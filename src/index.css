@@ -1,0 +1,167 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background-color: #0b1020;
+  color: #e6ebf5;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Thin scrollbars that match the dark theme. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #33416b #11182e;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #33416b;
+  border-radius: 6px;
+}
+*::-webkit-scrollbar-track {
+  background: #11182e;
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-brand text-white hover:bg-blue-500;
+  }
+  .btn-ghost {
+    @apply btn bg-ink-700 text-slate-200 hover:bg-ink-600;
+  }
+  .card {
+    @apply rounded-xl border border-ink-600/60 bg-ink-800/70 shadow-lg;
+  }
+  .pill {
+    @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium;
+  }
+}
+
+/* Markdown content styling (no typography plugin needed). */
+.prose-pylearn {
+  color: #cdd6ea;
+  line-height: 1.7;
+  font-size: 15px;
+}
+.prose-pylearn h1 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0.4em 0 0.4em;
+}
+.prose-pylearn h2 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 1.1em 0 0.4em;
+}
+.prose-pylearn h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #e6ebf5;
+  margin: 1em 0 0.3em;
+}
+.prose-pylearn p {
+  margin: 0.6em 0;
+}
+.prose-pylearn ul,
+.prose-pylearn ol {
+  margin: 0.6em 0;
+  padding-left: 1.4em;
+}
+.prose-pylearn ul {
+  list-style: disc;
+}
+.prose-pylearn ol {
+  list-style: decimal;
+}
+.prose-pylearn li {
+  margin: 0.25em 0;
+}
+.prose-pylearn a {
+  color: #4f8cff;
+  text-decoration: underline;
+}
+.prose-pylearn strong {
+  color: #fff;
+}
+.prose-pylearn code {
+  font-family: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+  font-size: 0.86em;
+  background: #1a2440;
+  color: #ffd43b;
+  padding: 0.12em 0.4em;
+  border-radius: 4px;
+}
+.prose-pylearn pre {
+  background: #0b1020;
+  border: 1px solid #243156;
+  border-radius: 8px;
+  padding: 0.9em 1em;
+  overflow-x: auto;
+  margin: 0.8em 0;
+}
+.prose-pylearn pre code {
+  background: transparent;
+  color: #cdd6ea;
+  padding: 0;
+}
+.prose-pylearn blockquote {
+  border-left: 3px solid #4f8cff;
+  padding-left: 1em;
+  margin: 0.8em 0;
+  color: #9fb0d0;
+}
+.prose-pylearn table {
+  border-collapse: collapse;
+  margin: 0.8em 0;
+  width: 100%;
+  font-size: 14px;
+}
+.prose-pylearn th,
+.prose-pylearn td {
+  border: 1px solid #243156;
+  padding: 0.45em 0.7em;
+  text-align: left;
+}
+.prose-pylearn th {
+  background: #1a2440;
+  color: #fff;
+}
+
+/* Highlight for the line currently executing in the ExecutionVisualizer. */
+.exec-current-line {
+  background: rgba(255, 212, 59, 0.16);
+  border-left: 3px solid #ffd43b;
+}
+
+/* Variable value change pulse. */
+@keyframes varPulse {
+  0% {
+    background-color: rgba(79, 140, 255, 0.45);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+.var-changed {
+  animation: varPulse 0.6s ease-out;
+}
