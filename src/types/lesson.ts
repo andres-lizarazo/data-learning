@@ -48,7 +48,11 @@ export interface DsaVizBlock {
     | "stack-queue"
     | "tree"
     | "graph"
-    | "recursion";
+    | "recursion"
+    | "hash-table"
+    | "heap"
+    | "sliding-window"
+    | "backtracking";
   /** Initial data for the visualizer (interpretation depends on `viz`). */
   data?: unknown;
   /** Sorting algorithm to animate, when viz === "sorting". */

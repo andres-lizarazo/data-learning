@@ -282,5 +282,147 @@ def order_costs(orders, prices):
         },
       ],
     },
+    {
+      id: "time-series",
+      title: "Time Series",
+      summary: "Datetime indexes, grouping by period, and rolling windows.",
+      minutes: 12,
+      blocks: [
+        {
+          kind: "prose",
+          markdown: `# Time series
+
+Parse strings to datetimes with \`pd.to_datetime\`, then group by a calendar **period**
+or smooth with a **rolling** window.
+
+\`\`\`python
+df["date"] = pd.to_datetime(df["date"])
+df.groupby(df["date"].dt.to_period("M"))["sales"].sum()   # per month
+df["sales"].rolling(3).mean()                              # moving average
+\`\`\``,
+        },
+        {
+          kind: "runnable",
+          title: "Group by month & rolling mean",
+          packages: ["pandas"],
+          code: `import pandas as pd
+df = pd.DataFrame({
+    "date": pd.to_datetime(["2024-01-03", "2024-01-20", "2024-02-02", "2024-02-19"]),
+    "sales": [10, 20, 15, 30],
+})
+print("monthly totals:\\n", df.groupby(df["date"].dt.to_period("M"))["sales"].sum())
+print("\\nrolling mean (2):\\n", df["sales"].rolling(2).mean())`,
+        },
+        {
+          kind: "challenge",
+          title: "Monthly totals",
+          prompt:
+            "`dates` are `'YYYY-MM-DD'` strings and `amounts` the matching values. Return a dict mapping `'YYYY-MM'` → total amount (int) for that month.",
+          packages: ["pandas"],
+          starterCode: `import pandas as pd
+
+def monthly_totals(dates, amounts):
+    pass`,
+          tests: [
+            {
+              name: "two months",
+              assertion:
+                "assert monthly_totals(['2024-01-05','2024-01-20','2024-02-01'], [10,5,7]) == {'2024-01': 15, '2024-02': 7}",
+            },
+            {
+              name: "single",
+              assertion: "assert monthly_totals(['2023-12-31'], [4]) == {'2023-12': 4}",
+              hidden: true,
+            },
+          ],
+          hints: [
+            "Build a DataFrame and parse dates with `pd.to_datetime`.",
+            "Group by `df['date'].dt.strftime('%Y-%m')` and sum the amounts.",
+            "Convert the resulting Series to a dict with int values.",
+          ],
+          solution: `import pandas as pd
+
+def monthly_totals(dates, amounts):
+    df = pd.DataFrame({"d": pd.to_datetime(dates), "a": amounts})
+    s = df.groupby(df["d"].dt.strftime("%Y-%m"))["a"].sum()
+    return {k: int(v) for k, v in s.items()}`,
+          xp: 80,
+        },
+      ],
+    },
+    {
+      id: "reshape-chaining",
+      title: "Reshape & Method Chaining",
+      summary: "pivot_table / melt and readable chained transforms.",
+      minutes: 12,
+      blocks: [
+        {
+          kind: "prose",
+          markdown: `# Reshape & chaining
+
+- \`pivot_table\` turns long data into a wide matrix (rows × columns × aggregate).
+- \`melt\` does the reverse (wide → long).
+- **Method chaining** keeps a transform readable as one pipeline.
+
+\`\`\`python
+(df.groupby("product")["sales"].sum()
+   .sort_values(ascending=False)
+   .head(3))
+\`\`\``,
+        },
+        {
+          kind: "runnable",
+          title: "pivot_table & melt",
+          packages: ["pandas"],
+          code: `import pandas as pd
+df = pd.DataFrame({
+    "region": ["N", "N", "S", "S"],
+    "product": ["a", "b", "a", "b"],
+    "sales": [1, 2, 3, 4],
+})
+print(df.pivot_table(index="region", columns="product", values="sales", aggfunc="sum"))
+print("\\nmelted:\\n", pd.melt(df, id_vars=["region", "product"], value_vars=["sales"]))`,
+        },
+        {
+          kind: "challenge",
+          title: "Top products",
+          prompt:
+            "`records` is a list of dicts with `product` and `sales`. Return the **top `n` product names** by total sales, highest first. Use a chained group-by.",
+          packages: ["pandas"],
+          starterCode: `import pandas as pd
+
+def top_products(records, n):
+    pass`,
+          tests: [
+            {
+              name: "top 1",
+              assertion:
+                "assert top_products([{'product':'a','sales':5},{'product':'b','sales':9},{'product':'a','sales':3}], 1) == ['b']",
+            },
+            {
+              name: "top 2",
+              assertion:
+                "assert top_products([{'product':'a','sales':5},{'product':'b','sales':9},{'product':'a','sales':3}], 2) == ['b', 'a']",
+            },
+          ],
+          hints: [
+            "Group by `product` and sum `sales`.",
+            "Sort descending, take the first `n`, and return the index as a list.",
+          ],
+          solution: `import pandas as pd
+
+def top_products(records, n):
+    return (
+        pd.DataFrame(records)
+        .groupby("product")["sales"]
+        .sum()
+        .sort_values(ascending=False)
+        .head(n)
+        .index.tolist()
+    )`,
+          xp: 80,
+        },
+      ],
+    },
   ],
 };

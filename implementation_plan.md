@@ -124,6 +124,11 @@ execution visualization and animated DSA components. Local-first; deployment lat
 
 Prioritized, phase by phase. Each phase is independently shippable.
 
+> **Current execution scope (local-only):** building all in-app, client-side features.
+> Infra items (deploy/hosting, accounts & cross-device sync, leaderboard, real Spark
+> backend) are **deferred** — they need external services and can't be done while keeping
+> everything local. Marked 🚧 below.
+
 ### Phase A — Polish & hardening (DONE except where noted)
 - [x] Performance: route-level code-splitting (`React.lazy` + `Suspense`) — initial JS bundle
       dropped 625 KB → **395 KB** (130 KB gzip); pages load on demand
@@ -152,13 +157,25 @@ Prioritized, phase by phase. Each phase is independently shippable.
       the Profile page
 - [ ] Per-lesson notes + full spaced-repetition scheduling — still pending
 
-### Phase C — Richer visualizers
-- [ ] Drive DSA visualizers from the learner's **own code** (instrument via the tracer)
-      instead of only canned animations
-- [ ] New visualizers: hash table (with collisions), heap/priority queue, sliding window,
-      backtracking tree, weighted graphs + Dijkstra
-- [ ] Execution Visualizer upgrades: object/heap reference diagram (pythontutor-style),
-      call-stack panel, and watch expressions
+### Phase C — Richer visualizers (DONE except where noted)
+- [x] Execution Visualizer: **call-stack panel** (tracer captures the active call stack per
+      step) + **watch/pin variables** (filter the variable table to named vars)
+- [x] New visualizers: **hash table** (chaining), **heap / priority queue** (tree + array,
+      sift-up), **sliding window**, **backtracking** (subsets decision tree) — each wired
+      into a lesson
+- [ ] Drive DSA visualizers from the learner's **own code** (instrument via the tracer) —
+      still pending
+- [ ] Weighted graphs + Dijkstra visualizer; object/heap reference diagram — still pending
+
+### Phase D — More content (DONE)
+- [x] DSA: **Sliding Window**, **Heaps & Priority Queues**, **Backtracking**, **Tries**,
+      **DP — Coin Change** lessons (each with a visualizer/visualized code + challenge + hints)
+- [x] Pandas: **Time Series** (datetime, period group-by, rolling) and **Reshape & Method
+      Chaining** (pivot_table/melt) lessons with challenges
+- [x] New module **Intro to ML (scikit-learn)**: train/test split, fit/evaluate, decision-tree
+      classifier — 2 lessons + challenges, runs sklearn in Pyodide
+- [x] Knowledge-check quiz added to the pandas-plotting viz lesson
+- [x] All new pandas/sklearn/DSA challenge solutions verified against real libraries (uv venv)
 
 ### Phase D — More content
 - [ ] DSA: heaps, tries, sliding window, two-heaps, backtracking, more DP patterns
@@ -166,12 +183,12 @@ Prioritized, phase by phase. Each phase is independently shippable.
 - [ ] New module: **scikit-learn / intro ML** (train/test split, a simple model, metrics)
 - [ ] Add challenges to the visualization lessons; grow every starter idea into full depth
 
-### Phase E — Platform & accounts (needs a backend)
-- [ ] Deploy the static app (Vercel/Netlify/GitHub Pages) — currently local-only
-- [ ] Optional accounts + cross-device sync (e.g. Supabase) for progress/XP
-- [ ] Leaderboard, daily goals, shareable profile/achievement cards
-- [ ] Optional **FastAPI + Spark (Docker)** backend so PySpark lessons run for real
-- [ ] i18n: ES/EN content + UI toggle
+### Phase E — Platform & accounts (🚧 deferred — needs infra, not local)
+- [ ] 🚧 Deploy the static app (Vercel/Netlify/GitHub Pages)
+- [ ] 🚧 Optional accounts + cross-device sync (e.g. Supabase) for progress/XP
+- [ ] 🚧 Leaderboard, daily goals, shareable profile/achievement cards
+- [ ] 🚧 Optional **FastAPI + Spark (Docker)** backend so PySpark lessons run for real
+- [ ] 🚧 i18n: ES/EN content + UI toggle
 
 ## Decisions Log
 - **Pyodide over a backend kernel:** zero-install, local-first, trivially deployable as

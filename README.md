@@ -25,7 +25,8 @@ interpreter runs client-side via [Pyodide](https://pyodide.org) (WebAssembly).
 |---|---|---|
 | 🐍 Python Basics | **deep** | types, operators, strings, conditionals, **loops (visualized)**, functions, comprehensions, errors |
 | 🧱 Data Structures | **deep** | lists, tuples, dicts, sets, stacks/queues (with visualizers) |
-| 🧠 DSA — Algorithms | **deep** | two pointers, hashing, recursion, sorting (animated), binary search, linked lists, trees, graphs (BFS/DFS), intro DP |
+| 🧠 DSA — Algorithms | **deep** | two pointers, hashing (hash-table viz), sliding window, recursion, backtracking, sorting, binary search, linked lists, trees, heaps, graphs (BFS/DFS), tries, DP (incl. coin change) — with a call-stack panel + watch variables in the visualizer |
+| 🤖 Intro to ML | starter | scikit-learn in the browser: train/test split, fit/evaluate, decision-tree classifier |
 | 📦 Core Libraries | **deep** | collections/itertools, datetime/random/json, math/statistics, functools (+ challenges) |
 | 🔢 NumPy | **deep** | arrays & vectorization, indexing/reshaping, aggregations/broadcasting (+ challenges) |
 | 🐼 Pandas | **deep** | DataFrames, selecting/filtering, cleaning, group-by/agg, merge/join (+ challenges) |

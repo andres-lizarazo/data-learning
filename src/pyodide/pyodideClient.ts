@@ -13,6 +13,8 @@ export interface TraceStep {
   event: "line" | "return";
   func: string;
   depth: number;
+  /** Function names currently on the call stack (bottom → top). */
+  stack: string[];
   locals: Record<string, { repr: string; kind: string }>;
   stdout: string;
 }

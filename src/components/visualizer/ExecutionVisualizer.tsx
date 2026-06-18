@@ -36,6 +36,7 @@ export default function ExecutionVisualizer({ initialCode, title, draftKey }: Pr
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(600); // ms per step
   const [loading, setLoading] = useState(false);
+  const [watch, setWatch] = useState(""); // comma-separated names to pin
   const prevLocals = useRef<Record<string, string>>({});
 
   useEffect(() => {
@@ -91,6 +92,17 @@ export default function ExecutionVisualizer({ initialCode, title, draftKey }: Pr
   }, [current]);
 
   const atEnd = idx >= steps.length - 1;
+
+  // Optional watch filter: when set, the variable table shows only these names.
+  const watched = watch
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const visibleLocals = current
+    ? Object.entries(current.locals).filter(
+        ([name]) => watched.length === 0 || watched.includes(name),
+      )
+    : [];
 
   return (
     <div className="glass overflow-hidden">
@@ -205,11 +217,45 @@ export default function ExecutionVisualizer({ initialCode, title, draftKey }: Pr
           )}
         </div>
 
-        {/* Right: variable table + output */}
+        {/* Right: call stack + variable table + output */}
         <div className="space-y-3">
+          {current && current.stack && current.stack.length > 1 && (
+            <div className="panel">
+              <div className="border-b border-white/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Call stack
+              </div>
+              <div className="flex flex-col-reverse gap-1 p-2" aria-live="polite">
+                {current.stack.map((fn, i) => {
+                  const isTop = i === current.stack.length - 1;
+                  const label = fn === "<module>" ? "main" : `${fn}()`;
+                  return (
+                    <div
+                      key={i}
+                      className={`rounded-lg border px-2.5 py-1 font-mono text-xs ${
+                        isTop
+                          ? "border-accent-violet/40 bg-accent-violet/15 text-white"
+                          : "border-white/10 bg-white/[0.03] text-slate-400"
+                      }`}
+                    >
+                      {label}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           <div className="panel">
-            <div className="border-b border-white/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
-              Variables {current && current.depth > 0 && `· depth ${current.depth}`}
+            <div className="flex items-center gap-2 border-b border-white/10 px-3 py-1.5">
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Variables {current && current.depth > 0 && `· depth ${current.depth}`}
+              </span>
+              <input
+                value={watch}
+                onChange={(e) => setWatch(e.target.value)}
+                placeholder="watch (e.g. i, total)"
+                aria-label="Watch variables (comma-separated)"
+                className="ml-auto w-36 rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-xs text-slate-200 outline-none placeholder:text-slate-600"
+              />
             </div>
             <div className="max-h-56 overflow-auto p-2">
               {!current && (
@@ -217,15 +263,17 @@ export default function ExecutionVisualizer({ initialCode, title, draftKey }: Pr
                   Press <b>Visualize</b> then step through to watch variables change.
                 </p>
               )}
-              {current && Object.keys(current.locals).length === 0 && (
+              {current && visibleLocals.length === 0 && (
                 <p className="px-1 py-2 text-sm text-slate-500">
-                  No local variables yet at this line.
+                  {watched.length > 0
+                    ? "No watched variables in scope here."
+                    : "No local variables yet at this line."}
                 </p>
               )}
-              {current && (
+              {current && visibleLocals.length > 0 && (
                 <table className="w-full text-sm">
                   <tbody>
-                    {Object.entries(current.locals).map(([name, info]) => (
+                    {visibleLocals.map(([name, info]) => (
                       <tr
                         key={name}
                         className={`align-top rounded ${changed.has(name) ? "var-changed" : ""}`}

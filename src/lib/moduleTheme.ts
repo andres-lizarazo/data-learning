@@ -16,6 +16,7 @@ const THEMES: Record<string, ModuleTheme> = {
   numpy: { from: "#22d3ee", to: "#6366f1", solid: "#38bdf8" },
   pandas: { from: "#a3e635", to: "#22d3ee", solid: "#a3e635" },
   viz: { from: "#f472b6", to: "#fbbf24", solid: "#f472b6" },
+  ml: { from: "#8b5cf6", to: "#f472b6", solid: "#c084fc" },
   pyspark: { from: "#fb923c", to: "#fbbf24", solid: "#fb923c" },
 };
 

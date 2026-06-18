@@ -80,7 +80,17 @@ while lo < hi:
           markdown: `# Hashing
 
 Dicts/sets give average **O(1)** membership and counting. Many "find a pair / find
-a duplicate / group by" problems become linear with a hash map.`,
+a duplicate / group by" problems become linear with a hash map.
+
+Under the hood, a hash table maps each key to a **bucket** via \`hash(key) % n\`. When
+two keys land in the same bucket (a **collision**), they're kept in a small chain.`,
+        },
+        {
+          kind: "dsa-viz",
+          viz: "hash-table",
+          title: "Hashing with chaining",
+          data: { values: [12, 5, 19, 26, 7, 33], buckets: 7 },
+          caption: "Each key goes to bucket key % 7; collisions append to the bucket's chain.",
         },
         {
           kind: "challenge",
@@ -102,6 +112,55 @@ a duplicate / group by" problems become linear with a hash map.`,
         seen[x] = i
     return []`,
           xp: 70,
+        },
+      ],
+    },
+    {
+      id: "sliding-window",
+      title: "Sliding Window",
+      summary: "A moving window turns repeated sub-array work into O(n).",
+      minutes: 11,
+      blocks: [
+        {
+          kind: "prose",
+          markdown: `# Sliding Window
+
+When a problem asks about **contiguous** sub-arrays/substrings of a fixed (or growing)
+size, slide a window across the data and update an aggregate incrementally instead of
+recomputing it each time — O(n) instead of O(n·k).`,
+        },
+        {
+          kind: "dsa-viz",
+          viz: "sliding-window",
+          title: "Max window sum",
+          data: { values: [2, 1, 5, 1, 3, 2, 4], k: 3, metric: "sum" },
+          caption: "The window of size k slides one step at a time; track the best sum seen.",
+        },
+        {
+          kind: "challenge",
+          title: "Max sum of size-k window",
+          prompt:
+            "Return the **maximum sum** of any contiguous window of size `k` in `nums` (assume 1 ≤ k ≤ len).",
+          starterCode: `def max_window_sum(nums, k):
+    pass`,
+          tests: [
+            { name: "basic", assertion: "assert max_window_sum([2,1,5,1,3,2], 3) == 9" },
+            { name: "k=1", assertion: "assert max_window_sum([4,2,7], 1) == 7" },
+            { name: "whole", assertion: "assert max_window_sum([1,2,3], 3) == 6", hidden: true },
+          ],
+          hints: [
+            "Compute the sum of the first window (first k items).",
+            "To slide: add the new right element and subtract the one leaving on the left.",
+            "Keep a running max of the window sums.",
+          ],
+          solution: `def max_window_sum(nums, k):
+    window = sum(nums[:k])
+    best = window
+    for i in range(k, len(nums)):
+        window += nums[i] - nums[i - k]
+        best = max(best, window)
+    return best`,
+          xp: 80,
         },
       ],
     },
@@ -156,6 +215,74 @@ Watch the stack grow on the way down and unwind on the way back up 👇`,
     if not nums:
         return 0
     return nums[0] + rsum(nums[1:])`,
+        },
+      ],
+    },
+    {
+      id: "backtracking",
+      title: "Backtracking",
+      summary: "Explore choices with DFS, undoing each one to try the next.",
+      minutes: 13,
+      blocks: [
+        {
+          kind: "prose",
+          markdown: `# Backtracking
+
+Backtracking builds a solution incrementally: **choose**, recurse, then **undo** the
+choice and try the next. It explores a tree of decisions — great for subsets,
+permutations, combinations, and puzzles like N-Queens.
+
+\`\`\`python
+def backtrack(i, path):
+    if i == len(items):
+        record(path); return
+    backtrack(i + 1, path)          # skip items[i]
+    path.append(items[i])
+    backtrack(i + 1, path)          # choose items[i]
+    path.pop()                       # undo
+\`\`\``,
+        },
+        {
+          kind: "dsa-viz",
+          viz: "backtracking",
+          title: "All subsets of {1, 2, 3}",
+          data: { values: [1, 2, 3] },
+          caption: "At each element, branch into skip vs choose; collect a subset at each leaf.",
+        },
+        {
+          kind: "challenge",
+          title: "All subsets",
+          prompt:
+            "Return **all subsets** of `nums` (the power set) as a list of lists. Order doesn't matter.",
+          starterCode: `def subsets(nums):
+    pass`,
+          tests: [
+            {
+              name: "[1,2]",
+              assertion:
+                "assert sorted([sorted(s) for s in subsets([1,2])]) == [[], [1], [1,2], [2]]",
+            },
+            { name: "count", assertion: "assert len(subsets([1,2,3])) == 8" },
+            { name: "empty", assertion: "assert subsets([]) == [[]]", hidden: true },
+          ],
+          hints: [
+            "There are 2^n subsets — each element is either in or out.",
+            "Recurse with an index and a current path; at the end, append a copy of the path.",
+            "After the 'choose' branch, pop the element to restore state (backtrack).",
+          ],
+          solution: `def subsets(nums):
+    out = []
+    def bt(i, path):
+        if i == len(nums):
+            out.append(path[:])
+            return
+        bt(i + 1, path)
+        path.append(nums[i])
+        bt(i + 1, path)
+        path.pop()
+    bt(0, [])
+    return out`,
+          xp: 90,
         },
       ],
     },
@@ -413,6 +540,64 @@ O(log n) when balanced. Traversals visit nodes in different orders:
       ],
     },
     {
+      id: "heaps",
+      title: "Heaps & Priority Queues",
+      summary: "A tree that keeps the min (or max) at the root in O(log n).",
+      minutes: 12,
+      blocks: [
+        {
+          kind: "prose",
+          markdown: `# Heaps
+
+A **binary heap** is a complete tree where every parent is ≤ its children (min-heap).
+The minimum is always at the root, and insert/pop are **O(log n)** via *sift-up* /
+*sift-down*. It's stored compactly in an array: children of \`i\` live at \`2i+1\` and
+\`2i+2\`.
+
+Python's \`heapq\` module turns any list into a min-heap:
+
+\`\`\`python
+import heapq
+h = []
+heapq.heappush(h, 5)
+heapq.heappop(h)       # smallest
+heapq.nsmallest(3, xs) # k smallest
+\`\`\``,
+        },
+        {
+          kind: "dsa-viz",
+          viz: "heap",
+          title: "Building a min-heap",
+          data: { values: [9, 4, 7, 1, 5, 8, 2] },
+          caption: "Each insert appends at the end, then sifts up while smaller than its parent.",
+        },
+        {
+          kind: "challenge",
+          title: "k smallest",
+          prompt:
+            "Return the `k` smallest values of `nums`, sorted ascending. Use `heapq`.",
+          starterCode: `import heapq
+
+def k_smallest(nums, k):
+    pass`,
+          tests: [
+            { name: "basic", assertion: "assert k_smallest([5,1,3,2,4], 3) == [1,2,3]" },
+            { name: "k=1", assertion: "assert k_smallest([10, 2, 8], 1) == [2]" },
+            { name: "k=0", assertion: "assert k_smallest([3,1], 0) == []", hidden: true },
+          ],
+          hints: [
+            "`heapq.nsmallest(k, nums)` returns the k smallest (unordered-ish).",
+            "Wrap it in `sorted(...)` to return them ascending.",
+          ],
+          solution: `import heapq
+
+def k_smallest(nums, k):
+    return sorted(heapq.nsmallest(k, nums))`,
+          xp: 80,
+        },
+      ],
+    },
+    {
       id: "graphs",
       title: "Graphs — BFS & DFS",
       summary: "Traverse networks breadth-first and depth-first.",
@@ -478,6 +663,102 @@ A **graph** is nodes + edges, often stored as an adjacency list \`{node: [neighb
       ],
     },
     {
+      id: "tries",
+      title: "Tries (Prefix Trees)",
+      summary: "A tree of characters for fast prefix lookups.",
+      minutes: 11,
+      blocks: [
+        {
+          kind: "prose",
+          markdown: `# Tries
+
+A **trie** stores strings by character along tree edges, so shared prefixes share
+nodes. Lookups and prefix checks run in O(length of the word), independent of how many
+words are stored. A simple Python trie is just nested dicts:
+
+\`\`\`python
+trie = {}
+for ch in "cat":
+    trie = trie.setdefault(ch, {})
+trie["$"] = True   # mark end of a word
+\`\`\``,
+        },
+        {
+          kind: "runnable",
+          title: "Build & query a trie",
+          code: `def build(words):
+    root = {}
+    for w in words:
+        node = root
+        for ch in w:
+            node = node.setdefault(ch, {})
+        node["$"] = True
+    return root
+
+def has_prefix(root, prefix):
+    node = root
+    for ch in prefix:
+        if ch not in node:
+            return False
+        node = node[ch]
+    return True
+
+t = build(["cat", "car", "dog"])
+print(has_prefix(t, "ca"))   # True
+print(has_prefix(t, "do"))   # True
+print(has_prefix(t, "x"))    # False`,
+        },
+        {
+          kind: "challenge",
+          title: "Prefix search",
+          prompt:
+            "Implement `build(words)` (a nested-dict trie) and `has_prefix(trie, prefix)` returning `True` if any stored word starts with `prefix`.",
+          starterCode: `def build(words):
+    pass
+
+def has_prefix(trie, prefix):
+    pass`,
+          tests: [
+            {
+              name: "prefixes",
+              assertion:
+                "t = build(['cat','car','dog']); assert has_prefix(t,'ca') is True and has_prefix(t,'do') is True",
+            },
+            {
+              name: "absent",
+              assertion: "t = build(['cat']); assert has_prefix(t,'do') is False",
+            },
+            {
+              name: "empty prefix",
+              assertion: "t = build(['a']); assert has_prefix(t,'') is True",
+              hidden: true,
+            },
+          ],
+          hints: [
+            "In `build`, walk/create a nested dict node per character with `setdefault`.",
+            "In `has_prefix`, follow each character; if one is missing, return False.",
+            "Reaching the end of the prefix without a miss means True.",
+          ],
+          solution: `def build(words):
+    root = {}
+    for w in words:
+        node = root
+        for ch in w:
+            node = node.setdefault(ch, {})
+    return root
+
+def has_prefix(trie, prefix):
+    node = trie
+    for ch in prefix:
+        if ch not in node:
+            return False
+        node = node[ch]
+    return True`,
+          xp: 80,
+        },
+      ],
+    },
+    {
       id: "dynamic-programming",
       title: "Intro to Dynamic Programming",
       summary: "Memoization and bottom-up tables.",
@@ -528,6 +809,66 @@ print("fib(8) =", dp[n])`,
     for _ in range(n):
         a, b = b, a + b
     return a`,
+          xp: 90,
+        },
+      ],
+    },
+    {
+      id: "dp-coin-change",
+      title: "DP — Coin Change",
+      summary: "Bottom-up table for the classic min-coins problem.",
+      minutes: 13,
+      blocks: [
+        {
+          kind: "prose",
+          markdown: `# Coin Change (bottom-up DP)
+
+Given coin denominations and a target \`amount\`, find the **fewest coins** that sum to
+it. Build a table where \`dp[a]\` = min coins to make amount \`a\`:
+
+- \`dp[0] = 0\`; everything else starts at "infinity".
+- For each amount \`a\`, try every coin \`c ≤ a\`: \`dp[a] = min(dp[a], dp[a-c] + 1)\`.
+- If \`dp[amount]\` is still infinity, it's impossible → return -1.`,
+        },
+        {
+          kind: "visualized",
+          title: "Filling the dp table",
+          code: `coins = [1, 2, 5]
+amount = 6
+INF = amount + 1
+dp = [0] + [INF] * amount
+for a in range(1, amount + 1):
+    for c in coins:
+        if c <= a:
+            dp[a] = min(dp[a], dp[a - c] + 1)
+print(dp)
+print("min coins:", dp[amount])`,
+        },
+        {
+          kind: "challenge",
+          title: "Coin change",
+          prompt:
+            "Return the **minimum number of coins** that sum to `amount`, or `-1` if impossible. `coins` are positive denominations.",
+          starterCode: `def coin_change(coins, amount):
+    pass`,
+          tests: [
+            { name: "11 with [1,2,5]", assertion: "assert coin_change([1,2,5], 11) == 3" },
+            { name: "impossible", assertion: "assert coin_change([2], 3) == -1" },
+            { name: "zero", assertion: "assert coin_change([1], 0) == 0", hidden: true },
+          ],
+          hints: [
+            "Make a dp array of size amount+1, dp[0]=0, the rest a large 'infinity'.",
+            "For each amount a, relax with every coin: dp[a] = min(dp[a], dp[a-c]+1).",
+            "If dp[amount] is still 'infinity' at the end, return -1.",
+          ],
+          solution: `def coin_change(coins, amount):
+    INF = amount + 1
+    dp = [0] + [INF] * amount
+    for a in range(1, amount + 1):
+        for c in coins:
+            if c <= a:
+                dp[a] = min(dp[a], dp[a - c] + 1)
+    return dp[amount] if dp[amount] != INF else -1`,
           xp: 90,
         },
       ],

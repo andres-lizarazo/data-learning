@@ -134,6 +134,18 @@ df.assign(profit=df["sales"] - df["costs"]).plot(
 )
 fig.tight_layout()`,
         },
+        {
+          kind: "quiz",
+          question: "Which pandas call draws a bar chart of how often each category appears?",
+          options: [
+            { text: "df['cat'].value_counts().plot(kind='bar')", correct: true },
+            { text: "df['cat'].sum().plot()" },
+            { text: "df.plot(kind='scatter')" },
+            { text: "df['cat'].hist()" },
+          ],
+          explanation:
+            "`value_counts()` tallies each category; `.plot(kind='bar')` charts those tallies.",
+        },
       ],
     },
     {

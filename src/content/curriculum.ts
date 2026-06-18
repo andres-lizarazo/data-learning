@@ -6,6 +6,7 @@ import { libraries } from "./modules/libraries";
 import { numpy } from "./modules/numpy";
 import { pandas } from "./modules/pandas";
 import { viz } from "./modules/viz";
+import { ml } from "./modules/ml";
 import { pyspark } from "./modules/pyspark";
 
 // Master curriculum — ordered as the intended learning path. The sidebar, router,
@@ -18,6 +19,7 @@ export const curriculum: Module[] = [
   numpy,
   pandas,
   viz,
+  ml,
   pyspark,
 ];
 

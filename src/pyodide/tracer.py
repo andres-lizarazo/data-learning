@@ -72,19 +72,15 @@ def trace_code(source):
     out_buffer = io.StringIO()
     error = None
     truncated = False
-
-    def _frame_depth(frame):
-        depth = 0
-        f = frame.f_back
-        while f is not None:
-            if f.f_code.co_filename == FILENAME:
-                depth += 1
-            f = f.f_back
-        return depth
+    # Names of the functions currently on the call stack (within the user's file).
+    call_stack = []
 
     def tracer(frame, event, arg):
         nonlocal truncated
         if frame.f_code.co_filename != FILENAME:
+            return tracer
+        if event == "call":
+            call_stack.append(frame.f_code.co_name)
             return tracer
         if event == "line" or event == "return":
             if len(steps) >= MAX_STEPS:
@@ -95,11 +91,14 @@ def trace_code(source):
                     "line": frame.f_lineno,
                     "event": event,
                     "func": frame.f_code.co_name,
-                    "depth": _frame_depth(frame),
+                    "depth": max(0, len(call_stack) - 1),
+                    "stack": list(call_stack),
                     "locals": _snapshot(frame.f_locals),
                     "stdout": out_buffer.getvalue(),
                 }
             )
+            if event == "return" and call_stack:
+                call_stack.pop()
         return tracer
 
     try:
