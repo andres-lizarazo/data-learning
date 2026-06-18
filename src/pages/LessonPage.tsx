@@ -1,8 +1,11 @@
 import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
-import { getLesson, lessonSequence } from "../content/curriculum";
+import { ArrowLeft, ArrowRight, Check, ChevronRight } from "lucide-react";
+import { getLesson, getModule, lessonSequence } from "../content/curriculum";
 import LessonRenderer from "../components/lesson/LessonRenderer";
 import { useProgressStore } from "../store/progressStore";
+import { moduleGradient } from "../lib/moduleTheme";
+import { celebrate, bigCelebrate } from "../lib/confetti";
 
 export default function LessonPage() {
   const { moduleId, lessonId } = useParams();
@@ -12,6 +15,7 @@ export default function LessonPage() {
   const isComplete = useProgressStore((s) =>
     lessonId ? s.isLessonComplete(lessonId) : false,
   );
+  const completedMap = useProgressStore((s) => s.completedLessons);
 
   const nav = useMemo(() => {
     const seq = lessonSequence();
@@ -24,30 +28,59 @@ export default function LessonPage() {
   }
   const { module, lesson } = found;
 
+  const handleComplete = () => {
+    completeLesson(lesson.id);
+    celebrate();
+    // If this was the module's last remaining lesson, throw a bigger party.
+    const mod = getModule(module.id);
+    if (mod) {
+      const remaining = mod.lessons.filter(
+        (l) => l.id !== lesson.id && !completedMap[l.id],
+      ).length;
+      if (remaining === 0) setTimeout(bigCelebrate, 250);
+    }
+  };
+
   return (
-    <div className="mx-auto max-w-3xl px-5 py-8">
-      <div className="flex items-center gap-2 text-sm text-slate-400">
-        <Link to={`/learn/${module.id}`} className="hover:text-brand">
+    <div className="mx-auto max-w-3xl px-5 py-10">
+      <div className="flex items-center gap-1 text-sm text-slate-400">
+        <Link to="/" className="hover:text-white">
+          <ArrowLeft className="h-4 w-4" />
+        </Link>
+        <Link to={`/learn/${module.id}`} className="ml-1 hover:text-white">
           {module.icon} {module.title}
         </Link>
-        <span>/</span>
+        <ChevronRight className="h-4 w-4 text-slate-600" />
         <span className="text-slate-300">{lesson.title}</span>
       </div>
 
-      <h1 className="mt-2 text-2xl font-bold text-white">{lesson.title}</h1>
-      <p className="mb-6 text-slate-400">{lesson.summary}</p>
+      <div className="mt-3">
+        <span
+          className="mb-3 block h-1 w-16 rounded-full"
+          style={{ background: moduleGradient(module.id) }}
+        />
+        <h1 className="font-display text-3xl font-bold tracking-tight text-white">
+          {lesson.title}
+        </h1>
+        <p className="mb-7 mt-1 text-slate-400">{lesson.summary}</p>
+      </div>
 
-      {/* key forces a fresh mount per lesson so editable code blocks reset
-          (otherwise React reuses component instances across route changes). */}
+      {/* key forces a fresh mount per lesson so editable code blocks reset. */}
       <LessonRenderer key={lesson.id} lessonId={lesson.id} blocks={lesson.blocks} />
 
-      <div className="mt-8 flex flex-col gap-3 border-t border-ink-600/60 pt-5 sm:flex-row sm:items-center">
+      <div className="mt-9 flex flex-col gap-3 border-t border-white/10 pt-6 sm:flex-row sm:items-center">
         <button
           className={isComplete ? "btn-ghost" : "btn-primary"}
-          onClick={() => completeLesson(lesson.id)}
+          onClick={handleComplete}
           disabled={isComplete}
         >
-          {isComplete ? "✓ Completed" : "Mark lesson complete (+20 XP)"}
+          {isComplete ? (
+            <>
+              <Check className="h-4 w-4" /> Completed
+            </>
+          ) : (
+            "Mark lesson complete (+20 XP)"
+          )}
         </button>
         <div className="flex gap-2 sm:ml-auto">
           {nav.prev && (
@@ -55,7 +88,7 @@ export default function LessonPage() {
               to={`/learn/${nav.prev.moduleId}/${nav.prev.lessonId}`}
               className="btn-ghost"
             >
-              ← Previous
+              <ArrowLeft className="h-4 w-4" /> Previous
             </Link>
           )}
           {nav.next && (
@@ -63,7 +96,7 @@ export default function LessonPage() {
               to={`/learn/${nav.next.moduleId}/${nav.next.lessonId}`}
               className="btn-primary"
             >
-              Next →
+              Next <ArrowRight className="h-4 w-4" />
             </Link>
           )}
         </div>

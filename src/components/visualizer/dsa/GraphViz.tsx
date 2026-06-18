@@ -98,8 +98,29 @@ export default function GraphViz({
   return (
     <VizShell title={title ?? `Graph — ${traversal.toUpperCase()}`} caption={caption}>
       <div className="grid gap-3 md:grid-cols-[1fr_auto]">
-        <div className="overflow-auto rounded-lg bg-ink-900/60 p-2">
+        <div className="well overflow-auto p-2">
           <svg width={280} height={240} className="mx-auto">
+            <defs>
+              <linearGradient id="gv-current" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stopColor="#fcd34d" />
+                <stop offset="1" stopColor="#f59e0b" />
+              </linearGradient>
+              <linearGradient id="gv-visited" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stopColor="#67e8f9" />
+                <stop offset="1" stopColor="#a3e635" />
+              </linearGradient>
+              <linearGradient id="gv-frontier" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stopColor="#a78bfa" />
+                <stop offset="1" stopColor="#6366f1" />
+              </linearGradient>
+              <filter id="gv-glow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="3.5" result="b" />
+                <feMerge>
+                  <feMergeNode in="b" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
             {edges.map(([u, v], i) => (
               <line
                 key={i}
@@ -107,7 +128,7 @@ export default function GraphViz({
                 y1={positions[u].y}
                 x2={positions[v].x}
                 y2={positions[v].y}
-                stroke="#33416b"
+                stroke="rgba(255,255,255,0.14)"
                 strokeWidth={2}
               />
             ))}
@@ -116,20 +137,21 @@ export default function GraphViz({
               const current = frame.current === l;
               const inFrontier = frame.frontier.includes(l);
               const fill = current
-                ? "#ffd43b"
+                ? "url(#gv-current)"
                 : visited
-                  ? "#22c55e"
+                  ? "url(#gv-visited)"
                   : inFrontier
-                    ? "#4f8cff"
-                    : "#1a2440";
+                    ? "url(#gv-frontier)"
+                    : "rgba(255,255,255,0.05)";
+              const light = current || visited;
               return (
-                <g key={l}>
+                <g key={l} filter={current ? "url(#gv-glow)" : undefined}>
                   <circle
                     cx={positions[l].x}
                     cy={positions[l].y}
                     r={18}
                     fill={fill}
-                    stroke="#4f8cff"
+                    stroke={light || inFrontier ? "transparent" : "rgba(139,92,246,0.45)"}
                     strokeWidth={2}
                   />
                   <text
@@ -139,7 +161,7 @@ export default function GraphViz({
                     fontSize={13}
                     fontFamily="monospace"
                     fontWeight="bold"
-                    fill={current || visited ? "#0b1020" : "#e6ebf5"}
+                    fill={light ? "#070710" : "#e6ebf5"}
                   >
                     {l}
                   </text>

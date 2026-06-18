@@ -168,7 +168,7 @@ df = pd.DataFrame({
 })
 df["y"] = df["x"] * 2 + rng.normal(0, 0.5, 200)
 
-sns.set_theme(style="whitegrid")
+sns.set_theme(style="darkgrid", rc={"axes.facecolor": "none", "figure.facecolor": "none"})
 fig, axes = plt.subplots(1, 2, figsize=(9, 3.2))
 sns.histplot(data=df, x="x", hue="group", ax=axes[0])
 sns.scatterplot(data=df, x="x", y="y", hue="group", ax=axes[1])
@@ -208,7 +208,7 @@ df = pd.DataFrame({
     "minutes": rng.normal(30, 8, 120),
 })
 
-sns.set_theme(style="whitegrid")
+sns.set_theme(style="darkgrid", rc={"axes.facecolor": "none", "figure.facecolor": "none"})
 fig, axes = plt.subplots(1, 3, figsize=(11, 3.2))
 sns.boxplot(data=df, x="team", y="score", ax=axes[0])
 axes[0].set_title("Score by team")

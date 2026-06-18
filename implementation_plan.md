@@ -62,6 +62,38 @@ execution visualization and animated DSA components. Local-first; deployment lat
 ### Content — starter (conceptual)
 - [x] PySpark (conceptual): Spark model + quiz; pandas↔PySpark cheat sheet
 
+### Design polish (round 4) — refine Aurora Glass
+- [x] Surface harmonization: glass control primitives (`.panel`/`.well`/`.select`/`.callout`)
+      + global `:focus-visible` ring; ExecutionVisualizer panels/controls and all DSA
+      visualizer chart areas/dropdowns moved off the old `ink` styling
+- [x] Premium viz fills: gradient sorting bars, array/stack/linked-list tiles, and
+      SVG gradient + glow for tree/graph nodes
+- [x] Dark, theme-matched plots: matplotlib dark `rcParams` + `transparent` savefig in the
+      worker, seaborn lessons switched to a dark theme, PlotPanel on a dark glass panel
+- [x] Motion: route page transitions (AnimatePresence on location) + sliding sidebar active
+      indicator (`layoutId`)
+- [x] **Level-Up** moment: watcher in Layout fires `LevelUpToast` + big confetti on level gain
+- [x] **Profile / Achievements** page (`/profile`): level ring, stats, per-module progress,
+      badges grid (`lib/badges.ts`), reset progress; linked from the TopBar
+- [x] Loading/branding: Monaco skeleton, SVG favicon + theme-color, hero glow + tech chips
+
+### Frontend / UI-UX overhaul (round 3) — "Aurora Glass"
+- [x] Design system: deep base + animated **aurora** background + grain; **glassmorphism**
+      surfaces; violet→cyan→lime accent spectrum; display/sans/mono font trio
+      (Space Grotesk / Inter / JetBrains Mono); glow shadows; reduced-motion support
+      (`tailwind.config.js`, `src/index.css`, `index.html`)
+- [x] Deps: `framer-motion`, `lucide-react`, `canvas-confetti`
+- [x] Reusable UI primitives: `ui/{Aurora,Logo,XPBar,StreakFlame,AnimatedCounter,Reveal}`
+- [x] Gamification: XP→level math (`lib/level.ts`), level bar, animated streak flame,
+      animated XP counter, **confetti** on challenge solve / lesson complete / module finish
+      (`lib/confetti.ts`), module-complete badges; per-module accent identity (`lib/moduleTheme.ts`)
+- [x] Redesigned Layout (aurora + animated drawer), TopBar (glass + level/streak/XP),
+      Sidebar (glass + per-module dots + animated active bar)
+- [x] Home hero (gradient display headline, floating code card, stat chips, staggered
+      module grid with hover lift/glow), Module & Lesson pages, Playground
+- [x] Component polish: Monaco glass "window" frame + matched theme, terminal-style console,
+      glass plot panel, lucide transport icons on visualizers, restyled challenge runner & quiz
+
 ### Review pass (round 2)
 - [x] Fix: SortingViz bars rendered at 0-height → px-based bar heights with labels
 - [x] Fix: editable code persisted across lessons → `key={lesson.id}` remount in LessonPage
@@ -84,14 +116,51 @@ execution visualization and animated DSA components. Local-first; deployment lat
   truncated with a warning.
 - `tracer.py` records data-like locals only (skips functions/modules) to keep the table
   focused; this is intentional.
+- Main JS bundle is ~625 KB (≈197 KB gzip) after adding Framer Motion + lucide; Vite warns
+  about the 500 KB chunk threshold. Not a runtime problem, but Phase A code-splitting should
+  bring it down.
 
-## Stretch / Future 🔮
-- [ ] 🔮 Persist editor edits per lesson; "reset all progress" UI in settings
-- [ ] 🔮 More DSA: heaps/priority queues, Dijkstra on weighted graphs
-- [ ] 🔮 Instrument user code to drive DSA visualizers from their own implementations
-- [ ] 🔮 Achievements/badges; shareable progress
-- [ ] 🔮 Optional FastAPI+Spark Docker backend to make PySpark lessons live
-- [ ] 🔮 Deployment (static host) + offline/PWA caching of the Pyodide runtime
+## Roadmap — what's next 🗺️
+
+Prioritized, phase by phase. Each phase is independently shippable.
+
+### Phase A — Polish & hardening (quick wins, do first)
+- [ ] Performance: route-level code-splitting (`React.lazy`) + lazy-load Framer Motion and
+      Monaco so the initial bundle drops well under the 625 KB it is now
+- [ ] Persist editor edits per lesson (localStorage) so progress on a snippet isn't lost on
+      navigation; "continue where you left off" entry on Home
+- [ ] Tests: Vitest unit tests for `lib/level.ts`, `lib/badges.ts`, and the challenge harness
+      builder; a Playwright smoke test (boot Pyodide → run a snippet → solve a challenge)
+- [ ] PWA + offline: cache the Pyodide runtime/wheels via a service worker for instant,
+      offline-capable reloads
+- [ ] Accessibility audit (focus order, ARIA on the visualizers, contrast) + skip-to-content
+
+### Phase B — Deeper learning experience
+- [ ] Hints system per challenge (progressive reveal) + "explain my error" helper
+- [ ] In-app search + command palette (⌘K) to jump to any lesson/module
+- [ ] Lesson bookmarks/notes; a "Review" mode (spaced repetition over solved challenges)
+- [ ] A standalone **Challenge bank / Practice** area (filter by topic & difficulty)
+
+### Phase C — Richer visualizers
+- [ ] Drive DSA visualizers from the learner's **own code** (instrument via the tracer)
+      instead of only canned animations
+- [ ] New visualizers: hash table (with collisions), heap/priority queue, sliding window,
+      backtracking tree, weighted graphs + Dijkstra
+- [ ] Execution Visualizer upgrades: object/heap reference diagram (pythontutor-style),
+      call-stack panel, and watch expressions
+
+### Phase D — More content
+- [ ] DSA: heaps, tries, sliding window, two-heaps, backtracking, more DP patterns
+- [ ] Pandas: time series, window functions, pivot/melt, method chaining
+- [ ] New module: **scikit-learn / intro ML** (train/test split, a simple model, metrics)
+- [ ] Add challenges to the visualization lessons; grow every starter idea into full depth
+
+### Phase E — Platform & accounts (needs a backend)
+- [ ] Deploy the static app (Vercel/Netlify/GitHub Pages) — currently local-only
+- [ ] Optional accounts + cross-device sync (e.g. Supabase) for progress/XP
+- [ ] Leaderboard, daily goals, shareable profile/achievement cards
+- [ ] Optional **FastAPI + Spark (Docker)** backend so PySpark lessons run for real
+- [ ] i18n: ES/EN content + UI toggle
 
 ## Decisions Log
 - **Pyodide over a backend kernel:** zero-install, local-first, trivially deployable as

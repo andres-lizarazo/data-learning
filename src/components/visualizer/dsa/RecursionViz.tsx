@@ -72,7 +72,7 @@ export default function RecursionViz({
 
   return (
     <VizShell title={title ?? `Recursion — ${func}(${n})`} caption={caption}>
-      <div className="flex min-h-[12rem] flex-col-reverse items-center justify-end gap-1.5 rounded-lg bg-ink-900/60 p-4">
+      <div className="well flex min-h-[12rem] flex-col-reverse items-center justify-end gap-1.5 p-4">
         {frame.stack.length === 0 && (
           <span className="text-sm text-slate-500">call stack empty</span>
         )}
@@ -81,12 +81,12 @@ export default function RecursionViz({
           return (
             <div
               key={i}
-              className={`flex w-56 items-center justify-between rounded-lg border px-3 py-2 font-mono text-sm transition-all ${
+              className={`flex w-56 items-center justify-between rounded-xl border px-3 py-2 font-mono text-sm transition-all ${
                 s.returning !== undefined
-                  ? "border-brand-green bg-brand-green/15 text-brand-green"
+                  ? "border-accent-cyan/40 bg-accent-cyan/10 text-accent-cyan"
                   : isTop
-                    ? "border-brand-yellow bg-brand-yellow/15 text-brand-yellow"
-                    : "border-ink-600 bg-ink-700 text-slate-300"
+                    ? "border-amber-300/40 bg-amber-400/10 text-amber-200"
+                    : "border-white/10 bg-white/5 text-slate-300"
               }`}
             >
               <span>{s.label}</span>

@@ -39,6 +39,15 @@ interpreter runs client-side via [Pyodide](https://pyodide.org) (WebAssembly).
 > the browser. This module teaches the model and API (with a pandas↔Spark mapping) so
 > the code is familiar when you run it on a real cluster.
 
+## Design
+
+**"Aurora Glass"** — a dark, premium aesthetic: an animated aurora gradient-mesh
+background, **glassmorphism** panels (translucent + blur + hairline borders), a
+violet→cyan→lime accent spectrum, and a Space Grotesk / Inter / JetBrains Mono type
+trio. Motion via Framer Motion (entrance/hover springs, animated counters), icons via
+lucide-react, and gamification with XP **levels**, an animated streak flame, and
+**confetti** on solves/completions. Respects `prefers-reduced-motion`.
+
 ## Architecture
 
 ```

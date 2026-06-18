@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { Check, Eye, EyeOff, Play, RotateCcw, Trophy, X } from "lucide-react";
 import CodeEditor from "../editor/CodeEditor";
 import { pyodideClient } from "../../pyodide/pyodideClient";
 import { usePyodideStore } from "../../store/pyodideStore";
 import { useProgressStore } from "../../store/progressStore";
+import { celebrate } from "../../lib/confetti";
 import type { ChallengeBlock } from "../../types/lesson";
 
 interface Props {
@@ -98,6 +100,7 @@ export default function ChallengeRunner({ block, id }: Props) {
       setResults(merged);
 
       if (merged.every((r) => r.ok)) {
+        if (!alreadySolved) celebrate();
         solveChallenge(id, block.xp ?? 50);
       }
     } finally {
@@ -110,11 +113,15 @@ export default function ChallengeRunner({ block, id }: Props) {
   const allPass = results !== null && passed === total;
 
   return (
-    <div className="card overflow-hidden">
-      <div className="flex items-center justify-between border-b border-ink-600/60 px-4 py-2.5">
-        <span className="text-sm font-semibold text-slate-100">🏆 {block.title}</span>
+    <div className="glass overflow-hidden">
+      <div className="flex items-center justify-between border-b border-white/10 px-4 py-2.5">
+        <span className="flex items-center gap-2 text-sm font-semibold text-slate-100">
+          <Trophy className="h-4 w-4 text-accent-lime" /> {block.title}
+        </span>
         {(alreadySolved || allPass) && (
-          <span className="pill bg-brand-green/20 text-brand-green">✓ Solved</span>
+          <span className="pill border-accent-lime/30 bg-accent-lime/10 text-accent-lime">
+            <Check className="h-3 w-3" /> Solved
+          </span>
         )}
       </div>
 
@@ -127,7 +134,8 @@ export default function ChallengeRunner({ block, id }: Props) {
 
         <div className="flex flex-wrap items-center gap-2">
           <button className="btn-primary" onClick={submit} disabled={running || !ready}>
-            {running ? "Running tests…" : ready ? "Submit ▶" : "Loading Python…"}
+            <Play className="h-4 w-4" />
+            {running ? "Running tests…" : ready ? "Submit" : "Loading Python…"}
           </button>
           <button
             className="btn-ghost"
@@ -137,10 +145,11 @@ export default function ChallengeRunner({ block, id }: Props) {
               setStderr("");
             }}
           >
-            ↺ Reset
+            <RotateCcw className="h-4 w-4" /> Reset
           </button>
           {block.solution && (
             <button className="btn-ghost" onClick={() => setShowSolution((s) => !s)}>
+              {showSolution ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               {showSolution ? "Hide solution" : "Show solution"}
             </button>
           )}
@@ -162,19 +171,23 @@ export default function ChallengeRunner({ block, id }: Props) {
           <div className="space-y-1.5">
             <div className="text-sm font-medium text-slate-200">
               {passed} / {total} tests passed{" "}
-              {allPass && <span className="text-brand-green">— nice! 🎉</span>}
+              {allPass && <span className="text-accent-lime">— nice! 🎉</span>}
             </div>
             <ul className="space-y-1">
               {results.map((r, i) => (
                 <li
                   key={i}
-                  className={`flex items-start gap-2 rounded-md border px-3 py-1.5 text-sm ${
+                  className={`flex items-start gap-2 rounded-lg border px-3 py-1.5 text-sm ${
                     r.ok
-                      ? "border-brand-green/30 bg-brand-green/10"
+                      ? "border-accent-lime/30 bg-accent-lime/10"
                       : "border-brand-red/30 bg-brand-red/10"
                   }`}
                 >
-                  <span>{r.ok ? "✅" : "❌"}</span>
+                  {r.ok ? (
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-accent-lime" />
+                  ) : (
+                    <X className="mt-0.5 h-4 w-4 shrink-0 text-brand-red" />
+                  )}
                   <div className="min-w-0">
                     <div className="text-slate-200">
                       {r.name}{" "}

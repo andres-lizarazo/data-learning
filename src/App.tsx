@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import ModulePage from "./pages/ModulePage";
 import LessonPage from "./pages/LessonPage";
 import Playground from "./pages/Playground";
+import Profile from "./pages/Profile";
 
 export default function App() {
   return (
@@ -13,6 +14,7 @@ export default function App() {
         <Route path="learn/:moduleId" element={<ModulePage />} />
         <Route path="learn/:moduleId/:lessonId" element={<LessonPage />} />
         <Route path="playground" element={<Playground />} />
+        <Route path="profile" element={<Profile />} />
         <Route path="*" element={<Home />} />
       </Route>
     </Routes>

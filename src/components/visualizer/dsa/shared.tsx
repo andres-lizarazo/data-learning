@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { Pause, Play, RotateCcw, SkipBack, SkipForward } from "lucide-react";
 
 // Shared playback machinery for the DSA visualizers. Each visualizer precomputes an
 // array of "frames"; this hook handles play / pause / step / scrub over them.
@@ -49,27 +50,41 @@ export function StepControls({ stepper, length, label }: ControlsProps) {
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
         <button
-          className="btn-ghost"
+          className="btn-ghost px-2.5"
           onClick={() => setIdx(Math.max(0, idx - 1))}
           disabled={idx === 0}
+          aria-label="Previous"
         >
-          ◀
+          <SkipBack className="h-4 w-4" />
         </button>
         <button
           className="btn-primary"
           onClick={() => (atEnd ? (setIdx(0), setPlaying(true)) : setPlaying(!playing))}
         >
-          {atEnd ? "↻ Replay" : playing ? "⏸ Pause" : "▶ Play"}
+          {atEnd ? (
+            <>
+              <RotateCcw className="h-4 w-4" /> Replay
+            </>
+          ) : playing ? (
+            <>
+              <Pause className="h-4 w-4" /> Pause
+            </>
+          ) : (
+            <>
+              <Play className="h-4 w-4" /> Play
+            </>
+          )}
         </button>
         <button
-          className="btn-ghost"
+          className="btn-ghost px-2.5"
           onClick={() => setIdx(Math.min(length - 1, idx + 1))}
           disabled={atEnd}
+          aria-label="Next"
         >
-          ▶
+          <SkipForward className="h-4 w-4" />
         </button>
         <select
-          className="rounded-lg border border-ink-600 bg-ink-700 px-2 py-1 text-xs"
+          className="select"
           value={speed}
           onChange={(e) => setSpeed(Number(e.target.value))}
         >

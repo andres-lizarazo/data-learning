@@ -69,23 +69,31 @@ export default function StackQueueViz({
   return (
     <VizShell title={title ?? (isStack ? "Stack (LIFO)" : "Queue (FIFO)")} caption={caption}>
       <div
-        className={`flex min-h-[12rem] items-center gap-2 rounded-lg bg-ink-900/60 p-4 ${
+        className={`well flex min-h-[12rem] items-center gap-2 p-4 ${
           isStack ? "flex-col-reverse justify-start" : "flex-row justify-start"
         }`}
       >
         {frame.items.length === 0 && <span className="text-sm text-slate-500">empty</span>}
         {frame.items.map((v, i) => {
           const isEnd = isStack ? i === frame.items.length - 1 : i === 0;
+          const highlight = frame.changed === i;
           return (
             <div
               key={`${i}-${v}`}
-              className={`flex h-11 w-20 items-center justify-center rounded-lg border font-mono font-semibold ${
-                frame.changed === i
-                  ? "border-brand-yellow bg-brand-yellow/20 text-brand-yellow"
+              className={`flex h-11 w-20 items-center justify-center rounded-xl border font-mono font-semibold text-white transition-all ${
+                highlight
+                  ? "border-amber-300/50 shadow-[0_0_14px_rgba(245,158,11,0.45)]"
                   : isEnd
-                    ? "border-brand bg-brand/20 text-white"
-                    : "border-ink-600 bg-ink-700 text-slate-200"
+                    ? "border-accent-cyan/50"
+                    : "border-white/10 bg-white/5 text-slate-200"
               }`}
+              style={
+                highlight
+                  ? { background: "linear-gradient(145deg,#fcd34d,#f59e0b)" }
+                  : isEnd
+                    ? { background: "linear-gradient(145deg,#8b5cf6,#22d3ee)" }
+                    : undefined
+              }
             >
               {v}
             </div>

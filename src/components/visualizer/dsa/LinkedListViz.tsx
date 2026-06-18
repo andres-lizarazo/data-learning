@@ -58,31 +58,35 @@ export default function LinkedListViz({
 
   return (
     <VizShell title={title ?? "Singly Linked List"} caption={caption}>
-      <div className="flex min-h-[8rem] flex-wrap items-center gap-1 rounded-lg bg-ink-900/60 p-4">
+      <div className="well flex min-h-[8rem] flex-wrap items-center gap-1 p-4">
         {frame.nodes.length === 0 && <span className="text-sm text-slate-500">null</span>}
-        {frame.nodes.map((v, i) => (
-          <div key={`${i}-${v}`} className="flex items-center">
-            <div
-              className={`flex items-center overflow-hidden rounded-lg border font-mono ${
-                frame.active === i ? "border-brand-yellow" : "border-ink-600"
-              }`}
-            >
-              <span
-                className={`px-3 py-2 font-semibold ${
-                  frame.active === i
-                    ? "bg-brand-yellow/20 text-brand-yellow"
-                    : "bg-ink-700 text-slate-100"
+        {frame.nodes.map((v, i) => {
+          const active = frame.active === i;
+          return (
+            <div key={`${i}-${v}`} className="flex items-center">
+              <div
+                className={`flex items-center overflow-hidden rounded-xl border font-mono ${
+                  active ? "border-amber-300/50 shadow-[0_0_12px_rgba(245,158,11,0.4)]" : "border-white/10"
                 }`}
               >
-                {v}
-              </span>
-              <span className="border-l border-ink-600 bg-ink-800 px-2 py-2 text-xs text-slate-400">
-                next
-              </span>
+                <span
+                  className="px-3 py-2 font-semibold text-white"
+                  style={{
+                    background: active
+                      ? "linear-gradient(145deg,#fcd34d,#f59e0b)"
+                      : "rgba(255,255,255,0.05)",
+                  }}
+                >
+                  {v}
+                </span>
+                <span className="border-l border-white/10 bg-white/[0.02] px-2 py-2 text-xs text-slate-400">
+                  next
+                </span>
+              </div>
+              <span className="px-1 text-slate-600">→</span>
             </div>
-            <span className="px-1 text-slate-500">→</span>
-          </div>
-        ))}
+          );
+        })}
         <span className="text-sm text-slate-500">null</span>
       </div>
       <div className="text-center text-sm text-slate-300">{frame.note}</div>

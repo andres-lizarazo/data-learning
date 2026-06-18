@@ -44,7 +44,32 @@ const BOOTSTRAP = `
 import sys, io, base64, json, traceback
 import contextlib
 
+def __pylearn_setup_mpl():
+    # Make matplotlib figures blend into the dark glass UI (light text, transparent bg).
+    try:
+        import matplotlib
+        matplotlib.use("AGG")
+        matplotlib.rcParams.update({
+            "figure.facecolor": "none",
+            "axes.facecolor": "none",
+            "savefig.facecolor": "none",
+            "savefig.transparent": True,
+            "text.color": "#cdd6ea",
+            "axes.labelcolor": "#cdd6ea",
+            "axes.titlecolor": "#ffffff",
+            "axes.edgecolor": "#3a3a5a",
+            "xtick.color": "#9fb0d0",
+            "ytick.color": "#9fb0d0",
+            "grid.color": "#2a2a44",
+            "axes.prop_cycle": matplotlib.cycler(
+                color=["#a78bfa", "#22d3ee", "#a3e635", "#fb7185", "#fbbf24", "#67e8f9"]
+            ),
+        })
+    except Exception:
+        pass
+
 def __pylearn_run(code):
+    __pylearn_setup_mpl()
     out, err = io.StringIO(), io.StringIO()
     ok = True
     with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
@@ -71,7 +96,7 @@ def __pylearn_render_plots():
         for num in plt.get_fignums():
             fig = plt.figure(num)
             buf = io.BytesIO()
-            fig.savefig(buf, format="png", dpi=110, bbox_inches="tight")
+            fig.savefig(buf, format="png", dpi=110, bbox_inches="tight", transparent=True)
             figs.append(base64.b64encode(buf.getvalue()).decode("ascii"))
         plt.close("all")
     except Exception:

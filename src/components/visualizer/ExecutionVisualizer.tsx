@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Pause, Play, RotateCcw, Search, SkipBack, SkipForward } from "lucide-react";
 import CodeEditor from "../editor/CodeEditor";
 import {
   pyodideClient,
@@ -90,10 +91,10 @@ export default function ExecutionVisualizer({ initialCode, title }: Props) {
   const atEnd = idx >= steps.length - 1;
 
   return (
-    <div className="card overflow-hidden">
+    <div className="glass overflow-hidden">
       {title && (
-        <div className="border-b border-ink-600/60 px-4 py-2 text-sm font-semibold text-slate-200">
-          🔎 {title}
+        <div className="flex items-center gap-2 border-b border-white/10 px-4 py-2 text-sm font-semibold text-slate-200">
+          <Search className="h-4 w-4 text-accent-cyan" /> {title}
         </div>
       )}
       <div className="grid gap-4 p-4 md:grid-cols-2">
@@ -111,33 +112,55 @@ export default function ExecutionVisualizer({ initialCode, title }: Props) {
               onClick={run}
               disabled={loading || (!ready && status !== "ready")}
             >
-              {loading ? "Tracing…" : ready ? "▶ Visualize" : "Loading Python…"}
+              {loading ? (
+                "Tracing…"
+              ) : ready ? (
+                <>
+                  <Play className="h-4 w-4" /> Visualize
+                </>
+              ) : (
+                "Loading Python…"
+              )}
             </button>
             {!ready && <span className="text-xs text-slate-400">{status}</span>}
             {steps.length > 0 && (
               <>
                 <button
-                  className="btn-ghost"
+                  className="btn-ghost px-2.5"
                   onClick={() => setIdx((i) => Math.max(0, i - 1))}
                   disabled={idx === 0}
+                  aria-label="Previous step"
                 >
-                  ◀ Prev
+                  <SkipBack className="h-4 w-4" />
                 </button>
                 <button
                   className="btn-ghost"
                   onClick={() => (atEnd ? setIdx(0) : setPlaying((p) => !p))}
                 >
-                  {atEnd ? "↻ Restart" : playing ? "⏸ Pause" : "▶ Play"}
+                  {atEnd ? (
+                    <>
+                      <RotateCcw className="h-4 w-4" /> Restart
+                    </>
+                  ) : playing ? (
+                    <>
+                      <Pause className="h-4 w-4" /> Pause
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-4 w-4" /> Play
+                    </>
+                  )}
                 </button>
                 <button
-                  className="btn-ghost"
+                  className="btn-ghost px-2.5"
                   onClick={() => setIdx((i) => Math.min(steps.length - 1, i + 1))}
                   disabled={atEnd}
+                  aria-label="Next step"
                 >
-                  Next ▶
+                  <SkipForward className="h-4 w-4" />
                 </button>
                 <select
-                  className="rounded-lg border border-ink-600 bg-ink-700 px-2 py-1 text-xs"
+                  className="select"
                   value={speed}
                   onChange={(e) => setSpeed(Number(e.target.value))}
                 >
@@ -177,8 +200,8 @@ export default function ExecutionVisualizer({ initialCode, title }: Props) {
 
         {/* Right: variable table + output */}
         <div className="space-y-3">
-          <div className="rounded-lg border border-ink-600/60 bg-ink-900/60">
-            <div className="border-b border-ink-600/60 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <div className="panel">
+            <div className="border-b border-white/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
               Variables {current && current.depth > 0 && `· depth ${current.depth}`}
             </div>
             <div className="max-h-56 overflow-auto p-2">
@@ -198,9 +221,9 @@ export default function ExecutionVisualizer({ initialCode, title }: Props) {
                     {Object.entries(current.locals).map(([name, info]) => (
                       <tr
                         key={name}
-                        className={`align-top ${changed.has(name) ? "var-changed" : ""}`}
+                        className={`align-top rounded ${changed.has(name) ? "var-changed" : ""}`}
                       >
-                        <td className="w-1/3 py-1 pr-2 font-mono font-semibold text-slate-200">
+                        <td className="w-1/3 py-1 pl-2 pr-2 font-mono font-semibold text-accent-violet">
                           {name}
                         </td>
                         <td
@@ -219,8 +242,8 @@ export default function ExecutionVisualizer({ initialCode, title }: Props) {
             </div>
           </div>
 
-          <div className="rounded-lg border border-ink-600/60 bg-ink-900/80">
-            <div className="border-b border-ink-600/60 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <div className="panel">
+            <div className="border-b border-white/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
               Output so far
             </div>
             <pre className="max-h-32 overflow-auto px-3 py-2 font-mono text-[13px] text-slate-100">

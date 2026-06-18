@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Play, RotateCcw } from "lucide-react";
 import CodeEditor from "../../editor/CodeEditor";
 import OutputConsole from "../../editor/OutputConsole";
 import PlotPanel from "../../plot/PlotPanel";
@@ -30,10 +31,10 @@ export default function RunnableCode({ block }: { block: RunnableBlock }) {
   };
 
   return (
-    <div className="card overflow-hidden">
+    <div className="glass overflow-hidden">
       {block.title && (
-        <div className="border-b border-ink-600/60 px-4 py-2 text-sm font-semibold text-slate-200">
-          ▶ {block.title}
+        <div className="flex items-center gap-2 border-b border-white/10 px-4 py-2 text-sm font-semibold text-slate-200">
+          <Play className="h-3.5 w-3.5 text-accent-cyan" /> {block.title}
         </div>
       )}
       <div className="space-y-3 p-4">
@@ -41,10 +42,12 @@ export default function RunnableCode({ block }: { block: RunnableBlock }) {
           value={code}
           onChange={setCode}
           height={Math.min(360, 60 + code.split("\n").length * 20)}
+          filename={block.title ? undefined : "example.py"}
         />
         <div className="flex items-center gap-2">
           <button className="btn-primary" onClick={run} disabled={running || !ready}>
-            {running ? "Running…" : ready ? "Run ▶" : "Loading Python…"}
+            <Play className="h-4 w-4" />
+            {running ? "Running…" : ready ? "Run" : "Loading Python…"}
           </button>
           <button
             className="btn-ghost"
@@ -53,7 +56,7 @@ export default function RunnableCode({ block }: { block: RunnableBlock }) {
               setResult(null);
             }}
           >
-            ↺ Reset
+            <RotateCcw className="h-4 w-4" /> Reset
           </button>
           {(!ready || (running && status !== "ready")) && (
             <span className="text-xs text-slate-400">{status}</span>

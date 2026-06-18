@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Play, RotateCcw, Sparkles } from "lucide-react";
 import CodeEditor from "../components/editor/CodeEditor";
 import OutputConsole from "../components/editor/OutputConsole";
 import PlotPanel from "../components/plot/PlotPanel";
@@ -33,17 +34,20 @@ export default function Playground() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl px-5 py-8">
-      <h1 className="text-2xl font-bold text-white">🎮 Playground</h1>
-      <p className="mb-4 text-slate-400">
+    <div className="mx-auto max-w-4xl px-5 py-10">
+      <h1 className="flex items-center gap-2 font-display text-2xl font-bold text-white">
+        <Sparkles className="h-6 w-6 text-accent-cyan" /> Playground
+      </h1>
+      <p className="mb-5 text-slate-400">
         A scratchpad running real Python in your browser. Nothing is sent to a server.
       </p>
 
       <div className="space-y-3">
-        <CodeEditor value={code} onChange={setCode} height={340} />
-        <div className="flex flex-wrap items-center gap-3">
+        <CodeEditor value={code} onChange={setCode} height={340} filename="scratch.py" />
+        <div className="flex flex-wrap items-center gap-2">
           <button className="btn-primary" onClick={run} disabled={running || !ready}>
-            {running ? "Running…" : ready ? "Run ▶" : "Loading Python…"}
+            <Play className="h-4 w-4" />
+            {running ? "Running…" : ready ? "Run" : "Loading Python…"}
           </button>
           <button
             className="btn-ghost"
@@ -52,7 +56,7 @@ export default function Playground() {
               setResult(null);
             }}
           >
-            ↺ Reset
+            <RotateCcw className="h-4 w-4" /> Reset
           </button>
           {(!ready || (running && status !== "ready")) && (
             <span className="text-xs text-slate-400">{status}</span>

@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
+import { Check, HelpCircle, X } from "lucide-react";
 import type { QuizBlock } from "../../../types/lesson";
 
 export default function Quiz({ block }: { block: QuizBlock }) {
@@ -7,37 +9,47 @@ export default function Quiz({ block }: { block: QuizBlock }) {
   const correct = answered && !!block.options[picked!].correct;
 
   return (
-    <div className="card p-4">
-      <div className="mb-3 text-sm font-semibold text-slate-100">❓ {block.question}</div>
+    <div className="glass p-4">
+      <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-100">
+        <HelpCircle className="h-4 w-4 text-accent-cyan" /> {block.question}
+      </div>
       <div className="space-y-2">
         {block.options.map((opt, i) => {
           const show = answered;
           const isCorrect = !!opt.correct;
           const isPicked = picked === i;
-          let cls = "border-ink-600 bg-ink-700 hover:bg-ink-600";
-          if (show && isCorrect) cls = "border-brand-green/50 bg-brand-green/15";
+          let cls = "border-white/10 bg-white/5 hover:bg-white/10";
+          if (show && isCorrect) cls = "border-accent-lime/40 bg-accent-lime/10";
           else if (show && isPicked && !isCorrect)
-            cls = "border-brand-red/50 bg-brand-red/15";
+            cls = "border-brand-red/40 bg-brand-red/10";
           return (
             <button
               key={i}
               disabled={answered}
               onClick={() => setPicked(i)}
-              className={`flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm text-slate-200 transition-colors ${cls}`}
+              className={`flex w-full items-center gap-2.5 rounded-xl border px-3 py-2 text-left text-sm text-slate-200 transition-colors ${cls}`}
             >
-              <span className="font-mono text-xs text-slate-500">
+              <span className="grid h-5 w-5 shrink-0 place-items-center rounded-md border border-white/10 font-mono text-xs text-slate-400">
                 {String.fromCharCode(65 + i)}
               </span>
               <span>{opt.text}</span>
-              {show && isCorrect && <span className="ml-auto">✓</span>}
-              {show && isPicked && !isCorrect && <span className="ml-auto">✗</span>}
+              {show && isCorrect && (
+                <Check className="ml-auto h-4 w-4 text-accent-lime" />
+              )}
+              {show && isPicked && !isCorrect && (
+                <X className="ml-auto h-4 w-4 text-brand-red" />
+              )}
             </button>
           );
         })}
       </div>
       {answered && (
-        <div className="mt-3 text-sm">
-          <span className={correct ? "text-brand-green" : "text-brand-red"}>
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-3 text-sm"
+        >
+          <span className={correct ? "text-accent-lime" : "text-brand-red"}>
             {correct ? "Correct! 🎉" : "Not quite."}
           </span>
           {block.explanation && (
@@ -45,13 +57,13 @@ export default function Quiz({ block }: { block: QuizBlock }) {
           )}
           {!correct && (
             <button
-              className="ml-3 text-xs text-brand underline"
+              className="ml-3 text-xs text-accent-cyan underline"
               onClick={() => setPicked(null)}
             >
               try again
             </button>
           )}
-        </div>
+        </motion.div>
       )}
     </div>
   );

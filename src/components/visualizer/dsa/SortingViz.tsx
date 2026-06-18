@@ -162,23 +162,25 @@ export default function SortingViz({
 
   return (
     <VizShell title={title ?? `${cap(algorithm)} Sort`} caption={caption}>
-      <div className="flex h-56 items-end justify-center gap-1.5 rounded-lg bg-ink-900/60 p-3">
+      <div className="well flex h-56 items-end justify-center gap-1.5 p-3">
         {frame.arr.map((v, i) => {
           const isActive = frame.active.includes(i);
           const isSorted = frame.sorted.includes(i);
-          const color = isActive
-            ? "bg-brand-yellow"
+          // Gradient fill per state: active = amber, sorted = cyan→lime, default = violet.
+          const gradient = isActive
+            ? "linear-gradient(180deg,#fcd34d,#f59e0b)"
             : isSorted
-              ? "bg-brand-green"
-              : "bg-brand-py";
+              ? "linear-gradient(180deg,#67e8f9,#a3e635)"
+              : "linear-gradient(180deg,#a78bfa,#6366f1)";
+          const glow = isActive ? "0 0 14px rgba(245,158,11,0.5)" : "none";
           // Bar height in px, leaving room for the value label below each bar.
           const barPx = Math.max(6, Math.round((v / max) * BAR_AREA_PX));
           return (
             <div key={i} className="flex flex-1 flex-col items-center justify-end">
               <span className="mb-1 text-[10px] font-semibold text-slate-300">{v}</span>
               <div
-                className={`w-full rounded-t transition-all duration-300 ease-out ${color}`}
-                style={{ height: barPx }}
+                className="w-full rounded-t transition-all duration-300 ease-out"
+                style={{ height: barPx, background: gradient, boxShadow: glow }}
               />
               <span className="mt-1 text-[10px] text-slate-500">{i}</span>
             </div>

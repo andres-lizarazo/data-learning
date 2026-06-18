@@ -99,8 +99,25 @@ export default function TreeViz({
 
   return (
     <VizShell title={title ?? "Binary Search Tree"} caption={caption}>
-      <div className="overflow-auto rounded-lg bg-ink-900/60 p-3">
+      <div className="well overflow-auto p-3">
         <svg width={W} height={H} className="mx-auto">
+          <defs>
+            <linearGradient id="tv-visited" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stopColor="#67e8f9" />
+              <stop offset="1" stopColor="#a3e635" />
+            </linearGradient>
+            <linearGradient id="tv-current" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stopColor="#a78bfa" />
+              <stop offset="1" stopColor="#22d3ee" />
+            </linearGradient>
+            <filter id="tv-glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="3" result="b" />
+              <feMerge>
+                <feMergeNode in="b" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
           {edges.map((e, i) => (
             <line
               key={i}
@@ -108,21 +125,26 @@ export default function TreeViz({
               y1={py(e.from)}
               x2={px(e.to)}
               y2={py(e.to)}
-              stroke="#33416b"
+              stroke="rgba(255,255,255,0.14)"
               strokeWidth={2}
             />
           ))}
           {nodes.map((n) => {
             const on = frame.visited.includes(n.value);
             const isLast = frame.visited[frame.visited.length - 1] === n.value;
+            const fill = isLast
+              ? "url(#tv-current)"
+              : on
+                ? "url(#tv-visited)"
+                : "rgba(255,255,255,0.05)";
             return (
-              <g key={n.value}>
+              <g key={n.value} filter={isLast ? "url(#tv-glow)" : undefined}>
                 <circle
                   cx={px(n)}
                   cy={py(n)}
                   r={18}
-                  fill={isLast ? "#ffd43b" : on ? "#22c55e" : "#1a2440"}
-                  stroke={isLast ? "#ffd43b" : "#4f8cff"}
+                  fill={fill}
+                  stroke={on ? "transparent" : "rgba(139,92,246,0.5)"}
                   strokeWidth={2}
                 />
                 <text
@@ -131,7 +153,7 @@ export default function TreeViz({
                   textAnchor="middle"
                   fontSize={13}
                   fontFamily="monospace"
-                  fill={on ? "#0b1020" : "#e6ebf5"}
+                  fill={on ? "#070710" : "#e6ebf5"}
                   fontWeight="bold"
                 >
                   {n.value}
