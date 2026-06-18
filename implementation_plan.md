@@ -163,9 +163,11 @@ Prioritized, phase by phase. Each phase is independently shippable.
 - [x] New visualizers: **hash table** (chaining), **heap / priority queue** (tree + array,
       sift-up), **sliding window**, **backtracking** (subsets decision tree) — each wired
       into a lesson
-- [ ] Drive DSA visualizers from the learner's **own code** (instrument via the tracer) —
-      still pending
-- [ ] Weighted graphs + Dijkstra visualizer; object/heap reference diagram — still pending
+  > These remaining items are **fully local / client-side** (no infra needed) — just larger
+  > pieces of work:
+- [ ] Drive DSA visualizers from the learner's **own code** (instrument via the tracer)
+- [ ] Object/heap reference diagram in the Execution Visualizer (pythontutor-style)
+- [x] Weighted graphs + **Dijkstra** visualizer + lesson
 
 ### Phase D — More content (DONE)
 - [x] DSA: **Sliding Window**, **Heaps & Priority Queues**, **Backtracking**, **Tries**,

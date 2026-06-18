@@ -10,6 +10,7 @@ import HashTableViz from "./HashTableViz";
 import HeapViz from "./HeapViz";
 import SlidingWindowViz from "./SlidingWindowViz";
 import BacktrackViz from "./BacktrackViz";
+import DijkstraViz from "./DijkstraViz";
 
 // Maps a DsaVizBlock from lesson content to the right animated component.
 // `data` is loosely typed in the content model, so we cast per-visualizer.
@@ -54,6 +55,8 @@ export default function DsaViz({ block }: { block: DsaVizBlock }) {
       );
     case "backtracking":
       return <BacktrackViz {...common} data={data?.values} />;
+    case "dijkstra":
+      return <DijkstraViz {...common} adjacency={data?.adjacency} start={data?.start} />;
     default:
       return null;
   }

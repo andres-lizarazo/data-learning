@@ -663,6 +663,95 @@ A **graph** is nodes + edges, often stored as an adjacency list \`{node: [neighb
       ],
     },
     {
+      id: "dijkstra",
+      title: "Weighted Graphs & Dijkstra",
+      summary: "Shortest paths when edges have costs.",
+      minutes: 14,
+      blocks: [
+        {
+          kind: "prose",
+          markdown: `# Dijkstra's algorithm
+
+When edges have **weights** (costs), BFS no longer finds the shortest path. **Dijkstra**
+greedily settles the closest unvisited node, then **relaxes** its edges (improves a
+neighbor's tentative distance if going through this node is cheaper). A min-heap keeps
+the next-closest node handy → O((V+E) log V).
+
+\`\`\`python
+import heapq
+dist = {n: float("inf") for n in graph}
+dist[start] = 0
+pq = [(0, start)]
+while pq:
+    d, u = heapq.heappop(pq)
+    for v, w in graph[u]:
+        if d + w < dist[v]:
+            dist[v] = d + w
+            heapq.heappush(pq, (dist[v], v))
+\`\`\``,
+        },
+        {
+          kind: "dsa-viz",
+          viz: "dijkstra",
+          title: "Shortest paths from A",
+          data: {
+            start: "A",
+            adjacency: {
+              A: [["B", 4], ["C", 1]],
+              B: [["A", 4], ["D", 1]],
+              C: [["A", 1], ["B", 2], ["D", 5]],
+              D: [["B", 1], ["C", 5]],
+            },
+          },
+          caption: "Yellow = node being settled; the label above each node is its best distance.",
+        },
+        {
+          kind: "challenge",
+          title: "Shortest distances",
+          prompt:
+            "`graph` maps each node to a list of `[neighbor, weight]` edges. Return a dict of the **shortest distance** from `start` to every node (use `float('inf')` for unreachable). Use Dijkstra with `heapq`.",
+          starterCode: `import heapq
+
+def shortest(graph, start):
+    pass`,
+          tests: [
+            {
+              name: "basic",
+              assertion:
+                "assert shortest({'A':[['B',1],['C',4]],'B':[['C',2]],'C':[]}, 'A') == {'A':0,'B':1,'C':3}",
+            },
+            {
+              name: "unreachable",
+              assertion:
+                "assert shortest({'A':[],'B':[['A',1]]}, 'A') == {'A':0,'B':float('inf')}",
+              hidden: true,
+            },
+          ],
+          hints: [
+            "Init every distance to infinity except `dist[start] = 0`.",
+            "Pop the closest node from a heap; skip it if you've already found something better.",
+            "Relax each edge: if `d + w < dist[v]`, update and push `(dist[v], v)`.",
+          ],
+          solution: `import heapq
+
+def shortest(graph, start):
+    dist = {n: float("inf") for n in graph}
+    dist[start] = 0
+    pq = [(0, start)]
+    while pq:
+        d, u = heapq.heappop(pq)
+        if d > dist[u]:
+            continue
+        for v, w in graph[u]:
+            if d + w < dist[v]:
+                dist[v] = d + w
+                heapq.heappush(pq, (dist[v], v))
+    return dist`,
+          xp: 100,
+        },
+      ],
+    },
+    {
       id: "tries",
       title: "Tries (Prefix Trees)",
       summary: "A tree of characters for fast prefix lookups.",

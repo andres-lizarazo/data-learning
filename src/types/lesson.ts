@@ -52,7 +52,8 @@ export interface DsaVizBlock {
     | "hash-table"
     | "heap"
     | "sliding-window"
-    | "backtracking";
+    | "backtracking"
+    | "dijkstra";
   /** Initial data for the visualizer (interpretation depends on `viz`). */
   data?: unknown;
   /** Sorting algorithm to animate, when viz === "sorting". */
