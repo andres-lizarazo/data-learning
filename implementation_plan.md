@@ -124,16 +124,20 @@ execution visualization and animated DSA components. Local-first; deployment lat
 
 Prioritized, phase by phase. Each phase is independently shippable.
 
-### Phase A — Polish & hardening (quick wins, do first)
-- [ ] Performance: route-level code-splitting (`React.lazy`) + lazy-load Framer Motion and
-      Monaco so the initial bundle drops well under the 625 KB it is now
-- [ ] Persist editor edits per lesson (localStorage) so progress on a snippet isn't lost on
-      navigation; "continue where you left off" entry on Home
-- [ ] Tests: Vitest unit tests for `lib/level.ts`, `lib/badges.ts`, and the challenge harness
-      builder; a Playwright smoke test (boot Pyodide → run a snippet → solve a challenge)
-- [ ] PWA + offline: cache the Pyodide runtime/wheels via a service worker for instant,
-      offline-capable reloads
-- [ ] Accessibility audit (focus order, ARIA on the visualizers, contrast) + skip-to-content
+### Phase A — Polish & hardening (DONE except where noted)
+- [x] Performance: route-level code-splitting (`React.lazy` + `Suspense`) — initial JS bundle
+      dropped 625 KB → **395 KB** (130 KB gzip); pages load on demand
+- [x] Persist editor edits per lesson via `lib/useCodeDraft.ts` (localStorage), wired into
+      runnable/visualized/challenge blocks + Playground; "Continue where you left off" on Home
+      (`progressStore.lastLesson`)
+- [x] Tests: Vitest unit tests for `lib/level.ts`, `lib/badges.ts`, and `lib/harness.ts`
+      (extracted from ChallengeRunner) — 12 tests green; `npm test`
+- [ ] Playwright e2e smoke (boot Pyodide → run a snippet → solve a challenge) — still pending
+      (needs browser install)
+- [x] PWA + offline: `vite-plugin-pwa` (autoUpdate) precaches the app and runtime-caches the
+      Pyodide CDN + Google Fonts (CacheFirst) → offline-capable reloads
+- [x] Accessibility: skip-to-content link + focus moved to `<main>` on route change
+- [ ] Deeper a11y audit (ARIA on visualizers, full contrast pass) — still pending
 
 ### Phase B — Deeper learning experience
 - [ ] Hints system per challenge (progressive reveal) + "explain my error" helper

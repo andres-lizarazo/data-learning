@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, Award, Sparkles, Play } from "lucide-react";
-import { curriculum, totalLessons } from "../content/curriculum";
+import { curriculum, getLesson, totalLessons } from "../content/curriculum";
 import { useProgressStore } from "../store/progressStore";
 import { levelProgress } from "../lib/level";
 import { moduleGradient } from "../lib/moduleTheme";
@@ -48,9 +48,15 @@ function HeroCodeCard() {
 export default function Home() {
   const completed = useProgressStore((s) => s.completedLessons);
   const xp = useProgressStore((s) => s.xp);
+  const lastModuleId = useProgressStore((s) => s.lastModuleId);
+  const lastLessonId = useProgressStore((s) => s.lastLessonId);
   const doneCount = Object.keys(completed).length;
   const total = totalLessons();
   const { level } = levelProgress(xp);
+
+  // "Continue where you left off" target, if it still exists in the curriculum.
+  const cont =
+    lastModuleId && lastLessonId ? getLesson(lastModuleId, lastLessonId) : undefined;
 
   return (
     <div className="mx-auto max-w-6xl px-5 py-10">
@@ -95,8 +101,23 @@ export default function Home() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="mt-6 flex flex-wrap items-center gap-3"
           >
-            <Link to="/learn/basics/variables-and-types" className="btn-primary text-base">
-              Start learning <ArrowRight className="h-4 w-4" />
+            {cont ? (
+              <Link
+                to={`/learn/${cont.module.id}/${cont.lesson.id}`}
+                className="btn-primary text-base"
+              >
+                Continue: {cont.lesson.title} <ArrowRight className="h-4 w-4" />
+              </Link>
+            ) : (
+              <Link to="/learn/basics/variables-and-types" className="btn-primary text-base">
+                Start learning <ArrowRight className="h-4 w-4" />
+              </Link>
+            )}
+            <Link
+              to="/learn/basics/variables-and-types"
+              className={cont ? "btn-ghost text-base" : "hidden"}
+            >
+              Start over
             </Link>
             <Link to="/playground" className="btn-ghost text-base">
               <Play className="h-4 w-4 text-accent-cyan" /> Playground

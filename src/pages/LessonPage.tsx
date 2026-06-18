@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Check, ChevronRight } from "lucide-react";
 import { getLesson, getModule, lessonSequence } from "../content/curriculum";
@@ -16,6 +16,12 @@ export default function LessonPage() {
     lessonId ? s.isLessonComplete(lessonId) : false,
   );
   const completedMap = useProgressStore((s) => s.completedLessons);
+  const setLastLesson = useProgressStore((s) => s.setLastLesson);
+
+  // Remember this as the "continue where you left off" target.
+  useEffect(() => {
+    if (moduleId && lessonId) setLastLesson(moduleId, lessonId);
+  }, [moduleId, lessonId, setLastLesson]);
 
   const nav = useMemo(() => {
     const seq = lessonSequence();

@@ -20,10 +20,15 @@ export default function LessonRenderer({ lessonId, blocks }: Props) {
           case "prose":
             return <Prose key={i} block={block} />;
           case "runnable":
-            return <RunnableCode key={i} block={block} />;
+            return <RunnableCode key={i} block={block} draftKey={`${lessonId}::${i}`} />;
           case "visualized":
             return (
-              <ExecutionVisualizer key={i} initialCode={block.code} title={block.title} />
+              <ExecutionVisualizer
+                key={i}
+                initialCode={block.code}
+                title={block.title}
+                draftKey={`${lessonId}::${i}`}
+              />
             );
           case "dsa-viz":
             return <DsaViz key={i} block={block} />;

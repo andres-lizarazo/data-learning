@@ -10,12 +10,15 @@ interface ProgressState {
   xp: number;
   streakDays: number;
   lastActiveDay: string | null; // YYYY-MM-DD
+  lastModuleId: string | null;
+  lastLessonId: string | null;
 
   isLessonComplete: (id: string) => boolean;
   isChallengeSolved: (id: string) => boolean;
   completeLesson: (id: string, xp?: number) => void;
   solveChallenge: (id: string, xp?: number) => void;
   addXp: (amount: number) => void;
+  setLastLesson: (moduleId: string, lessonId: string) => void;
   reset: () => void;
 }
 
@@ -45,6 +48,8 @@ export const useProgressStore = create<ProgressState>()(
       xp: 0,
       streakDays: 0,
       lastActiveDay: null,
+      lastModuleId: null,
+      lastLessonId: null,
 
       isLessonComplete: (id) => !!get().completedLessons[id],
       isChallengeSolved: (id) => !!get().solvedChallenges[id],
@@ -71,6 +76,9 @@ export const useProgressStore = create<ProgressState>()(
 
       addXp: (amount) => set((s) => ({ xp: s.xp + amount, ...touchStreak(s) })),
 
+      setLastLesson: (moduleId, lessonId) =>
+        set({ lastModuleId: moduleId, lastLessonId: lessonId }),
+
       reset: () =>
         set({
           completedLessons: {},
@@ -78,6 +86,8 @@ export const useProgressStore = create<ProgressState>()(
           xp: 0,
           streakDays: 0,
           lastActiveDay: null,
+          lastModuleId: null,
+          lastLessonId: null,
         }),
     }),
     { name: "pylearn-progress" },

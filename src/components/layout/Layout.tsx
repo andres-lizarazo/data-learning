@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
+import { Loader2 } from "lucide-react";
 import Aurora from "../ui/Aurora";
 import LevelUpToast from "../ui/LevelUpToast";
 import Sidebar from "./Sidebar";
@@ -12,6 +13,12 @@ import { bigCelebrate } from "../../lib/confetti";
 export default function Layout() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
+  const mainRef = useRef<HTMLElement>(null);
+
+  // Move focus to the main region on navigation (screen-reader / keyboard friendly).
+  useEffect(() => {
+    mainRef.current?.focus();
+  }, [location.pathname]);
 
   // Watch for level-ups (XP crossing a threshold) and celebrate once.
   const xp = useProgressStore((s) => s.xp);
@@ -31,6 +38,12 @@ export default function Layout() {
 
   return (
     <div className="relative flex h-full flex-col">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-accent-violet focus:px-3 focus:py-2 focus:text-sm focus:text-white"
+      >
+        Skip to content
+      </a>
       <Aurora />
       <TopBar onToggleSidebar={() => setOpen((o) => !o)} />
 
@@ -68,7 +81,12 @@ export default function Layout() {
           )}
         </AnimatePresence>
 
-        <main className="min-w-0 flex-1 overflow-y-auto">
+        <main
+          id="main"
+          ref={mainRef}
+          tabIndex={-1}
+          className="min-w-0 flex-1 overflow-y-auto outline-none"
+        >
           {/* Subtle page transition keyed on the route. */}
           <AnimatePresence mode="wait">
             <motion.div
@@ -78,7 +96,15 @@ export default function Layout() {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.25, ease: "easeOut" }}
             >
-              <Outlet />
+              <Suspense
+                fallback={
+                  <div className="grid place-items-center py-32 text-slate-400">
+                    <Loader2 className="h-6 w-6 animate-spin text-accent-violet" />
+                  </div>
+                }
+              >
+                <Outlet />
+              </Suspense>
             </motion.div>
           </AnimatePresence>
         </main>

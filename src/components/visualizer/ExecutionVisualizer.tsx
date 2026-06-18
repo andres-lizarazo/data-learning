@@ -7,10 +7,12 @@ import {
   type TraceStep,
 } from "../../pyodide/pyodideClient";
 import { usePyodideStore } from "../../store/pyodideStore";
+import { useCodeDraft } from "../../lib/useCodeDraft";
 
 interface Props {
   initialCode: string;
   title?: string;
+  draftKey?: string;
 }
 
 const KIND_COLORS: Record<string, string> = {
@@ -26,9 +28,9 @@ const KIND_COLORS: Record<string, string> = {
   object: "text-slate-200",
 };
 
-export default function ExecutionVisualizer({ initialCode, title }: Props) {
+export default function ExecutionVisualizer({ initialCode, title, draftKey }: Props) {
   const { ready, boot, status } = usePyodideStore();
-  const [code, setCode] = useState(initialCode);
+  const [code, setCode] = useCodeDraft(draftKey, initialCode);
   const [trace, setTrace] = useState<TraceResult | null>(null);
   const [idx, setIdx] = useState(0);
   const [playing, setPlaying] = useState(false);

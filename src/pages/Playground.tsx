@@ -5,6 +5,7 @@ import OutputConsole from "../components/editor/OutputConsole";
 import PlotPanel from "../components/plot/PlotPanel";
 import { pyodideClient, type RunResult } from "../pyodide/pyodideClient";
 import { usePyodideStore } from "../store/pyodideStore";
+import { useCodeDraft } from "../lib/useCodeDraft";
 
 const DEFAULT = `# Free playground — write anything and Run.
 # numpy / pandas / matplotlib / seaborn are available (installed on first use).
@@ -15,7 +16,7 @@ for i in range(1, 6):
 
 export default function Playground() {
   const { ready, boot, status } = usePyodideStore();
-  const [code, setCode] = useState(DEFAULT);
+  const [code, setCode, resetCode] = useCodeDraft("playground", DEFAULT);
   const [result, setResult] = useState<RunResult | null>(null);
   const [running, setRunning] = useState(false);
 
@@ -52,7 +53,7 @@ export default function Playground() {
           <button
             className="btn-ghost"
             onClick={() => {
-              setCode(DEFAULT);
+              resetCode();
               setResult(null);
             }}
           >

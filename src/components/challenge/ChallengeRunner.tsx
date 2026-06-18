@@ -7,6 +7,8 @@ import { pyodideClient } from "../../pyodide/pyodideClient";
 import { usePyodideStore } from "../../store/pyodideStore";
 import { useProgressStore } from "../../store/progressStore";
 import { celebrate } from "../../lib/confetti";
+import { useCodeDraft } from "../../lib/useCodeDraft";
+import { RESULT_MARKER, buildHarness } from "../../lib/harness";
 import type { ChallengeBlock } from "../../types/lesson";
 
 interface Props {
@@ -22,41 +24,12 @@ interface TestResult {
   hidden?: boolean;
 }
 
-const RESULT_MARKER = "__PL_RESULTS__";
-
-function indent(src: string, spaces = 4): string {
-  const pad = " ".repeat(spaces);
-  return src
-    .split("\n")
-    .map((l) => (l.trim() ? pad + l : l))
-    .join("\n");
-}
-
-/** Build a Python harness that runs each test in isolation and prints a JSON line. */
-function buildHarness(userCode: string, tests: ChallengeBlock["tests"]): string {
-  const parts: string[] = [userCode, "", "import json as __pl_json", "__pl_results = []"];
-  tests.forEach((t, i) => {
-    parts.push(`def __pl_test_${i}():`);
-    parts.push(indent(t.assertion || "pass"));
-    parts.push("try:");
-    parts.push(`    __pl_test_${i}()`);
-    parts.push(`    __pl_results.append({"ok": True})`);
-    parts.push("except BaseException as __e:");
-    parts.push("    import traceback as __tb");
-    parts.push(
-      '    __pl_results.append({"ok": False, "error": "".join(__tb.format_exception_only(type(__e), __e)).strip()})',
-    );
-  });
-  parts.push(`print("${RESULT_MARKER}" + __pl_json.dumps(__pl_results))`);
-  return parts.join("\n");
-}
-
 export default function ChallengeRunner({ block, id }: Props) {
   const { ready, boot, status } = usePyodideStore();
   const solveChallenge = useProgressStore((s) => s.solveChallenge);
   const alreadySolved = useProgressStore((s) => s.isChallengeSolved(id));
 
-  const [code, setCode] = useState(block.starterCode);
+  const [code, setCode, resetCode] = useCodeDraft(id, block.starterCode);
   const [results, setResults] = useState<TestResult[] | null>(null);
   const [running, setRunning] = useState(false);
   const [runtimeMs, setRuntimeMs] = useState<number | null>(null);
@@ -140,7 +113,7 @@ export default function ChallengeRunner({ block, id }: Props) {
           <button
             className="btn-ghost"
             onClick={() => {
-              setCode(block.starterCode);
+              resetCode();
               setResults(null);
               setStderr("");
             }}

@@ -5,11 +5,18 @@ import OutputConsole from "../../editor/OutputConsole";
 import PlotPanel from "../../plot/PlotPanel";
 import { pyodideClient, type RunResult } from "../../../pyodide/pyodideClient";
 import { usePyodideStore } from "../../../store/pyodideStore";
+import { useCodeDraft } from "../../../lib/useCodeDraft";
 import type { RunnableBlock } from "../../../types/lesson";
 
-export default function RunnableCode({ block }: { block: RunnableBlock }) {
+export default function RunnableCode({
+  block,
+  draftKey,
+}: {
+  block: RunnableBlock;
+  draftKey?: string;
+}) {
   const { ready, boot, status } = usePyodideStore();
-  const [code, setCode] = useState(block.code);
+  const [code, setCode, resetCode] = useCodeDraft(draftKey, block.code);
   const [result, setResult] = useState<RunResult | null>(null);
   const [running, setRunning] = useState(false);
 
@@ -52,7 +59,7 @@ export default function RunnableCode({ block }: { block: RunnableBlock }) {
           <button
             className="btn-ghost"
             onClick={() => {
-              setCode(block.code);
+              resetCode();
               setResult(null);
             }}
           >
