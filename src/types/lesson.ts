@@ -130,6 +130,11 @@ export interface SqlRunnableBlock {
    * DELETE/DDL) so changes don't leak into later blocks. Default false.
    */
   resetBefore?: boolean;
+  /**
+   * This snippet is *meant* to raise an error (e.g. demonstrating a constraint
+   * violation). The UI frames the error as expected, and tests treat it as a pass.
+   */
+  expectError?: boolean;
 }
 
 /** SQL coding challenge: the learner writes a query, checked against a reference solution. */

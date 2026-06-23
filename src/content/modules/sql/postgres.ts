@@ -623,15 +623,14 @@ RETURNING id, name, price;`,
           kind: "sql-challenge",
           title: "Discount everything 10%",
           prompt:
-            "Give every product a **10% discount** and return `name` and the new `price` (rounded to 2 decimals), ordered by `name`. Use `UPDATE … RETURNING`.",
+            "Give every product a **10% discount** and return `name` and the new `price` (rounded to 2 decimals). Use `UPDATE … RETURNING`.\n\n*(Note: `RETURNING` can't take an `ORDER BY`, so just return the rows — order doesn't matter here.)*",
           starterSql:
             "UPDATE products\nSET price = -- 90% of price, rounded\nRETURNING name, price;",
           solution:
-            "UPDATE products SET price = ROUND(price * 0.9, 2) RETURNING name, price ORDER BY name;",
-          ordered: true,
+            "UPDATE products SET price = ROUND(price * 0.9, 2) RETURNING name, price;",
           hints: [
             "`SET price = ROUND(price * 0.9, 2)`.",
-            "`RETURNING name, price ORDER BY name` to shape the output.",
+            "`RETURNING name, price` hands back the updated rows.",
           ],
           xp: 60,
         },
@@ -722,6 +721,7 @@ SELECT code, pct_off FROM coupons ORDER BY pct_off;`,
           kind: "sql-runnable",
           title: "A CHECK constraint rejecting bad data",
           resetBefore: true,
+          expectError: true,
           sql: `ALTER TABLE products ADD CONSTRAINT chk_price_positive CHECK (price >= 0);
 
 -- This violates the constraint and raises an error (that's the point!):

@@ -126,6 +126,12 @@ exercises. Local-first; deployment later.
       `maximumFileSizeToCacheInBytes` bumped so the Postgres WASM/data precache for offline
 - [x] Tests: `lib/sqlCompare.test.ts` (8 unit tests) + Playwright e2e that boots PGlite and
       runs SQL in the browser
+- [x] **Full lesson verification** (`content/modules/sql/postgres.lessons.test.ts`, 97 checks):
+      runs **every** `sql-runnable` and every `sql-challenge` `solution` across all 28 lessons through
+      the production `sqlClient` + PGlite, asserting each succeeds (or fails, for an `expectError`
+      teaching demo) and that the grader accepts each reference solution. Added `expectError` flag to
+      `SqlRunnableBlock` (UI shows an "expected to error" pill). **Caught & fixed a real bug**: a
+      challenge solution used `UPDATE … RETURNING … ORDER BY` (invalid in Postgres)
 
 > The original `sql-learning` repo is left untouched (its own submodule). Its `concepts.md`
 > remains the source-of-truth reference that this interactive module was ported from.
