@@ -226,7 +226,7 @@ Prioritized, phase by phase. Each phase is independently shippable.
 ### Phase E — Platform & accounts
 - [x] Deploy the static app to **GitHub Pages** via Actions (`.github/workflows/deploy.yml`,
       `DEPLOY_BASE` subpath + router basename + `404.html` fallback). Local dev unchanged at
-      `localhost:5173/`. Live: https://andres-lizarazo.github.io/python-learning/
+      `localhost:5173/`. Live: https://andres-lizarazo.github.io/data-learning/
 
 > **Decision (2026-06-18): keep it personal-study / local-only for now.** Progress (XP, streak,
 > completion, bookmarks, editor drafts) lives in each visitor's browser `localStorage` — it is

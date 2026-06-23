@@ -5,14 +5,12 @@ Project-specific context and rules. Inherits the root `projects/CLAUDE.md`.
 ## Repo structure note
 
 This project is a **git submodule** of `andres-lizarazo/projects`, living in the
-`data-learning/` folder. Its remote is still
-`https://github.com/andres-lizarazo/python-learning.git` until the GitHub repo is renamed
-to `data-learning` (GitHub redirects the old URL, so pushes keep working in the meantime;
-after renaming, update the remote URL, `DEPLOY_BASE` in `.github/workflows/deploy.yml`, and
-the live-URL references). Commit/push from inside this folder; then update the pointer in
-the parent. The former standalone `sql-learning` repo has been **merged in** — its
-reference docs now live in `sql-reference/` and its content was ported into the interactive
-PostgreSQL module.
+`data-learning/` folder, with its own remote
+`https://github.com/andres-lizarazo/data-learning.git`. Commit/push from inside this
+folder; then update the pointer in the parent. Deployed to GitHub Pages at
+`https://andres-lizarazo.github.io/data-learning/` (`DEPLOY_BASE=/data-learning/`). The
+former standalone `sql-learning` repo has been **merged in** — its reference docs now live
+in `sql-reference/` and its content was ported into the interactive PostgreSQL module.
 
 ## What this is
 

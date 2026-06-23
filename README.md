@@ -131,8 +131,8 @@ for the full shape, `modules/basics.ts` for Python examples, and
 The app is a static SPA, deployed to **GitHub Pages** via GitHub Actions
 (`.github/workflows/deploy.yml`) on every push to `main`:
 
-- Live URL: **https://andres-lizarazo.github.io/python-learning/**
-- The production build sets `DEPLOY_BASE=/python-learning/` (Vite `base`) so assets/routes
+- Live URL: **https://andres-lizarazo.github.io/data-learning/**
+- The production build sets `DEPLOY_BASE=/data-learning/` (Vite `base`) so assets/routes
   resolve under the project subpath; the router uses `import.meta.env.BASE_URL` as its
   `basename`. A `404.html` (copy of `index.html`) handles deep-link refreshes.
 - **Local dev is unaffected** — `npm run dev` still serves at `http://localhost:5173/` (base `/`).

@@ -31,7 +31,7 @@ jobs:
         # DEPLOY_BASE = the Pages project subpath so assets/routes resolve in production.
         run: npm run build
         env:
-          DEPLOY_BASE: /python-learning/
+          DEPLOY_BASE: /data-learning/
       - name: SPA fallback (deep links)
         run: cp dist/index.html dist/404.html
       - uses: actions/configure-pages@v5

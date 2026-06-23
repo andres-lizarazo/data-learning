@@ -8,7 +8,7 @@ import { fileURLToPath, URL } from "node:url";
 // bundled. Web Workers are authored with `new Worker(new URL(...), { type: "module" })`.
 export default defineConfig({
   // Local dev/preview serve at root ("/"). The deploy workflow sets DEPLOY_BASE to the
-  // GitHub Pages project subpath (e.g. "/python-learning/") so production assets resolve.
+  // GitHub Pages project subpath (e.g. "/data-learning/") so production assets resolve.
   base: process.env.DEPLOY_BASE || "/",
   plugins: [
     react(),
