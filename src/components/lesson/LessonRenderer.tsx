@@ -6,6 +6,8 @@ import ExecutionVisualizer from "../visualizer/ExecutionVisualizer";
 import DsaViz from "../visualizer/dsa/DsaViz";
 import UserDrivenViz from "../visualizer/UserDrivenViz";
 import ChallengeRunner from "../challenge/ChallengeRunner";
+import SqlRunnable from "./blocks/SqlRunnable";
+import SqlChallengeRunner from "../challenge/SqlChallengeRunner";
 
 interface Props {
   lessonId: string;
@@ -39,6 +41,10 @@ export default function LessonRenderer({ lessonId, blocks }: Props) {
             );
           case "challenge":
             return <ChallengeRunner key={i} block={block} id={`${lessonId}::${i}`} />;
+          case "sql-runnable":
+            return <SqlRunnable key={i} block={block} draftKey={`${lessonId}::${i}`} />;
+          case "sql-challenge":
+            return <SqlChallengeRunner key={i} block={block} id={`${lessonId}::${i}`} />;
           case "quiz":
             return <Quiz key={i} block={block} />;
           default:

@@ -18,6 +18,7 @@ const THEMES: Record<string, ModuleTheme> = {
   viz: { from: "#f472b6", to: "#fbbf24", solid: "#f472b6" },
   ml: { from: "#8b5cf6", to: "#f472b6", solid: "#c084fc" },
   pyspark: { from: "#fb923c", to: "#fbbf24", solid: "#fb923c" },
+  postgres: { from: "#38bdf8", to: "#6366f1", solid: "#38bdf8" },
 };
 
 const FALLBACK: ModuleTheme = { from: "#8b5cf6", to: "#22d3ee", solid: "#a78bfa" };

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Menu, Search, Sparkles, Target } from "lucide-react";
+import { Database, Menu, Search, Sparkles, Target } from "lucide-react";
 import { useProgressStore } from "../../store/progressStore";
 import { usePyodideStore } from "../../store/pyodideStore";
 import Logo from "../ui/Logo";
@@ -63,6 +63,10 @@ export default function TopBar({ onToggleSidebar }: { onToggleSidebar: () => voi
         <Link to="/playground" className="btn-ghost hidden sm:inline-flex">
           <Sparkles className="h-4 w-4 text-accent-cyan" />
           Playground
+        </Link>
+        <Link to="/sql-playground" className="btn-ghost hidden lg:inline-flex">
+          <Database className="h-4 w-4 text-accent-cyan" />
+          SQL
         </Link>
       </div>
     </header>

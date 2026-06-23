@@ -16,10 +16,10 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["icon.svg"],
       manifest: {
-        name: "PyLearn — Learn Python, Visually",
-        short_name: "PyLearn",
+        name: "Data Learning — Learn Python & SQL, Visually",
+        short_name: "Data Learning",
         description:
-          "Interactive, visual platform to learn Python, data structures, data processing and DSA — in your browser.",
+          "Interactive, visual platform to learn Python and PostgreSQL — in your browser via Pyodide and PGlite.",
         theme_color: "#070710",
         background_color: "#070710",
         display: "standalone",
@@ -32,6 +32,9 @@ export default defineConfig({
       },
       workbox: {
         navigateFallbackDenylist: [/^\/sw\.js$/],
+        // PGlite's Postgres WASM + data files are several MB each; precache them so SQL
+        // works offline (the default 2 MB limit would skip them).
+        maximumFileSizeToCacheInBytes: 16 * 1024 * 1024,
         runtimeCaching: [
           {
             // Cache the Pyodide runtime + wheels for fast, offline-capable reloads.
@@ -60,6 +63,10 @@ export default defineConfig({
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
+  },
+  // PGlite ships its own WASM/data assets and must not be pre-bundled by esbuild.
+  optimizeDeps: {
+    exclude: ["@electric-sql/pglite"],
   },
   server: {
     port: 5173,

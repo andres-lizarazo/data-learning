@@ -12,7 +12,9 @@ export type BlockKind =
   | "dsa-viz"
   | "user-viz"
   | "challenge"
-  | "quiz";
+  | "quiz"
+  | "sql-runnable"
+  | "sql-challenge";
 
 /** Markdown prose. Supports GitHub-flavored markdown. */
 export interface ProseBlock {
@@ -118,6 +120,34 @@ export interface QuizBlock {
   explanation?: string;
 }
 
+/** An editable SQL snippet the learner can run against the seeded Postgres DB. */
+export interface SqlRunnableBlock {
+  kind: "sql-runnable";
+  title?: string;
+  sql: string;
+  /**
+   * Reload the seed schema before running. Use for mutating examples (INSERT/UPDATE/
+   * DELETE/DDL) so changes don't leak into later blocks. Default false.
+   */
+  resetBefore?: boolean;
+}
+
+/** SQL coding challenge: the learner writes a query, checked against a reference solution. */
+export interface SqlChallengeBlock {
+  kind: "sql-challenge";
+  title: string;
+  prompt: string; // markdown problem statement
+  starterSql: string;
+  /** Reference solution; the runner compares the learner's result set to this one. */
+  solution: string;
+  /** If true, row order must match exactly. Default false (order-insensitive). */
+  ordered?: boolean;
+  /** Progressive hints, revealed one at a time. */
+  hints?: string[];
+  /** XP awarded the first time the learner passes. */
+  xp?: number;
+}
+
 export type Block =
   | ProseBlock
   | RunnableBlock
@@ -125,7 +155,9 @@ export type Block =
   | DsaVizBlock
   | UserVizBlock
   | ChallengeBlock
-  | QuizBlock;
+  | QuizBlock
+  | SqlRunnableBlock
+  | SqlChallengeBlock;
 
 export interface Lesson {
   id: string; // unique within the whole curriculum, kebab-case
@@ -138,11 +170,16 @@ export interface Lesson {
 
 export type ModuleLevel = "Beginner" | "Intermediate" | "Advanced";
 
+/** Top-level grouping shown as a section heading (sidebar + home). */
+export type Track = "Python" | "SQL";
+
 export interface Module {
   id: string; // kebab-case, used in the URL
   title: string;
   /** One-line description for cards. */
   blurb: string;
+  /** Section this module belongs to. Defaults to "Python" when omitted. */
+  track?: Track;
   level: ModuleLevel;
   /** Emoji or short icon shown in the sidebar/cards. */
   icon: string;

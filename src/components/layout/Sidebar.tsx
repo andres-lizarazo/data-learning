@@ -1,7 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { motion } from "framer-motion";
 import { CheckCircle2, Circle, Home } from "lucide-react";
-import { curriculum } from "../../content/curriculum";
+import { modulesByTrack, tracks } from "../../content/curriculum";
 import { useProgressStore } from "../../store/progressStore";
 import { moduleTheme } from "../../lib/moduleTheme";
 
@@ -23,7 +23,12 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         <Home className="h-4 w-4" /> Home
       </NavLink>
 
-      {curriculum.map((m) => {
+      {tracks().map((track) => (
+        <div key={track} className="mb-2">
+          <div className="px-3 pb-1 pt-3 text-[11px] font-bold uppercase tracking-[0.15em] text-slate-500">
+            {track}
+          </div>
+          {modulesByTrack(track).map((m) => {
         const theme = moduleTheme(m.id);
         const done = m.lessons.filter((l) => completed[l.id]).length;
         const allDone = done === m.lessons.length;
@@ -78,7 +83,9 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
             </ul>
           </div>
         );
-      })}
+          })}
+        </div>
+      ))}
     </nav>
   );
 }

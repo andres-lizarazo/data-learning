@@ -8,9 +8,11 @@ import { pandas } from "./modules/pandas";
 import { viz } from "./modules/viz";
 import { ml } from "./modules/ml";
 import { pyspark } from "./modules/pyspark";
+import { postgres } from "./modules/sql/postgres";
 
 // Master curriculum — ordered as the intended learning path. The sidebar, router,
-// and progress tracking all read from here.
+// and progress tracking all read from here. Modules without a `track` default to the
+// "Python" section; SQL modules carry `track: "SQL"`.
 export const curriculum: Module[] = [
   basics,
   dataStructures,
@@ -21,7 +23,23 @@ export const curriculum: Module[] = [
   viz,
   ml,
   pyspark,
+  postgres,
 ];
+
+/** Distinct tracks in curriculum order, e.g. ["Python", "SQL"]. */
+export function tracks(): import("../types/lesson").Track[] {
+  const seen: import("../types/lesson").Track[] = [];
+  for (const m of curriculum) {
+    const t = m.track ?? "Python";
+    if (!seen.includes(t)) seen.push(t);
+  }
+  return seen;
+}
+
+/** Modules belonging to a given track, in curriculum order. */
+export function modulesByTrack(track: import("../types/lesson").Track): Module[] {
+  return curriculum.filter((m) => (m.track ?? "Python") === track);
+}
 
 export function getModule(id: string): Module | undefined {
   return curriculum.find((m) => m.id === id);

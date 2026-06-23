@@ -1,18 +1,29 @@
-# PyLearn — CLAUDE.md
+# Data Learning — CLAUDE.md
 
 Project-specific context and rules. Inherits the root `projects/CLAUDE.md`.
 
 ## Repo structure note
 
-This project is a **git submodule** of `andres-lizarazo/projects`, with its own remote
-`https://github.com/andres-lizarazo/python-learning.git`. Commit/push from inside this
-folder targets the python-learning repo; then update the pointer in the parent.
+This project is a **git submodule** of `andres-lizarazo/projects`, living in the
+`data-learning/` folder. Its remote is still
+`https://github.com/andres-lizarazo/python-learning.git` until the GitHub repo is renamed
+to `data-learning` (GitHub redirects the old URL, so pushes keep working in the meantime;
+after renaming, update the remote URL, `DEPLOY_BASE` in `.github/workflows/deploy.yml`, and
+the live-URL references). Commit/push from inside this folder; then update the pointer in
+the parent. The former standalone `sql-learning` repo has been **merged in** — its
+reference docs now live in `sql-reference/` and its content was ported into the interactive
+PostgreSQL module.
 
 ## What this is
 
-An interactive, visual Python learning platform (CodeSignal-style) that runs Python
-entirely in the browser via **Pyodide**. React + Vite + TypeScript + Tailwind.
-Local-first; deployment comes later.
+An interactive, visual platform to learn **Python and SQL** (CodeSignal-style), running
+entirely in the browser. Python runs via **Pyodide**; SQL (PostgreSQL) runs via **PGlite**
+(real Postgres compiled to WASM). React + Vite + TypeScript + Tailwind. Local-first.
+
+Content is organized into **tracks** (`Module.track`: "Python" | "SQL"). SQL lessons live
+in `src/content/modules/sql/postgres.ts` and run against a seeded e-commerce DB
+(`src/sql/seeds.ts`); the SQL engine wrapper is `src/sql/sqlClient.ts`. The original SQL
+study notes are kept in `sql-reference/` (source of truth the module was ported from).
 
 ## Commands
 

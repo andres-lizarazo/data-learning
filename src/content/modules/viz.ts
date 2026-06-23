@@ -20,8 +20,8 @@ export const viz: Module = {
           kind: "prose",
           markdown: `# matplotlib
 
-The foundational plotting library. Build a figure, draw on it, and PyLearn renders
-the result below the editor **automatically** — no need to call \`plt.show()\`.`,
+The foundational plotting library. Build a figure, draw on it, and the result renders
+below the editor **automatically** — no need to call \`plt.show()\`.`,
         },
         {
           kind: "runnable",

@@ -2,8 +2,20 @@ import { expect, test } from "@playwright/test";
 
 test("home renders the hero", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /Learn Python/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Learn Data/i })).toBeVisible();
   await expect(page.getByText(/Learning path/i)).toBeVisible();
+});
+
+test("runs SQL in the browser (boots PGlite end-to-end)", async ({ page }) => {
+  await page.goto("/sql-playground");
+
+  // The Run button is disabled until PGlite (Postgres WASM) finishes booting.
+  const runBtn = page.getByRole("button", { name: /^Run$/ });
+  await expect(runBtn).toBeEnabled({ timeout: 90_000 });
+  await runBtn.click();
+
+  // The default query returns a row per user — "Alice Smith" appears in the grid.
+  await expect(page.getByText(/Alice Smith/)).toBeVisible({ timeout: 60_000 });
 });
 
 test("runs Python in a lesson (boots Pyodide end-to-end)", async ({ page }) => {

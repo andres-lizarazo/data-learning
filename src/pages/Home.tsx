@@ -1,7 +1,13 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, Award, Sparkles, Play } from "lucide-react";
-import { curriculum, getLesson, totalLessons } from "../content/curriculum";
+import {
+  getLesson,
+  modulesByTrack,
+  totalLessons,
+  tracks,
+} from "../content/curriculum";
+import type { Module } from "../types/lesson";
 import { useProgressStore } from "../store/progressStore";
 import { levelProgress } from "../lib/level";
 import { moduleGradient } from "../lib/moduleTheme";
@@ -81,7 +87,7 @@ export default function Home() {
             transition={{ duration: 0.6 }}
             className="font-display text-4xl font-bold leading-[1.05] tracking-tight text-white sm:text-6xl"
           >
-            Learn Python,
+            Learn Data,
             <br />
             <span className="gradient-text">visually.</span>
           </motion.h1>
@@ -91,9 +97,9 @@ export default function Home() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="mt-4 max-w-xl text-lg text-slate-300"
           >
-            An interactive, CodeSignal-style playground. Run real code,{" "}
+            An interactive, CodeSignal-style playground. Run real Python <i>and</i> SQL,{" "}
             <b className="text-white">watch loops and algorithms animate step by step</b>, and
-            solve challenges — from basics to data wrangling and DSA.
+            solve challenges — from basics to data wrangling, DSA, and PostgreSQL.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -145,7 +151,7 @@ export default function Home() {
 
           {/* Tech chips */}
           <div className="mt-6 flex flex-wrap gap-2">
-            {["Data Structures", "DSA", "NumPy", "Pandas", "Matplotlib", "Seaborn"].map(
+            {["Data Structures", "DSA", "NumPy", "Pandas", "Matplotlib", "PostgreSQL"].map(
               (t) => (
                 <span key={t} className="pill border-white/10 bg-white/5 text-slate-300">
                   {t}
@@ -160,68 +166,83 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Module grid */}
-      <h2 className="mb-4 font-display text-xl font-bold text-white">Learning path</h2>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {curriculum.map((m, i) => {
-          const done = m.lessons.filter((l) => completed[l.id]).length;
-          const pct = Math.round((done / m.lessons.length) * 100);
-          const allDone = done === m.lessons.length;
-          return (
-            <Reveal key={m.id} delay={i * 0.05}>
-              <Link to={`/learn/${m.id}`} className="group block h-full">
-                <motion.div
-                  whileHover={{ y: -4 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                  className="glass relative h-full overflow-hidden p-5 transition-shadow group-hover:glow-ring"
-                >
-                  {/* Top accent line */}
-                  <span
-                    className="absolute inset-x-0 top-0 h-1"
-                    style={{ background: moduleGradient(m.id) }}
-                  />
-                  <div className="flex items-center justify-between">
-                    <span
-                      className="grid h-11 w-11 place-items-center rounded-xl text-2xl"
-                      style={{ background: moduleGradient(m.id, 145) }}
-                    >
-                      {m.icon}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      {allDone && (
-                        <span className="pill border-accent-lime/30 bg-accent-lime/10 text-accent-lime">
-                          <Award className="h-3 w-3" /> Done
-                        </span>
-                      )}
-                      <span className="pill border-white/10 bg-white/5 text-slate-300">
-                        {m.level}
-                      </span>
-                    </div>
-                  </div>
-                  <h3 className="mt-3 font-display text-lg font-semibold text-white">
-                    {m.title}
-                  </h3>
-                  <p className="mt-1 text-sm text-slate-400">{m.blurb}</p>
-                  <div className="mt-4 flex items-center justify-between text-xs text-slate-400">
-                    <span>
-                      {done}/{m.lessons.length} lessons
-                    </span>
-                    <span className="inline-flex items-center gap-1 text-slate-300 opacity-0 transition-opacity group-hover:opacity-100">
-                      Open <ArrowRight className="h-3 w-3" />
-                    </span>
-                  </div>
-                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/5">
-                    <div
-                      className="h-full rounded-full transition-all"
-                      style={{ width: `${pct}%`, background: moduleGradient(m.id) }}
-                    />
-                  </div>
-                </motion.div>
-              </Link>
-            </Reveal>
-          );
-        })}
-      </div>
+      {/* Module grid, grouped into sections (Python / SQL). */}
+      <h2 className="mb-1 font-display text-xl font-bold text-white">Learning path</h2>
+      {tracks().map((track) => (
+        <section key={track} className="mb-10">
+          <h3 className="mb-3 mt-5 text-xs font-bold uppercase tracking-[0.15em] text-slate-500">
+            {track}
+          </h3>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {modulesByTrack(track).map((m, i) => (
+              <ModuleCard key={m.id} m={m} i={i} completed={completed} />
+            ))}
+          </div>
+        </section>
+      ))}
     </div>
+  );
+}
+
+function ModuleCard({
+  m,
+  i,
+  completed,
+}: {
+  m: Module;
+  i: number;
+  completed: Record<string, true>;
+}) {
+  const done = m.lessons.filter((l) => completed[l.id]).length;
+  const pct = Math.round((done / m.lessons.length) * 100);
+  const allDone = done === m.lessons.length;
+  return (
+    <Reveal delay={i * 0.05}>
+      <Link to={`/learn/${m.id}`} className="group block h-full">
+        <motion.div
+          whileHover={{ y: -4 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          className="glass relative h-full overflow-hidden p-5 transition-shadow group-hover:glow-ring"
+        >
+          {/* Top accent line */}
+          <span
+            className="absolute inset-x-0 top-0 h-1"
+            style={{ background: moduleGradient(m.id) }}
+          />
+          <div className="flex items-center justify-between">
+            <span
+              className="grid h-11 w-11 place-items-center rounded-xl text-2xl"
+              style={{ background: moduleGradient(m.id, 145) }}
+            >
+              {m.icon}
+            </span>
+            <div className="flex items-center gap-2">
+              {allDone && (
+                <span className="pill border-accent-lime/30 bg-accent-lime/10 text-accent-lime">
+                  <Award className="h-3 w-3" /> Done
+                </span>
+              )}
+              <span className="pill border-white/10 bg-white/5 text-slate-300">{m.level}</span>
+            </div>
+          </div>
+          <h3 className="mt-3 font-display text-lg font-semibold text-white">{m.title}</h3>
+          <p className="mt-1 text-sm text-slate-400">{m.blurb}</p>
+          <div className="mt-4 flex items-center justify-between text-xs text-slate-400">
+            <span>
+              {done}/{m.lessons.length} lessons
+            </span>
+            <span className="inline-flex items-center gap-1 text-slate-300 opacity-0 transition-opacity group-hover:opacity-100">
+              Open <ArrowRight className="h-3 w-3" />
+            </span>
+          </div>
+          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/5">
+            <div
+              className="h-full rounded-full transition-all"
+              style={{ width: `${pct}%`, background: moduleGradient(m.id) }}
+            />
+          </div>
+        </motion.div>
+      </Link>
+    </Reveal>
   );
 }

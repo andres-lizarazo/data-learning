@@ -17,6 +17,7 @@ function buildIndex(): Item[] {
     { id: "p-home", label: "Home", to: "/", kind: "page" },
     { id: "p-practice", label: "Practice — Challenge bank", to: "/practice", kind: "page" },
     { id: "p-playground", label: "Playground", to: "/playground", kind: "page" },
+    { id: "p-sql-playground", label: "SQL Playground", to: "/sql-playground", kind: "page" },
     { id: "p-profile", label: "Profile & achievements", to: "/profile", kind: "page" },
   ];
   const items: Item[] = [...pages];

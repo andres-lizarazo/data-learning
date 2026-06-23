@@ -10,7 +10,7 @@ export default function Logo({ to = "/" }: { to?: string }) {
         <span className="absolute inset-0 rounded-xl ring-1 ring-inset ring-white/20" />
       </span>
       <span className="font-display text-lg font-bold tracking-tight text-white">
-        Py<span className="gradient-text">Learn</span>
+        Data<span className="gradient-text">Learn</span>
       </span>
     </Link>
   );

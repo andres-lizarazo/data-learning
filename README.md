@@ -1,9 +1,17 @@
-# PyLearn 🐍
+# Data Learning 🐍🐘
 
-An interactive, **visual** platform to learn Python — CodeSignal-style, but everything
-runs **100% in your browser**. Write code, press Run, and *watch loops and algorithms
-animate step by step*. No backend, no install of Python required: a full CPython
-interpreter runs client-side via [Pyodide](https://pyodide.org) (WebAssembly).
+An interactive, **visual** platform to learn **Python and SQL** — CodeSignal-style, but
+everything runs **100% in your browser**. Write code, press Run, and *watch loops and
+algorithms animate step by step* — or query a **real PostgreSQL database**. No backend,
+no installs: a full CPython interpreter runs client-side via
+[Pyodide](https://pyodide.org), and a full Postgres engine via
+[PGlite](https://pglite.dev) — both WebAssembly.
+
+The platform is organized into two **tracks**:
+
+- **Python** — basics → data structures → DSA → libraries → NumPy/Pandas → viz → ML.
+- **SQL** — a **PostgreSQL** subsection where every example runs against a seeded
+  e-commerce database and most lessons end with a checked query exercise.
 
 ## What you can do
 
@@ -17,6 +25,10 @@ interpreter runs client-side via [Pyodide](https://pyodide.org) (WebAssembly).
   instant pass/fail, and XP rewards.
 - **Real data libraries** — `numpy`, `pandas`, `matplotlib`, and `seaborn` run in the
   browser; plots render inline.
+- **Query real SQL** — a full **PostgreSQL** engine (PGlite/WASM) runs in the browser.
+  SQL lessons render results as a grid, ship a **schema explorer** for the sample DB, and
+  grade exercises by comparing your result set to a reference solution. There's also a
+  free-form **SQL Playground**.
 - **Track progress** — XP, daily streak, and per-lesson completion, saved locally.
 
 ## Curriculum
@@ -32,6 +44,12 @@ interpreter runs client-side via [Pyodide](https://pyodide.org) (WebAssembly).
 | 🐼 Pandas | **deep** | DataFrames, selecting/filtering, cleaning, group-by/agg, merge/join (+ challenges) |
 | 📈 Data Visualization | **deep** | matplotlib, customizing plots, plotting from pandas, seaborn (distribution & categorical) |
 | ⚡ PySpark | starter (conceptual) | Spark model, lazy eval, pandas↔PySpark cheat sheet |
+
+### SQL track
+
+| Module | Status | Highlights |
+|---|---|---|
+| 🐘 PostgreSQL | **deep** | 20 lessons: SELECT/WHERE, JOINs (+LATERAL), GROUP BY/HAVING/FILTER, CASE, subqueries/EXISTS, CTEs (+recursive), window functions, set ops, INSERT/UPDATE/DELETE/UPSERT, transactions, DDL/constraints, indexes/EXPLAIN, arrays, JSONB, views/matviews, functions/triggers (PL/pgSQL), string/date/math/NULL functions, full-text search, interview patterns, and an **Advanced Query Workshop** (multi-CTE pipelines: UNNEST + window + FILTER + ROLLUP + gaps-and-islands) — each runnable against a seeded e-commerce DB, most with a graded exercise. Includes "vs MySQL" notes throughout. |
 
 > Plots render **automatically** whenever your code draws a matplotlib/seaborn figure —
 > no `plt.show()` needed.
@@ -54,22 +72,30 @@ lucide-react, and gamification with XP **levels**, an animated streak flame, and
 ```
 React + Vite + TypeScript + Tailwind
    │
-   ├─ Monaco editor ........... code editing
+   ├─ Monaco editor ........... code editing (Python + SQL)
    ├─ Pyodide (Web Worker) .... runs Python off the main thread
    │     ├─ run  → stdout/stderr (+ matplotlib PNGs)
    │     ├─ trace → sys.settrace step recorder (ExecutionVisualizer)
    │     └─ install → micropip / loadPackage
+   ├─ PGlite (WASM) ........... real PostgreSQL in the browser
+   │     ├─ exec  → result grid / affected rows / errors
+   │     └─ reset → reload the seeded e-commerce DB
    ├─ Zustand ................. progress + XP (persisted to localStorage)
-   └─ Content as typed TS ..... src/content/modules/*.ts
+   └─ Content as typed TS ..... src/content/modules/**/*.ts
 ```
 
 Key directories:
 
 - `src/pyodide/` — `worker.ts` (interpreter host), `pyodideClient.ts` (typed promise
   API), `tracer.py` (the step recorder behind the visualizer).
+- `src/sql/` — `sqlClient.ts` (PGlite wrapper: `exec`/`reset`/`queryRows` + status) and
+  `seeds.ts` (the e-commerce schema/data + schema description).
 - `src/components/visualizer/` — `ExecutionVisualizer.tsx` and `dsa/*` animations.
-- `src/components/challenge/ChallengeRunner.tsx` — the test-case runner.
-- `src/content/` — `curriculum.ts` (the index) + `modules/*.ts` (lessons).
+- `src/components/challenge/` — `ChallengeRunner.tsx` (Python tests) and
+  `SqlChallengeRunner.tsx` (compares your result set to a reference solution).
+- `src/components/sql/` — `SqlResultTable.tsx`, `SchemaExplorer.tsx`.
+- `src/content/` — `curriculum.ts` (the index, grouped by `track`) + `modules/**/*.ts`
+  (lessons; SQL lives in `modules/sql/postgres.ts`).
 
 ## Quickstart
 
@@ -78,8 +104,10 @@ npm install
 npm run dev      # open the printed localhost URL (http://localhost:5173)
 ```
 
-The first time you run any code, Pyodide downloads (~6–10 MB) and boots — the top bar
-shows progress and flips to **“Python ready”**. NumPy/pandas/etc. install on first use.
+The first time you run Python, Pyodide downloads (~6–10 MB) and boots; NumPy/pandas/etc.
+install on first use. The first time you run SQL, PGlite's Postgres WASM (~10 MB) downloads
+and boots, then seeds the sample database. Both are cached by the service worker for
+offline use after the first visit.
 
 Build for production: `npm run build` then `npm run preview`.
 
@@ -88,9 +116,15 @@ Build for production: `npm run build` then `npm run preview`.
 Lessons are plain typed data — no markdown files to wire up. Edit the relevant module
 in `src/content/modules/`, appending a `Lesson` whose `blocks` array mixes:
 
-`prose` · `runnable` · `visualized` · `dsa-viz` · `challenge` · `quiz`
+`prose` · `runnable` · `visualized` · `dsa-viz` · `challenge` · `quiz` ·
+`sql-runnable` · `sql-challenge`
 
-See `src/types/lesson.ts` for the full shape, and `modules/basics.ts` for examples.
+A module's `track` field (`"Python"` | `"SQL"`, default `"Python"`) controls which
+section it appears under in the sidebar/home. SQL blocks run against the seeded DB in
+`src/sql/seeds.ts`; a `sql-challenge` is graded by comparing your result set to its
+`solution` query (order-insensitive unless `ordered: true`). See `src/types/lesson.ts`
+for the full shape, `modules/basics.ts` for Python examples, and
+`modules/sql/postgres.ts` for SQL.
 
 ## Deployment
 

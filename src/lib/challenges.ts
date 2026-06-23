@@ -1,5 +1,5 @@
 import { curriculum } from "../content/curriculum";
-import type { ChallengeBlock } from "../types/lesson";
+import type { ChallengeBlock, SqlChallengeBlock } from "../types/lesson";
 
 // Flattens every challenge across the curriculum into a single list for the Practice
 // page. The `id` matches the one ChallengeRunner uses (`lessonId::blockIndex`), so it
@@ -20,8 +20,8 @@ export function allChallenges(): ChallengeEntry[] {
   for (const m of curriculum) {
     for (const l of m.lessons) {
       l.blocks.forEach((b, i) => {
-        if (b.kind === "challenge") {
-          const c = b as ChallengeBlock;
+        if (b.kind === "challenge" || b.kind === "sql-challenge") {
+          const c = b as ChallengeBlock | SqlChallengeBlock;
           out.push({
             id: `${l.id}::${i}`,
             title: c.title,

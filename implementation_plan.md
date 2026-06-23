@@ -1,12 +1,16 @@
-# PyLearn — Implementation Plan
+# Data Learning — Implementation Plan
 
 ## Overview
 
-PyLearn is an interactive, visual platform for learning Python — from basics through
-data structures, data wrangling/visualization, and a dedicated DSA track. It is a
+Data Learning (formerly "PyLearn") is an interactive, visual platform for learning
+**Python and SQL** — from Python basics through data structures, data
+wrangling/visualization, and DSA, plus a dedicated **SQL track** whose PostgreSQL
+subsection teaches Postgres against a seeded e-commerce database. It is a
 CodeSignal-style experience that runs **entirely in the browser**: a full CPython
-interpreter (Pyodide/WebAssembly) executes user code client-side, with step-by-step
-execution visualization and animated DSA components. Local-first; deployment later.
+interpreter (Pyodide/WebAssembly) executes Python client-side with step-by-step
+execution visualization and animated DSA components, and a full PostgreSQL engine
+(PGlite/WebAssembly) executes SQL client-side with a result grid and graded query
+exercises. Local-first; deployment later.
 
 ## Architecture
 
@@ -61,6 +65,37 @@ execution visualization and animated DSA components. Local-first; deployment lat
 
 ### Content — starter (conceptual)
 - [x] PySpark (conceptual): Spark model + quiz; pandas↔PySpark cheat sheet
+
+### SQL track — PostgreSQL (deep) — merged from the sql-learning repo
+- [x] In-browser Postgres engine: **PGlite** (real Postgres/WASM) wrapped in `src/sql/`
+      (`sqlClient.ts` exec/reset/queryRows + status stream; `seeds.ts` e-commerce
+      schema/data ported from sql-learning `concepts.md` §26; `sqlStore.ts` boot store)
+- [x] New block kinds `sql-runnable` (editable SQL → result grid) and `sql-challenge`
+      (graded by comparing the result set to a reference solution — `lib/sqlCompare.ts`,
+      order-insensitive by default); wired into `LessonRenderer`
+- [x] SQL UI: `SqlResultTable` (grid/affected-rows/error), `SchemaExplorer` (sample-DB
+      tables/columns, shown in SQL lessons + Playground), `CodeEditor` SQL language mode
+- [x] **Advanced Query Workshop** lesson (interview live-coding prep): chained CTEs combining
+      UNNEST (array-of-composite sessionization — the user's example, verified Postgres-compatible),
+      ROW_NUMBER/PARTITION, COUNT(DISTINCT), window frames + `SUM() OVER ()`, FILTER pivots +
+      ROLLUP, and gaps-and-islands streaks — with step-by-step explanations and 4 graded exercises
+- [x] **PostgreSQL module** (20 lessons covering all 26 `concepts.md` sections): SELECT/
+      WHERE, JOINs (+LATERAL), GROUP BY/HAVING/FILTER/percentiles, CASE, subqueries/EXISTS,
+      CTEs (+recursive), window functions, set ops, INSERT/UPDATE/DELETE/UPSERT,
+      transactions, DDL/constraints, indexes/EXPLAIN, arrays, JSONB, views/matviews,
+      functions/procedures/triggers (PL/pgSQL), string/date/math/NULL functions,
+      full-text search, interview patterns — each runnable against the seed DB, most with
+      a graded exercise or quiz; "vs MySQL" notes preserved from the source
+- [x] Navigation: `Module.track` ("Python" | "SQL"); Sidebar + Home grouped into sections;
+      SQL challenges flow into the Practice bank + XP; **SQL Playground** page + route +
+      TopBar/CommandPalette links
+- [x] Build/PWA: `@electric-sql/pglite` dep, `optimizeDeps.exclude`, workbox
+      `maximumFileSizeToCacheInBytes` bumped so the Postgres WASM/data precache for offline
+- [x] Tests: `lib/sqlCompare.test.ts` (8 unit tests) + Playwright e2e that boots PGlite and
+      runs SQL in the browser
+
+> The original `sql-learning` repo is left untouched (its own submodule). Its `concepts.md`
+> remains the source-of-truth reference that this interactive module was ported from.
 
 ### Design polish (round 4) — refine Aurora Glass
 - [x] Surface harmonization: glass control primitives (`.panel`/`.well`/`.select`/`.callout`)
@@ -208,6 +243,18 @@ Prioritized, phase by phase. Each phase is independently shippable.
 - [ ] 🚧 i18n: ES/EN content + UI toggle
 
 ## Decisions Log
+- **PGlite for SQL (not SQLite/sql.js):** the sql-learning content is heavily
+  Postgres-specific (JSONB `@>`/`?`, arrays, window functions, recursive CTEs, `FILTER`,
+  `generate_series`, `DISTINCT ON`, `PERCENTILE_CONT`, PL/pgSQL, full-text search). Only
+  PGlite (real Postgres compiled to WASM) runs all of it faithfully; SQLite would fail most
+  sections. Mirrors the Pyodide model (a WASM engine behind a typed client).
+- **PGlite on the main thread (not a worker):** queries hit tiny seeded tables, so blocking
+  is negligible, and it avoids the fragility of bundling PGlite's WASM/data into a nested
+  Vite module worker. The client keeps the same status-stream API as the Pyodide worker.
+- **SQL challenges graded by result-set comparison:** run the learner's query and a
+  reference `solution` against a freshly seeded DB and compare rows by value/position
+  (order-insensitive unless `ordered`). Robust to column aliasing and avoids hand-encoding
+  expected outputs.
 - **Pyodide over a backend kernel:** zero-install, local-first, trivially deployable as
   static files; keeps everything client-side. Trade-off: no JVM → PySpark stays conceptual.
 - **Web Worker for Pyodide:** the interpreter is blocking; a worker keeps the UI responsive.

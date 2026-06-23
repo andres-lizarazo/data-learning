@@ -41,6 +41,8 @@ interface Props {
   highlightLine?: number | null;
   /** Optional filename shown in the window chrome. */
   filename?: string;
+  /** Monaco language id. Defaults to "python". */
+  language?: string;
 }
 
 export default function CodeEditor({
@@ -50,6 +52,7 @@ export default function CodeEditor({
   readOnly = false,
   highlightLine = null,
   filename,
+  language = "python",
 }: Props) {
   const editorRef = useRef<AnyEditor | null>(null);
   const monacoRef = useRef<AnyMonaco | null>(null);
@@ -82,12 +85,20 @@ export default function CodeEditor({
         <span className="h-2.5 w-2.5 rounded-full bg-amber-400/70" />
         <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/70" />
         <span className="ml-2 font-mono text-xs text-slate-500">
-          {filename ?? (readOnly ? "solution.py" : "main.py")}
+          {filename ??
+            (language === "sql"
+              ? readOnly
+                ? "solution.sql"
+                : "query.sql"
+              : readOnly
+                ? "solution.py"
+                : "main.py")}
         </span>
       </div>
       <Editor
         height={height}
         defaultLanguage="python"
+        language={language}
         theme="pylearn"
         value={value}
         loading={

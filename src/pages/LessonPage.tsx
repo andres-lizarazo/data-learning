@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Bookmark, BookmarkCheck, Check, ChevronRight } from "lucide-react";
 import { getLesson, getModule, lessonSequence } from "../content/curriculum";
 import LessonRenderer from "../components/lesson/LessonRenderer";
+import SchemaExplorer from "../components/sql/SchemaExplorer";
 import { useProgressStore } from "../store/progressStore";
 import { moduleGradient } from "../lib/moduleTheme";
 import { celebrate, bigCelebrate } from "../lib/confetti";
@@ -88,6 +89,13 @@ export default function LessonPage() {
         </div>
         <p className="mb-7 mt-1 text-slate-400">{lesson.summary}</p>
       </div>
+
+      {/* SQL lessons show the sample-database schema so the learner knows what to query. */}
+      {module.track === "SQL" && (
+        <div className="mb-6">
+          <SchemaExplorer />
+        </div>
+      )}
 
       {/* key forces a fresh mount per lesson so editable code blocks reset. */}
       <LessonRenderer key={lesson.id} lessonId={lesson.id} blocks={lesson.blocks} />

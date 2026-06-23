@@ -8,6 +8,7 @@ const Home = lazy(() => import("./pages/Home"));
 const ModulePage = lazy(() => import("./pages/ModulePage"));
 const LessonPage = lazy(() => import("./pages/LessonPage"));
 const Playground = lazy(() => import("./pages/Playground"));
+const SqlPlayground = lazy(() => import("./pages/SqlPlayground"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Practice = lazy(() => import("./pages/Practice"));
 
@@ -19,6 +20,7 @@ export default function App() {
         <Route path="learn/:moduleId" element={<ModulePage />} />
         <Route path="learn/:moduleId/:lessonId" element={<LessonPage />} />
         <Route path="playground" element={<Playground />} />
+        <Route path="sql-playground" element={<SqlPlayground />} />
         <Route path="profile" element={<Profile />} />
         <Route path="practice" element={<Practice />} />
         <Route path="*" element={<Home />} />

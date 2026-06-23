@@ -73,7 +73,7 @@ export function computeBadges(p: ProgressSnapshot): Badge[] {
   const allDone: Badge = {
     id: "completionist",
     name: "Completionist",
-    desc: "Finish every lesson in PyLearn",
+    desc: "Finish every lesson in Data Learning",
     icon: Crown,
     unlocked: curriculum.every((m) => m.lessons.every((l) => p.completedLessons[l.id])),
   };
