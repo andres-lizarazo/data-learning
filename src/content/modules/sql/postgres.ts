@@ -102,6 +102,21 @@ A join stitches rows from two tables on a condition.
 > **vs MySQL:** \`FULL OUTER JOIN\` doesn't exist in MySQL (emulate with \`LEFT JOIN UNION RIGHT JOIN\`).`,
         },
         {
+          kind: "prose",
+          markdown: `## 🧭 Which join — and JOIN vs. EXISTS
+
+- **INNER JOIN** — keep only rows that **match in both** tables.
+- **LEFT JOIN** — keep **all left rows**, NULLs where the right has no match ("every user, plus their orders if any"). Add \`WHERE right.id IS NULL\` to find the **non-matches** (anti-join).
+- **FULL OUTER JOIN** — unmatched rows from **both** sides (rare; reconciliation/diffing).
+- **CROSS JOIN / LATERAL** — every combination, or "for each left row, run this subquery" (top-N per row).
+
+**JOIN vs. EXISTS for "has a related row":**
+- **\`EXISTS\`** when you only need to *test* for a match and want each left row **once** — a JOIN can multiply rows when the match is one-to-many.
+- **JOIN** when you actually need the related table's **columns** in the output.
+
+**Rule of thumb:** need their columns → JOIN; only checking existence → \`EXISTS\`; need rows with *no* match → LEFT JOIN + \`IS NULL\` (or \`NOT EXISTS\`).`,
+        },
+        {
           kind: "sql-runnable",
           title: "Orders with full detail (multi-table join)",
           sql: `SELECT u.name AS customer, o.id AS order_id, p.name AS product,
@@ -179,6 +194,16 @@ Every non-aggregated column in \`SELECT\` must appear in \`GROUP BY\`.
 The \`FILTER (WHERE …)\` clause does conditional aggregation cleanly — count/sum only matching rows.
 
 > **vs MySQL:** \`FILTER\`, \`PERCENTILE_CONT\`, and \`GROUPING SETS\` don't exist in MySQL; \`string_agg\` is \`GROUP_CONCAT\`.`,
+        },
+        {
+          kind: "prose",
+          markdown: `## 🧭 WHERE vs. HAVING, and GROUP BY vs. window
+
+- **WHERE** filters **individual rows before** grouping; **HAVING** filters **groups after** aggregation. If a condition doesn't involve an aggregate, put it in WHERE — it's cheaper (fewer rows to group). Use HAVING only for conditions on \`COUNT/SUM/AVG/...\`.
+- **GROUP BY** when you want **one row per group** (the detail rows collapse).
+- **Window function** (\`… OVER (PARTITION BY …)\`) when you want the aggregate **next to every original row** — running totals, "each row vs. its group's average", ranking. Rows are **kept**, not collapsed.
+
+**Rule of thumb:** filtering raw rows → WHERE; filtering aggregates → HAVING. Need a per-group summary → GROUP BY; need the summary **and** the detail rows → window function.`,
         },
         {
           kind: "sql-runnable",
@@ -290,6 +315,21 @@ A subquery is a \`SELECT\` nested in another query:
 > UNKNOWN and you get **zero rows**. Prefer \`NOT EXISTS\` or a \`LEFT JOIN … WHERE IS NULL\`.`,
         },
         {
+          kind: "prose",
+          markdown: `## 🧭 When to use a subquery vs. a CTE vs. a JOIN
+
+- **Scalar / \`IN\` subquery** — a quick, one-off filter returning a single value or a single column for \`WHERE x IN (…)\`. Inline, 1–2 lines, used in exactly one place; no need to name it.
+- **CTE (\`WITH\`)** — multi-step logic you want to read top-to-bottom, a derived result you reference **more than once** in the same query, or recursion. Naming each step beats deeply nested subqueries for readability.
+- **JOIN** — when you actually need **columns from the other table** in your output, not just a yes/no filter.
+
+**Matching rows — \`IN\` vs \`EXISTS\` vs \`JOIN\`:**
+- \`IN (list)\` — a small, simple set of values; very readable.
+- \`EXISTS\` — "does at least one related row exist?" Stops at the first match and is **NULL-safe** — prefer it for correlated checks, especially \`NOT EXISTS\`.
+- \`JOIN\` — when you need the matched table's **columns** (but beware row duplication if the match is one-to-many).
+
+**Rule of thumb:** filter only → subquery / \`EXISTS\`; need their columns → JOIN; complex, reused, or recursive → CTE. Never use \`NOT IN\` against a subquery that can return NULL — it silently yields zero rows; use \`NOT EXISTS\`.`,
+        },
+        {
           kind: "sql-runnable",
           title: "Products priced above their category's average (correlated)",
           sql: `SELECT name, price, category_id
@@ -339,6 +379,19 @@ base case \`UNION ALL\` a recursive step that joins back to the CTE.
 
 > **vs MySQL:** CTEs (incl. recursive) arrived in MySQL 8.0. In Postgres a CTE is an optimization
 > fence by default — use \`WITH … AS NOT MATERIALIZED (…)\` (PG12+) if you need the planner to inline it.`,
+        },
+        {
+          kind: "prose",
+          markdown: `## 🧭 When to reach for a CTE
+
+- **CTE over a nested subquery** when the query has **distinct steps** (aggregate → filter → join) — naming them makes intent obvious and reviewable.
+- **CTE over copy-pasting a subquery** when you need the **same derived set twice** — define it once, reference it many times.
+- **Recursive CTE** for **hierarchies / graphs of unknown depth** (org charts, category trees, bill-of-materials) — anything you'd otherwise solve with a loop.
+- **Temp table** instead of a CTE when the intermediate set is **large and reused across many separate queries** (not just within one statement), or you want to index it.
+
+**Performance:** in modern Postgres a CTE is usually **inlined** (optimized like a subquery). Force it with \`AS NOT MATERIALIZED\`, or pin it with \`AS MATERIALIZED\` when you *want* an expensive step computed **once** and reused.
+
+**Rule of thumb:** default to a CTE for anything past a trivial one-liner — readability wins and the planner usually treats it like a subquery anyway.`,
         },
         {
           kind: "sql-runnable",
@@ -417,6 +470,19 @@ function() OVER (PARTITION BY … ORDER BY … ROWS BETWEEN …)
 > **Gotcha:** You can't use a window function in \`WHERE\`/\`HAVING\` — wrap it in a subquery/CTE and filter outside.`,
         },
         {
+          kind: "prose",
+          markdown: `## 🧭 ROW_NUMBER vs. RANK vs. DENSE_RANK
+
+- **\`ROW_NUMBER()\`** — strict 1, 2, 3… with **no ties**; every row unique. Use for "exactly one row per group" (top-1, dedupe-keep-latest, pagination cursors).
+- **\`RANK()\`** — ties share a rank, then it **skips** (1, 1, 3). Use for leaderboards where "two in 1st ⇒ next is 3rd".
+- **\`DENSE_RANK()\`** — ties share a rank, **no gaps** (1, 1, 2). Use for "**Nth distinct** value" (2nd-highest salary).
+- **\`NTILE(n)\`** — split rows into n equal buckets (quartiles, deciles).
+
+**Window vs. GROUP BY:** use a window function whenever you must **keep every row** and still compute across a group. If you only need the collapsed summary, GROUP BY is simpler and cheaper.
+
+**Rule of thumb:** unique pick → \`ROW_NUMBER\`; ranking with gaps → \`RANK\`; ranking without gaps / "Nth distinct" → \`DENSE_RANK\`. You can't filter a window result in \`WHERE\` — wrap it in a subquery/CTE and filter \`rn\`/\`rnk\` outside.`,
+        },
+        {
           kind: "sql-runnable",
           title: "Rank, running total, and change vs. previous",
           sql: `SELECT o.created_at, u.name, o.total,
@@ -469,6 +535,17 @@ Both queries must have the same number of columns with compatible types.
 - **INTERSECT** — rows in *both*. **EXCEPT** — rows in the first but *not* the second.`,
         },
         {
+          kind: "prose",
+          markdown: `## 🧭 UNION vs. UNION ALL (and vs. OR)
+
+- **\`UNION ALL\`** — concatenate and **keep duplicates**. Faster (no dedup sort). Use when the inputs can't overlap, or duplicates are fine.
+- **\`UNION\`** — concatenate and **remove duplicates** (an implicit \`DISTINCT\` → sort/hash). Use only when you truly need dedup; it's measurably slower on large sets.
+- **A single \`WHERE a OR b\`** — if the "two sets" are just two filters on the **same table**, one query beats UNION.
+- **\`INTERSECT\` / \`EXCEPT\`** — whole-row set membership ("in both" / "in A not B"); \`EXCEPT\` is a clean anti-join.
+
+**Rule of thumb:** default to **\`UNION ALL\`** and only upgrade to \`UNION\` when you must remove duplicates — don't pay for a \`DISTINCT\` you don't need.`,
+        },
+        {
           kind: "sql-runnable",
           title: "Users who paid but never got a refund (EXCEPT)",
           sql: `SELECT user_id FROM orders WHERE status = 'paid'
@@ -511,6 +588,18 @@ where \`EXCLUDED\` is the row you tried to insert.
 
 > **vs MySQL:** \`RETURNING\` doesn't exist in MySQL (use \`LAST_INSERT_ID()\`); upsert is
 > \`ON DUPLICATE KEY UPDATE\`; \`UPDATE … FROM\` is written \`UPDATE a JOIN b … SET\`.`,
+        },
+        {
+          kind: "prose",
+          markdown: `## 🧭 Writing data — pick the right tool
+
+- **\`DELETE … WHERE\`** — remove specific rows; transactional, fires triggers, supports \`RETURNING\`.
+- **\`TRUNCATE\`** — wipe **all** rows fast (no per-row work; \`RESTART IDENTITY\` resets sequences). Can't filter, heavier lock. Use to empty a table.
+- **\`INSERT … ON CONFLICT (key) DO UPDATE\`** — the go-to **upsert** on a unique/PK conflict; supports \`RETURNING\`.
+- **\`MERGE\`** — when you need **branching** (insert *and* update *and* delete) against a joined source. More powerful, but no \`RETURNING\`.
+- **\`UPDATE … FROM\` / \`DELETE … USING\`** — when the change depends on **another table** (join inside the write).
+
+**Rule of thumb:** plain upsert on a key → \`ON CONFLICT\`; multi-branch / join-driven → \`MERGE\`; empty a whole table → \`TRUNCATE\`; everything else → \`DELETE/UPDATE … WHERE\`.`,
         },
         {
           kind: "sql-runnable",
@@ -675,6 +764,20 @@ big table usually means a missing index.
 > **vs MySQL:** No GIN/GiST/BRIN or partial indexes in MySQL; it has FULLTEXT/SPATIAL instead.`,
         },
         {
+          kind: "prose",
+          markdown: `## 🧭 Which index — and when NOT to
+
+- **B-tree (default)** — equality, ranges (\`<, >, BETWEEN\`), \`ORDER BY\`, and \`LIKE 'prefix%'\`. ~90% of indexes.
+- **GIN** — "many values per row": arrays (\`@>\`, \`&&\`), JSONB (\`@>\`, \`?\`), full-text (\`tsvector\`).
+- **BRIN** — huge tables with **natural ordering** (append-only timestamps/ids); tiny, cheap, great for time-series ranges.
+- **Partial index** (\`… WHERE status = 'pending'\`) — index only the hot subset; smaller and faster.
+- **Expression index** (\`LOWER(email)\`) — when you query a function of a column.
+
+**When NOT to index:** high-write tables (every write maintains every index), tiny tables (a seq scan is faster), and very low-cardinality columns (a plain boolean rarely helps).
+
+**Rule of thumb:** start with a B-tree on the columns you filter/sort by; switch to GIN for arrays/JSONB/FTS; then confirm it's used with \`EXPLAIN\` (look for *Index Scan*, not *Seq Scan*).`,
+        },
+        {
           kind: "sql-runnable",
           title: "Create an index, then read the plan",
           resetBefore: true,
@@ -725,6 +828,16 @@ Postgres can store and query arrays directly. Indexing is **1-based**.
 > **vs MySQL:** No native array type — people emulate with JSON or a join table.`,
         },
         {
+          kind: "prose",
+          markdown: `## 🧭 Array column vs. a join table vs. JSONB
+
+- **Array column** (\`text[]\`) — a **small, bounded list of scalars** that belongs to the row and you mostly read whole or test membership (tags, flags). Index with GIN for \`@>\`/\`&&\`.
+- **Join table** (the normalized default) — when the items are **entities** with their own attributes, need foreign keys/constraints, or you aggregate across them ("top tags overall", "products per tag"). The right call for real relationships.
+- **JSONB** — heterogeneous or nested structure whose shape varies per row.
+
+**Rule of thumb:** a few simple labels read with the row → array; anything you'd join, count, or constrain on → a proper join table. Arrays trade query flexibility for locality.`,
+        },
+        {
           kind: "sql-runnable",
           title: "Search by tags (overlap) and expand (unnest)",
           sql: `SELECT name, tags
@@ -771,6 +884,16 @@ ORDER BY tag;`,
 - \`? 'key'\` tests key existence; \`?|\` / \`?&\` test any/all of several keys.
 
 > **vs MySQL:** MySQL's \`JSON\` is closer to PG's \`JSON\` (no GIN, no \`@>\`/\`?\`); use \`JSON_EXTRACT\`/\`JSON_CONTAINS\`.`,
+        },
+        {
+          kind: "prose",
+          markdown: `## 🧭 JSONB vs. JSON vs. plain columns
+
+- **Plain columns** — for fields you **filter, join, sort, or constrain** on. Always prefer real columns for known, structured attributes: typed, indexable, validated.
+- **JSONB** — **semi-structured / variable** data (per-row differing keys, third-party payloads, sparse attributes). Binary, GIN-indexable, supports \`@>\`, \`?\`, \`->>\`.
+- **JSON (text)** — only when you must **preserve exact formatting/key order** and won't query inside it. No GIN, slower access. Rare.
+
+**Rule of thumb:** structured & queried → columns; flexible & queried → JSONB; raw blob you just store → JSON. Don't model your whole schema as one JSONB column — you lose constraints and the planner's help.`,
         },
         {
           kind: "sql-runnable",
@@ -822,6 +945,17 @@ Use a view for frequently-changing data; a materialized view for expensive aggre
 slightly stale.
 
 > **vs MySQL:** Materialized views don't exist in MySQL — emulate with a table refreshed on a schedule.`,
+        },
+        {
+          kind: "prose",
+          markdown: `## 🧭 View vs. Materialized View vs. CTE
+
+- **View** — a named query, **always fresh**, recomputed on each read. Use to encapsulate/standardize logic over **frequently-changing** data. No storage, no staleness.
+- **Materialized View** — stores the **precomputed result** for fast reads; must be \`REFRESH\`ed. Use for **expensive aggregations** where slightly stale data is OK (dashboards, reports).
+- **CTE** — scoped to a **single query**, not reusable elsewhere. Use for readability within one statement, not as a persistent object.
+- **Table** — when you need to write to it, index it heavily, or share a large result widely.
+
+**Rule of thumb:** reusable logic that must be live → view; expensive and staleness-tolerant → materialized view (refresh on a schedule); one-query readability → CTE.`,
         },
         {
           kind: "sql-runnable",
@@ -1058,6 +1192,16 @@ Memorize the *shape*, adapt to the problem:
 3. **Delete duplicates** — keep \`MIN(id)\` per key, delete the rest.
 4. **Running total that resets per group** — \`SUM(x) OVER (PARTITION BY g ORDER BY t ROWS UNBOUNDED PRECEDING)\`.
 5. **Pivot** — \`SUM(CASE WHEN … THEN … END)\` grouped.`,
+        },
+        {
+          kind: "prose",
+          markdown: `## 🧭 "Find rows with no match" — three ways
+
+- **\`LEFT JOIN … WHERE right.id IS NULL\`** — usually the **fastest** anti-join (the planner uses a hash/merge anti-join). Great default.
+- **\`NOT EXISTS\` (correlated)** — equally correct and **NULL-safe**; reads clearly as "no such row". Often planned identically to the LEFT JOIN form.
+- **\`NOT IN (subquery)\`** — **avoid** when the subquery column can be NULL: a single NULL makes the predicate UNKNOWN and you get **zero rows**. Only safe if the column is \`NOT NULL\` (or you add \`WHERE col IS NOT NULL\`).
+
+**Rule of thumb:** default to \`NOT EXISTS\` or \`LEFT JOIN … IS NULL\`; never \`NOT IN\` against a nullable subquery.`,
         },
         {
           kind: "sql-runnable",

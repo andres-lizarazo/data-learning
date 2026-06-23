@@ -101,6 +101,11 @@ exercises. Local-first; deployment later.
       MERGE-vs-ON CONFLICT trade-off; graded writable-CTE exercise
 - [x] **Pagination & Performance** lesson: keyset/seek pagination via row-value comparison vs slow
       OFFSET, EXISTS/semi-join vs IN, anti-joins, EXPLAIN to confirm index use; graded keyset exercise
+- [x] **"🧭 When to use what" decision callouts** added to 12 decision-heavy lessons (subquery vs
+      CTE vs JOIN; IN vs EXISTS; which join; WHERE vs HAVING / GROUP BY vs window; ROW_NUMBER vs RANK
+      vs DENSE_RANK; UNION vs UNION ALL; DELETE/TRUNCATE/ON CONFLICT/MERGE; index-type choice; array
+      vs join-table vs JSONB; JSONB vs JSON vs columns; view vs matview vs CTE; NOT IN vs NOT EXISTS
+      vs LEFT JOIN IS NULL) — each with concrete cues, the *why*, and a one-line rule of thumb
 - [x] **PostgreSQL module** (27 lessons covering all 26 `concepts.md` sections): SELECT/
       WHERE, JOINs (+LATERAL), GROUP BY/HAVING/FILTER/percentiles, CASE, subqueries/EXISTS,
       CTEs (+recursive), window functions, set ops, INSERT/UPDATE/DELETE/UPSERT,
