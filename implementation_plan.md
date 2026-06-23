@@ -79,7 +79,13 @@ exercises. Local-first; deployment later.
       UNNEST (array-of-composite sessionization — the user's example, verified Postgres-compatible),
       ROW_NUMBER/PARTITION, COUNT(DISTINCT), window frames + `SUM() OVER ()`, FILTER pivots +
       ROLLUP, and gaps-and-islands streaks — with step-by-step explanations and 4 graded exercises
-- [x] **PostgreSQL module** (20 lessons covering all 26 `concepts.md` sections): SELECT/
+- [x] **Analytics Patterns (Interview Pack)** lesson (grounded in 2026 SQL-interview research —
+      the recurring "7 patterns" + analytics extensions): period-over-period MoM growth (LAG +
+      NULLIF), 7-day rolling average (ROWS frame), **gap-based sessionization** (30-min rule via
+      cumulative SUM of session-start flags), dedupe-keep-latest (ROW_NUMBER DESC), NTILE
+      segmentation, and cohort retention (first-activity cohort + month-offset pivot) — all
+      verified in PGlite, with 3 graded exercises
+- [x] **PostgreSQL module** (21 lessons covering all 26 `concepts.md` sections): SELECT/
       WHERE, JOINs (+LATERAL), GROUP BY/HAVING/FILTER/percentiles, CASE, subqueries/EXISTS,
       CTEs (+recursive), window functions, set ops, INSERT/UPDATE/DELETE/UPSERT,
       transactions, DDL/constraints, indexes/EXPLAIN, arrays, JSONB, views/matviews,

@@ -1352,5 +1352,252 @@ above. Order matters where the prompt says so.`,
         },
       ],
     },
+
+    // ───────────────────────────────── 21. Analytics Patterns (Interview Pack)
+    {
+      id: "analytics-patterns",
+      title: "Analytics Patterns (Interview Pack)",
+      summary:
+        "The patterns analytics/DE interviews keep reusing — period-over-period (LAG), rolling averages, gap-based sessionization, dedupe-keep-latest, NTILE segmentation, and cohort retention. All Postgres, all runnable.",
+      minutes: 32,
+      blocks: [
+        {
+          kind: "prose",
+          markdown: `## The shapes ~90% of SQL tests reduce to
+
+Interviewers reuse a small set of patterns. You've already met several earlier in this track:
+
+| Pattern | Where |
+|---|---|
+| Filter & aggregate | *GROUP BY* lesson |
+| Conditional joins (LEFT JOIN + IS NULL) | *JOINs* / *Interview Patterns* |
+| Top-N per group | *Window Functions* / *Advanced Workshop* |
+| Hierarchy / manager chain (recursive CTE / self-join) | *CTEs* / *JOINs* |
+
+This lesson drills the **analytics-flavored** ones that separate "writes SQL" from "writes
+*analytical* SQL": **period-over-period change, rolling windows, sessionization by inactivity gap,
+deduplication keeping the latest row, NTILE segmentation, and cohort retention.** Edit and re-run each.`,
+        },
+
+        {
+          kind: "prose",
+          markdown: `## 1. Period-over-period — month-over-month growth %
+
+The go-to for any "compare this period to the previous one". \`LAG(x) OVER (ORDER BY period)\` pulls
+the previous row; guard the division with \`NULLIF(prev, 0)\` so a zero or missing prior period doesn't
+blow up.`,
+        },
+        {
+          kind: "sql-runnable",
+          title: "Month-over-month revenue growth",
+          sql: `DROP TABLE IF EXISTS monthly_rev;
+CREATE TABLE monthly_rev (month date, revenue numeric);
+INSERT INTO monthly_rev VALUES
+  ('2026-01-01',1000),('2026-02-01',1500),('2026-03-01',1200),('2026-04-01',1800);
+
+SELECT
+    month,
+    revenue,
+    LAG(revenue) OVER (ORDER BY month) AS prev_month,
+    ROUND(100.0 * (revenue - LAG(revenue) OVER (ORDER BY month))
+          / NULLIF(LAG(revenue) OVER (ORDER BY month), 0), 1) AS mom_growth_pct
+FROM monthly_rev
+ORDER BY month;`,
+        },
+
+        {
+          kind: "prose",
+          markdown: `## 2. Rolling window — 7-day moving average
+
+A frame of \`ROWS BETWEEN 6 PRECEDING AND CURRENT ROW\` is exactly 7 rows (today + the 6 before it).
+Swap \`AVG\` for \`SUM\`/\`COUNT\` for rolling totals. This is the canonical "7-day rolling DAU" question.`,
+        },
+        {
+          kind: "sql-runnable",
+          title: "7-day rolling average of daily active users",
+          sql: `DROP TABLE IF EXISTS dau;
+CREATE TABLE dau (d date, users int);
+INSERT INTO dau
+SELECT g::date, 10 + EXTRACT(day FROM g)::int
+FROM generate_series('2026-01-01','2026-01-10','1 day'::interval) g;
+
+SELECT
+    d,
+    users,
+    ROUND(AVG(users) OVER (ORDER BY d ROWS BETWEEN 6 PRECEDING AND CURRENT ROW), 1) AS rolling_7d_avg
+FROM dau
+ORDER BY d;`,
+        },
+
+        {
+          kind: "prose",
+          markdown: `## 3. Sessionization by inactivity gap (the "30-minute rule")
+
+The other sessionization question (the *Advanced Workshop* did the array-of-events version): raw hit
+rows, and a **new session starts after 30+ minutes of inactivity**. The trick is a two-step window:
+
+1. Flag a row as a session start when the gap from the previous hit exceeds 30 min (or it's the user's
+   first hit) — \`ts - LAG(ts) OVER (…) > interval '30 minutes'\`.
+2. A **running \`SUM\` of those flags** assigns an increasing session number per user — every flag bumps
+   it by one. This "cumulative sum of a boolean" is a pattern worth memorizing.`,
+        },
+        {
+          kind: "sql-runnable",
+          title: "Assign session ids from a 30-minute inactivity gap",
+          sql: `DROP TABLE IF EXISTS hits;
+CREATE TABLE hits (user_id int, ts timestamptz, page text);
+INSERT INTO hits VALUES
+  (1,'2026-01-01 10:00','/a'),(1,'2026-01-01 10:10','/b'),
+  (1,'2026-01-01 10:55','/c'),(1,'2026-01-01 11:00','/d'),
+  (2,'2026-01-01 09:00','/x'),(2,'2026-01-01 12:00','/y');
+
+WITH flagged AS (                                  -- 1) mark each session's first hit
+    SELECT user_id, ts, page,
+        CASE
+            WHEN ts - LAG(ts) OVER (PARTITION BY user_id ORDER BY ts) > interval '30 minutes'
+              OR LAG(ts) OVER (PARTITION BY user_id ORDER BY ts) IS NULL
+            THEN 1 ELSE 0
+        END AS is_new_session
+    FROM hits
+),
+sessions AS (                                      -- 2) running SUM of flags = session number
+    SELECT user_id, ts, page,
+        SUM(is_new_session) OVER (PARTITION BY user_id ORDER BY ts) AS session_no
+    FROM flagged
+)
+SELECT user_id, session_no, COUNT(*) AS hits, MIN(ts) AS started, MAX(ts) AS ended
+FROM sessions
+GROUP BY user_id, session_no
+ORDER BY user_id, session_no;`,
+        },
+
+        {
+          kind: "prose",
+          markdown: `## 4. Deduplicate — keep the **latest** row per key
+
+"One row per user — their most recent order." Number rows within each key by a descending sort, keep
+\`rn = 1\`. (Add a tiebreaker like \`id DESC\` so it's deterministic when timestamps collide.) Same idea
+as top-N, applied to dedup.`,
+        },
+        {
+          kind: "sql-runnable",
+          title: "Most recent order per user",
+          sql: `SELECT user_id, id AS latest_order_id, created_at, total
+FROM (
+    SELECT o.*,
+           ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC, id DESC) AS rn
+    FROM orders o
+) ranked
+WHERE rn = 1
+ORDER BY user_id;`,
+        },
+
+        {
+          kind: "prose",
+          markdown: `## 5. Segmentation — NTILE buckets
+
+\`NTILE(n)\` splits ordered rows into \`n\` roughly equal buckets — quartiles, deciles, "top 10%". The
+staple of customer segmentation, A/B cohorts, and fraud scoring.`,
+        },
+        {
+          kind: "sql-runnable",
+          title: "Bucket products into price quartiles",
+          sql: `SELECT
+    name,
+    price,
+    NTILE(4) OVER (ORDER BY price DESC) AS price_quartile
+FROM products
+ORDER BY price DESC;`,
+        },
+
+        {
+          kind: "prose",
+          markdown: `## 6. Cohort retention
+
+The product-DS classic: group users by the period of their **first** activity (their *cohort*), then
+measure how many are still active N periods later. Steps: find each user's first month, compute each
+activity's **month offset** from that cohort, then pivot the distinct user counts per offset with
+\`COUNT(DISTINCT …) FILTER (WHERE month_no = k)\`.`,
+        },
+        {
+          kind: "sql-runnable",
+          title: "Cohort table — month-0 and month-1 retention",
+          sql: `DROP TABLE IF EXISTS activity;
+CREATE TABLE activity (user_id int, activity_month date);
+INSERT INTO activity VALUES
+  (1,'2026-01-01'),(1,'2026-02-01'),       -- user 1: Jan cohort, retained in Feb
+  (2,'2026-01-01'),                          -- user 2: Jan cohort, churned
+  (3,'2026-02-01'),(3,'2026-03-01');         -- user 3: Feb cohort, retained in Mar
+
+WITH first_m AS (
+    SELECT user_id, MIN(activity_month) AS cohort
+    FROM activity GROUP BY user_id
+),
+offsets AS (
+    SELECT f.cohort, a.user_id,
+        (EXTRACT(year FROM a.activity_month) * 12 + EXTRACT(month FROM a.activity_month))
+      - (EXTRACT(year FROM f.cohort)         * 12 + EXTRACT(month FROM f.cohort)) AS month_no
+    FROM first_m f
+    JOIN activity a USING (user_id)
+)
+SELECT
+    cohort,
+    COUNT(DISTINCT user_id) FILTER (WHERE month_no = 0) AS month_0,
+    COUNT(DISTINCT user_id) FILTER (WHERE month_no = 1) AS month_1
+FROM offsets
+GROUP BY cohort
+ORDER BY cohort;`,
+        },
+
+        {
+          kind: "prose",
+          markdown: `## Graded exercises
+
+These run against the sample e-commerce DB (reset before each check). Order matters where stated.`,
+        },
+        {
+          kind: "sql-challenge",
+          title: "Keep each user's latest order",
+          prompt:
+            "Return one row per user who has orders: `user_id`, `order_id` (their **most recent** order by `created_at`), and that order's `total`. Order by `user_id`.\n\n*Pattern: dedupe-keep-latest — ROW_NUMBER ordered DESC, keep rn = 1.*",
+          starterSql:
+            "SELECT user_id, id AS order_id, total\nFROM (\n  -- ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC, id DESC)\n) x\nWHERE rn = 1\nORDER BY user_id;",
+          solution:
+            "SELECT user_id, id AS order_id, total FROM (SELECT o.*, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC, id DESC) AS rn FROM orders o) x WHERE rn = 1 ORDER BY user_id;",
+          ordered: true,
+          hints: [
+            "Sort **descending** inside the window so the newest gets `rn = 1`.",
+            "Add `id DESC` as a tiebreaker for determinism.",
+          ],
+          xp: 80,
+        },
+        {
+          kind: "sql-challenge",
+          title: "Change vs. the user's previous paid order",
+          prompt:
+            "For each **paid** order, return `user_id`, `total`, and `vs_prev` — the total minus that user's *previous* paid order total (NULL for their first). Order by `user_id`, then `created_at`.\n\n*Pattern: period-over-period with LAG partitioned per user.*",
+          starterSql:
+            "SELECT user_id, total,\n  -- total - LAG(total) OVER (PARTITION BY user_id ORDER BY created_at) AS vs_prev\nFROM orders\nWHERE status = 'paid'\nORDER BY user_id, created_at;",
+          solution:
+            "SELECT user_id, total, total - LAG(total) OVER (PARTITION BY user_id ORDER BY created_at) AS vs_prev FROM orders WHERE status = 'paid' ORDER BY user_id, created_at;",
+          ordered: true,
+          hints: ["`LAG(total) OVER (PARTITION BY user_id ORDER BY created_at)` is the previous total."],
+          xp: 80,
+        },
+        {
+          kind: "sql-challenge",
+          title: "Split products into two price tiers",
+          prompt:
+            "Using `NTILE(2)` over `price` **descending**, return each product's `name` and its `tier` (1 = pricier half, 2 = cheaper half). Order by `price` descending, then `name`.\n\n*Pattern: NTILE segmentation.*",
+          starterSql:
+            "SELECT name,\n  -- NTILE(2) OVER (ORDER BY price DESC) AS tier\nFROM products\nORDER BY price DESC, name;",
+          solution:
+            "SELECT name, NTILE(2) OVER (ORDER BY price DESC) AS tier FROM products ORDER BY price DESC, name;",
+          ordered: true,
+          hints: ["`NTILE(2) OVER (ORDER BY price DESC)` splits the 5 rows into a 3/2 top/bottom."],
+          xp: 70,
+        },
+      ],
+    },
   ],
 };
