@@ -229,7 +229,10 @@ Prioritized, phase by phase. Each phase is independently shippable.
       unsolved filters (covers the "review" need); links back to each lesson
 - [x] Lesson bookmarks (`progressStore.bookmarks`), toggle on the lesson header, surfaced on
       the Profile page
-- [ ] Per-lesson notes + full spaced-repetition scheduling — still pending
+- [x] Per-lesson notes: collapsible markdown panel on every lesson
+      (`components/lesson/LessonNotes.tsx`), persisted in `progressStore.notes`
+- [ ] Full spaced-repetition scheduling (flashcards block + SM-2 review queue) — planned
+      as Phase 6 of the 2026-07 curriculum expansion (see below)
 
 ### Phase C — Richer visualizers (DONE)
 - [x] Execution Visualizer: **call-stack panel** (tracer captures the active call stack per
@@ -256,11 +259,124 @@ Prioritized, phase by phase. Each phase is independently shippable.
 - [x] Knowledge-check quiz added to the pandas-plotting viz lesson
 - [x] All new pandas/sklearn/DSA challenge solutions verified against real libraries (uv venv)
 
-### Phase D — More content
-- [ ] DSA: heaps, tries, sliding window, two-heaps, backtracking, more DP patterns
-- [ ] Pandas: time series, window functions, pivot/melt, method chaining
-- [ ] New module: **scikit-learn / intro ML** (train/test split, a simple model, metrics)
-- [ ] Add challenges to the visualization lessons; grow every starter idea into full depth
+## 2026-07 Curriculum Expansion — Data/Analytics Engineer path
+
+> Goal: grow the platform into a full Data Engineer / Analytics Engineer curriculum.
+> Four tracks in learning order: **Python → SQL → Software Design → Data Engineering**.
+> New concept modules stay interactive: SOLID/patterns run as real Python in Pyodide;
+> data modeling / warehousing / dbt labs run as real SQL in PGlite (star-schema seed);
+> Spark/Databricks pair concept quizzes with pandas-simulated DataFrame exercises.
+
+### Phase 1 — Structure + quick UX wins (DONE)
+- [x] `Track` union extended: "Python" | "SQL" | "Software Design" | "Data Engineering"
+- [x] **Learning-path roadmap page** (`/roadmap`): numbered stages by track, per-module
+      progress bars, "you are here" marker, continue CTA; linked from TopBar + ⌘K
+- [x] **Keyboard shortcuts**: Cmd/Ctrl+Enter runs/submits the focused editor (all runnable/
+      challenge blocks + both playgrounds), `[` / `]` prev/next lesson, `?` shortcuts overlay
+- [x] **Per-lesson notes** (see Phase B above)
+- [x] **Settings dialog** (TopBar gear): export/import a JSON backup of all progress, notes
+      & drafts (the local-first cross-device path from the Phase E decision), full reset
+- [x] New module **Python OOP** (`python-oop`, 6 lessons, deep): classes & objects, dunder
+      methods, inheritance & super(), composition over inheritance, dataclasses, properties/
+      classmethods — prerequisite for the Software Design track; all challenge solutions
+      verified in real Python
+### Phase 2 — Warehouse foundation (DONE)
+- [x] **Named SQL seeds**: `seeds.ts` now exports `SEEDS` (`ecommerce` + new `warehouse`
+      star schema: `dim_date` via generate_series, `dim_customer` with real SCD2 history,
+      `dim_product`, `fact_sales`, plus `staging.raw_orders` / `staging.customer_updates`);
+      seeds start with `DROP SCHEMA ... CASCADE` so switches can't leak tables
+- [x] **Seed plumbing**: `sqlClient.ensureSeed()` + `seedId` on `exec/reset/queryRows`;
+      `SqlRunnableBlock.seedId` / `SqlChallengeBlock.seedId`; SchemaExplorer is seed-aware;
+      LessonPage derives the panel's seed from the lesson's SQL blocks; SqlPlayground got a
+      dataset picker
+- [x] **Curriculum-wide SQL test** (`src/content/lessons.sql.test.ts`, replaces the
+      postgres-only one): every sql-runnable/sql-challenge in EVERY module runs in real
+      PGlite against its declared seed, sequentially per lesson like a learner would; plus
+      a seed-switching isolation test
+- [x] New module **Data Fundamentals** (5 lessons): landscape & roles, OLTP vs OLAP with
+      real EXPLAIN plans, file formats with a row-vs-columnar Python simulation, batch vs
+      streaming, the data lifecycle
+- [x] New module **Data Modeling** (9 lessons): normalization, grain, star schemas,
+      fact types & additivity, surrogate keys, date dimension, **SCD 0–3 with a live
+      close-and-insert walkthrough**, as-was vs as-is analytics, OBT/Data Vault
+- [x] New module **Warehouse, Lake & Lakehouse** (7 lessons): staging→core→marts with real
+      PG schemas, ETL vs ELT, data lakes, Delta/Iceberg with a **Python transaction-log
+      simulation + time-travel challenge**, medallion bronze/silver/gold lab, incremental
+      loads & CDC, partitioning & pruning with EXPLAIN
+- [x] PostgreSQL module +3 lessons (now 31): Bulk Loading & Data Generation, Table
+      Partitioning (LIST/RANGE, drop-partition maintenance), Roles & Permissions (concepts)
+- [x] Spike results: PGlite (Postgres 18.3) supports declarative partitioning + EXPLAIN
+      pruning and MERGE; `COPY FROM STDIN` hangs (no client stream) → taught conceptually
+      with set-based alternatives
+### Phase 3 — Software Design track (DONE)
+- [x] New module **SOLID Principles** (7 lessons): coupling/cohesion, then one lesson per
+      principle — each with a *runnable violation* and a refactor-to-pass-the-tests
+      challenge (god-function split, pluggable discounts, bird-hierarchy LSP fix,
+      capability-split ISP, constructor-injection DIP) + a capstone messy-pipeline refactor
+- [x] New module **Design Patterns** (6 lessons): Factory & Builder, Singleton/Borg (+ why
+      to be careful), Strategy & Template Method, Adapter/Facade/Decorator (incl. writing
+      `@memoize`), Observer/pub-sub (build an EventBus), and "Patterns in Data Tools"
+      (mapping Airflow/dbt/Spark onto the patterns)
+- [x] New module **Architecture Patterns** (5 lessons): layered → hexagonal/ports &
+      adapters (runnable mini-app), DI + composition root (cached UserService challenge),
+      functional composition (implement `compose`), idempotency & retries (implement
+      `retry`), choosing an architecture (script → modular → orchestrated)
+- [x] **`scripts/verify-python-challenges.mjs`**: extracts every Python challenge from the
+      curriculum (esbuild-bundled) and runs each reference solution against its tests in
+      real python3 — 61 challenges verified, all pass (2 sklearn ones skip without the lib)
+### Phase 4 — Spark / Databricks / dbt (DONE)
+- [x] **`pyspark` reworked → "Spark & PySpark"** (2 → 9 lessons, starter → deep, moved to
+      the Data Engineering track; id kept so saved progress survives): architecture with a
+      runnable hash-partitioning simulation, DataFrame API with **pandas-graded "translate
+      the PySpark" challenges**, joins & shuffles, Spark SQL as ANSI labs in PGlite (with
+      dialect table), window functions (SQL + pandas), performance (partitions/caching/AQE
+      + a runnable **skew & salting simulation**), reading/writing (save modes, partitioned
+      writes)
+- [x] New module **Databricks** (7 lessons): platform (clusters/jobs/DBR/Photon), **Delta
+      Lake with a real Postgres-15 MERGE lab** + predict-the-MERGE challenge, medallion +
+      Auto Loader, Unity Catalog & lineage, Jobs/Workflows/DLT, Databricks SQL (portable
+      window-function drills), rapid-fire cert-prep quiz set
+- [x] New module **dbt** (6 lessons): the analytics-engineering workflow, **models & ref()
+      built live as chained CREATE VIEWs** (+ DAG shown via the graph visualizer in BFS
+      waves), materializations (incremental = high-water mark, run both stages),
+      **tests compiled by hand** (unique/relationships/accepted_values as SQL returning
+      violating rows), sources/seeds/snapshots (= the SCD2 you built), Jinja/macros (Python
+      simulation of template compilation) + project-structure conventions
+### Phase 5 — Pipeline operations (DONE)
+- [x] New module **Orchestration (Airflow)** (5 lessons): DAGs (graph-viz execution
+      waves), Airflow core (TaskFlow, operators, XCom), scheduling/logical dates/backfills
+      + an idempotent-partition-load challenge, **capstone: build a mini orchestrator**
+      (Kahn's topological sort + cycle detection + runner, 130xp), sensors & ecosystem
+- [x] New module **Data Quality** (5 lessons): DQ dimensions, constraints as defense
+      (expected-error labs), **reconciliation audits with a real planted discrepancy in
+      the warehouse seed** (staging order 116 re-delivered with a different qty),
+      Great-Expectations-style validation in Python, observability & incident response
+- [x] New module **Streaming & Kafka** (4 lessons, starter): event vs processing time &
+      watermarks, Kafka topics/partitions/offsets/consumer groups (runnable simulation),
+      windowing + delivery semantics (implement tumbling_counts), Structured Streaming +
+      lambda/kappa
+- [x] New module **Python Engineering** (7 lessons): type hints (TypedDict/Protocol),
+      errors done right (custom exceptions + raise-from config parser), generators
+      (visualized laziness + chunked()), context managers (transactional-dict challenge),
+      files & pathlib (real round-trip file I/O), pytest concepts (build a mini test
+      runner), pydantic-style schema validation
+### Phase 6 — Flashcards & spaced repetition (DONE — closes the old Phase B item)
+- [x] New **`flashcards` block kind** (`FlashcardsBlock`: title + front/back cards) rendered
+      by `components/lesson/blocks/Flashcards.tsx` via a shared
+      `components/review/FlashcardStudy.tsx` (tap-to-flip, Again/Good/Easy)
+- [x] **`store/reviewStore.ts`**: SM-2-lite scheduler as a pure, unit-tested `schedule()`
+      (ease 2.5 default, floor 1.3; again → today; good → ×ease; easy → ×ease×1.3 with
+      ease growth; 365-day cap); state persisted to localStorage (`pylearn-review`),
+      keyed `lessonId::front`; card CONTENT stays in lesson data (no duplication)
+- [x] **`/review` page**: due queue across the whole curriculum (new cards due
+      immediately), with lesson attribution; TopBar "Review" link with live due-count
+      badge; ⌘K entry
+- [x] **6 decks / 40 cards** authored into concept-heavy lessons: SCD types
+      (data-modeling), Databricks/Delta vocabulary (cert-prep), pattern intents
+      (design-patterns), Kafka vocabulary (streaming), data-landscape essentials
+      (data-fundamentals), storage-architecture vocabulary (warehouse-lakehouse)
+- [x] Unit tests: scheduler transitions, ease floor, interval cap, curriculum-wide card-id
+      uniqueness (`store/reviewStore.test.ts` — 9 tests)
 
 ### Phase E — Platform & accounts
 - [x] Deploy the static app to **GitHub Pages** via Actions (`.github/workflows/deploy.yml`,

@@ -11,6 +11,8 @@ const Playground = lazy(() => import("./pages/Playground"));
 const SqlPlayground = lazy(() => import("./pages/SqlPlayground"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Practice = lazy(() => import("./pages/Practice"));
+const Roadmap = lazy(() => import("./pages/Roadmap"));
+const Review = lazy(() => import("./pages/Review"));
 
 export default function App() {
   return (
@@ -23,6 +25,8 @@ export default function App() {
         <Route path="sql-playground" element={<SqlPlayground />} />
         <Route path="profile" element={<Profile />} />
         <Route path="practice" element={<Practice />} />
+        <Route path="roadmap" element={<Roadmap />} />
+        <Route path="review" element={<Review />} />
         <Route path="*" element={<Home />} />
       </Route>
     </Routes>

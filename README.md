@@ -7,11 +7,18 @@ no installs: a full CPython interpreter runs client-side via
 [Pyodide](https://pyodide.org), and a full Postgres engine via
 [PGlite](https://pglite.dev) — both WebAssembly.
 
-The platform is organized into two **tracks**:
+The platform is organized into four **tracks**, in recommended learning order (see the
+in-app **/roadmap** page for the full numbered path):
 
-- **Python** — basics → data structures → DSA → libraries → NumPy/Pandas → viz → ML.
+- **Python** — basics → data structures → **OOP** → DSA → libraries → NumPy/Pandas → viz → ML.
 - **SQL** — a **PostgreSQL** subsection where every example runs against a seeded
   e-commerce database and most lessons end with a checked query exercise.
+- **Software Design** — SOLID principles, classic design patterns, and architecture
+  patterns (hexagonal, DI, reliability) — all as runnable Python with
+  refactor-to-pass-the-tests challenges.
+- **Data Engineering** — data fundamentals, dimensional modeling (star schemas, SCD2),
+  warehouse/lakehouse/medallion — with more coming: Spark & Databricks, dbt,
+  orchestration, data quality, streaming.
 
 ## What you can do
 
@@ -29,7 +36,15 @@ The platform is organized into two **tracks**:
   SQL lessons render results as a grid, ship a **schema explorer** for the sample DB, and
   grade exercises by comparing your result set to a reference solution. There's also a
   free-form **SQL Playground**.
-- **Track progress** — XP, daily streak, and per-lesson completion, saved locally.
+- **Track progress** — XP, daily streak, and per-lesson completion, saved locally; a
+  **learning-path roadmap** (`/roadmap`) shows where you are and what's next.
+- **Remember it** — flashcard decks in concept lessons feed a **spaced-repetition
+  review queue** (`/review`, SM-2-style scheduling, due-count badge in the top bar).
+- **Take notes** — a personal notes panel on every lesson, saved with your progress.
+- **Back up & restore** — export/import all progress, notes, and code drafts as JSON
+  from the settings dialog (move between devices without any account).
+- **Keyboard shortcuts** — `⌘/Ctrl+Enter` runs the focused editor, `[` / `]` jump
+  between lessons, `⌘K` searches, `?` shows the cheat sheet.
 
 ## Curriculum
 
@@ -37,6 +52,8 @@ The platform is organized into two **tracks**:
 |---|---|---|
 | 🐍 Python Basics | **deep** | types, operators, strings, conditionals, **loops (visualized)**, functions, comprehensions, errors |
 | 🧱 Data Structures | **deep** | lists, tuples, dicts, sets, stacks/queues (with visualizers) |
+| 🏗️ Python OOP | **deep** | classes & objects, dunder methods, inheritance & super(), composition over inheritance, dataclasses, properties/classmethods — the bridge into the Software Design track |
+| 🛠️ Python Engineering | **deep** | type hints (TypedDict/Protocol), custom exceptions & `raise from`, generators & lazy pipelines, context managers (build a transactional dict), files & pathlib (real I/O), pytest concepts (build a mini test runner), pydantic-style validation |
 | 🧠 DSA — Algorithms | **deep** | two pointers, hashing (hash-table viz), sliding window, recursion, backtracking, sorting, binary search, linked lists, trees, heaps, graphs (BFS/DFS), tries, DP (incl. coin change) — with a call-stack panel + watch variables in the visualizer |
 | 🤖 Intro to ML | starter | scikit-learn in the browser: train/test split, fit/evaluate, decision-tree classifier |
 | 📦 Core Libraries | **deep** | collections/itertools, datetime/random/json, math/statistics, functools (+ challenges) |
@@ -50,6 +67,32 @@ The platform is organized into two **tracks**:
 | Module | Status | Highlights |
 |---|---|---|
 | 🐘 PostgreSQL | **deep** | 28 lessons: SELECT/WHERE, JOINs (+LATERAL), GROUP BY/HAVING/FILTER, CASE, subqueries/EXISTS, CTEs (+recursive), window functions, set ops, INSERT/UPDATE/DELETE/UPSERT, transactions, DDL/constraints, indexes/EXPLAIN, arrays, JSONB, views/matviews, functions/triggers (PL/pgSQL), string/date/math/NULL functions, full-text search, interview patterns, an **Advanced Query Workshop** (multi-CTE pipelines: UNNEST + window + FILTER + ROLLUP + gaps-and-islands), an **Analytics Patterns (Interview Pack)** (period-over-period/LAG, rolling averages, gap-based sessionization, dedupe-keep-latest, NTILE segmentation, cohort retention), a **Funnel Conversion** lesson (loose vs. strict ordered funnels), a **Recursive CTEs — Manager Chains & Trees** lesson (walk hierarchies up/down), **Pivot & Unpivot** (FILTER pivot + VALUES/LATERAL unpivot), **Statistics, Percentiles & Histograms** (median with/without `PERCENTILE_CONT`, `percent_rank`/`cume_dist`, `width_bucket`), **Data-Modifying CTEs & MERGE** (writable CTEs + `MERGE` upserts), **Pagination & Performance** (keyset/seek pagination, EXISTS vs IN, anti-joins), and a **Data Engineering & ETL Patterns** lesson (incremental load/watermark, SCD Type 2, calendar/date dimension, dynamic pivot, plus a T-SQL→PostgreSQL translation map) — each runnable against a seeded e-commerce DB, most with a graded exercise. Many lessons open with a **"🧭 When to use what"** decision guide. Includes "vs MySQL" notes throughout. |
+
+### Software Design track
+
+| Module | Status | Highlights |
+|---|---|---|
+| 📐 SOLID Principles | **deep** | coupling & cohesion, then S-O-L-I-D one by one — every principle shown as a runnable violation, fixed via a refactor-to-pass-the-tests challenge, closing with a messy-pipeline capstone |
+| 🧩 Design Patterns | **deep** | Factory & Builder, Singleton/Borg, Strategy & Template Method, Adapter/Facade/Decorator (write your own `@memoize`), Observer (build an EventBus), and how Airflow/dbt/Spark are made of these patterns |
+| 🏛️ Architecture Patterns | **deep** | layered → hexagonal (ports & adapters mini-app), dependency injection & composition roots, functional pipeline composition (implement `compose`), idempotency & retries (implement `retry`), choosing architectures by stage |
+
+### Data Engineering track
+
+| Module | Status | Highlights |
+|---|---|---|
+| 🧭 Data Fundamentals | **deep** | data-team roles & the modern stack, OLTP vs OLAP (real `EXPLAIN` plans on a 20k-row table), file formats (CSV/JSON/Avro/Parquet with a row-vs-columnar Python simulation), batch vs streaming, the data lifecycle |
+| 💠 Data Modeling | **deep** | normalization → grain → **star schemas** (Kimball), fact-table types & additivity, surrogate keys, the date dimension, **SCD Type 2 hands-on** (close-and-insert on a real dimension with history), as-was vs as-is analytics, One Big Table & Data Vault — every lab runs on a seeded **warehouse star schema** in PGlite |
+| 🏔️ Warehouse, Lake & Lakehouse | **deep** | staging→core→marts built with real Postgres schemas, ETL vs ELT, data lakes & the swamp problem, **Delta/Iceberg table formats** (build a mini transaction log + time travel in Python), **medallion bronze/silver/gold lab**, incremental loads & CDC (high-water mark, idempotent anti-join), partitioning & pruning with `EXPLAIN` |
+| ⚡ Spark & PySpark | **deep** | driver/executors/partitions (hash-partitioning simulation), DataFrame API with **pandas-graded translation challenges**, joins & shuffles (broadcast vs sort-merge), Spark SQL as runnable ANSI labs, window functions, performance (**skew & salting simulation**, caching, AQE), reading/writing (save modes, partitioned writes) |
+| 🧱 Databricks | **deep** | workspace/clusters/Photon, **Delta Lake MERGE run for real** (PG15) + time travel & VACUUM, medallion + Auto Loader, Unity Catalog & lineage, Jobs/Workflows/DLT, Databricks SQL drills, rapid-fire cert-prep quizzes |
+| 🔶 dbt | **deep** | models & `ref()` DAGs built live as chained views, materializations (incremental = high-water mark), **dbt tests written by hand as SQL**, sources/seeds/snapshots (=SCD2), Jinja & macros, project-structure conventions |
+| 🗓️ Orchestration (Airflow) | **deep** | DAGs & execution waves, TaskFlow/operators/XCom, logical dates & backfills, idempotent loads — capstone: **build a mini orchestrator** (topological sort + cycle detection) |
+| ✅ Data Quality | **deep** | DQ dimensions, constraints (watch the DB reject bad rows), **reconciliation audits that catch a real planted discrepancy in the seed**, expectations-style validation in Python, observability & incident response |
+| 🌊 Streaming & Kafka | starter | event time vs processing time & watermarks, Kafka partitions/offsets/consumer groups (simulated), tumbling windows (implement one), delivery semantics, Structured Streaming, lambda vs kappa |
+
+> SQL lessons declare which seeded dataset they use: the OLTP **e-commerce** schema or the
+> dimensional **warehouse** star schema (`seedId` on SQL blocks). The SQL Playground has a
+> dataset picker for both.
 
 > Plots render **automatically** whenever your code draws a matplotlib/seaborn figure —
 > no `plt.show()` needed.
@@ -117,10 +160,11 @@ Lessons are plain typed data — no markdown files to wire up. Edit the relevant
 in `src/content/modules/`, appending a `Lesson` whose `blocks` array mixes:
 
 `prose` · `runnable` · `visualized` · `dsa-viz` · `challenge` · `quiz` ·
-`sql-runnable` · `sql-challenge`
+`flashcards` · `sql-runnable` · `sql-challenge`
 
-A module's `track` field (`"Python"` | `"SQL"`, default `"Python"`) controls which
-section it appears under in the sidebar/home. SQL blocks run against the seeded DB in
+A module's `track` field (`"Python"` | `"SQL"` | `"Software Design"` |
+`"Data Engineering"`, default `"Python"`) controls which section it appears under in
+the sidebar/home and where it slots into the `/roadmap` learning path. SQL blocks run against the seeded DB in
 `src/sql/seeds.ts`; a `sql-challenge` is graded by comparing your result set to its
 `solution` query (order-insensitive unless `ordered: true`). See `src/types/lesson.ts`
 for the full shape, `modules/basics.ts` for Python examples, and

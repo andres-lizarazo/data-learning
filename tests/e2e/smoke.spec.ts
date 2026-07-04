@@ -44,6 +44,47 @@ test("challenge runner executes tests in the browser", async ({ page }) => {
   await expect(page.getByText(/\d \/ 3 tests passed/)).toBeVisible({ timeout: 60_000 });
 });
 
+test("roadmap shows the four-track learning path with progress", async ({ page }) => {
+  await page.goto("/roadmap");
+
+  await expect(page.getByRole("heading", { name: /Learning path/i })).toBeVisible();
+  // All four stages render…
+  await expect(page.getByRole("heading", { name: "Software Design" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Data Engineering" })).toBeVisible();
+  // …and a fresh profile is placed at the first module.
+  await expect(page.getByText(/You are here/i)).toBeVisible();
+});
+
+test("review queue serves flashcards and grades them", async ({ page }) => {
+  await page.goto("/review");
+
+  // Decks ship with the curriculum, so a fresh profile has due (new) cards.
+  const card = page.getByRole("button", { name: /Reveal answer/i });
+  await expect(card).toBeVisible();
+  await card.click();
+
+  // Flipping exposes the grading row; grading advances the session.
+  const good = page.getByRole("button", { name: /Good/ });
+  await expect(good).toBeVisible();
+  await good.click();
+  await expect(page.getByText(/1\/\d+ done/)).toBeVisible();
+});
+
+test("warehouse-seed lesson queries the star schema (seed switching end-to-end)", async ({
+  page,
+}) => {
+  await page.goto("/learn/data-modeling/star-schemas");
+
+  // The schema panel reflects the lesson's seed.
+  await expect(page.getByText(/warehouse — \d+ tables/)).toBeVisible();
+
+  // Run the star-join block: PGlite must load the warehouse seed and answer.
+  const runBtn = page.getByRole("button", { name: /^Run$/ }).first();
+  await expect(runBtn).toBeEnabled({ timeout: 90_000 });
+  await runBtn.click();
+  await expect(page.getByText(/Electronics/).first()).toBeVisible({ timeout: 60_000 });
+});
+
 test("user-driven visualizer records & animates frames", async ({ page }) => {
   await page.goto("/learn/dsa/sorting");
 

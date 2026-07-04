@@ -15,6 +15,8 @@ interface Item {
 function buildIndex(): Item[] {
   const pages: Item[] = [
     { id: "p-home", label: "Home", to: "/", kind: "page" },
+    { id: "p-roadmap", label: "Learning path — Roadmap", to: "/roadmap", kind: "page" },
+    { id: "p-review", label: "Review — Flashcard queue", to: "/review", kind: "page" },
     { id: "p-practice", label: "Practice — Challenge bank", to: "/practice", kind: "page" },
     { id: "p-playground", label: "Playground", to: "/playground", kind: "page" },
     { id: "p-sql-playground", label: "SQL Playground", to: "/sql-playground", kind: "page" },

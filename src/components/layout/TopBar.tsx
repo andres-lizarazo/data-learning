@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
-import { Database, Menu, Search, Sparkles, Target } from "lucide-react";
+import { Database, GraduationCap, Map as MapIcon, Menu, Search, Settings, Sparkles, Target } from "lucide-react";
 import { useProgressStore } from "../../store/progressStore";
+import { dueCards, useReviewStore } from "../../store/reviewStore";
 import { usePyodideStore } from "../../store/pyodideStore";
 import Logo from "../ui/Logo";
 import XPBar from "../ui/XPBar";
@@ -9,6 +10,8 @@ import StreakFlame from "../ui/StreakFlame";
 export default function TopBar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
   const xp = useProgressStore((s) => s.xp);
   const streak = useProgressStore((s) => s.streakDays);
+  const cardStates = useReviewStore((s) => s.cards);
+  const due = dueCards(cardStates).length;
   const { ready, booting, status } = usePyodideStore();
 
   return (
@@ -56,6 +59,23 @@ export default function TopBar({ onToggleSidebar }: { onToggleSidebar: () => voi
           <StreakFlame days={streak} />
           <XPBar xp={xp} />
         </Link>
+        <Link to="/roadmap" className="btn-ghost hidden md:inline-flex">
+          <MapIcon className="h-4 w-4 text-accent-violet" />
+          Path
+        </Link>
+        <Link
+          to="/review"
+          className="btn-ghost hidden md:inline-flex"
+          title="Flashcard review queue"
+        >
+          <GraduationCap className="h-4 w-4 text-accent-violet" />
+          Review
+          {due > 0 && (
+            <span className="pill border-accent-violet/40 bg-accent-violet/15 text-[10px] text-violet-200">
+              {due}
+            </span>
+          )}
+        </Link>
         <Link to="/practice" className="btn-ghost hidden md:inline-flex">
           <Target className="h-4 w-4 text-accent-lime" />
           Practice
@@ -68,6 +88,14 @@ export default function TopBar({ onToggleSidebar }: { onToggleSidebar: () => voi
           <Database className="h-4 w-4 text-accent-cyan" />
           SQL
         </Link>
+        <button
+          className="btn-ghost px-2"
+          onClick={() => window.dispatchEvent(new Event("pylearn:open-settings"))}
+          aria-label="Open settings"
+          title="Settings — backup, restore, reset"
+        >
+          <Settings className="h-4 w-4" />
+        </button>
       </div>
     </header>
   );
