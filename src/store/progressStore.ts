@@ -8,6 +8,8 @@ interface ProgressState {
   completedLessons: Record<string, true>;
   solvedChallenges: Record<string, true>;
   bookmarks: Record<string, true>;
+  /** Personal per-lesson markdown notes, keyed by lesson id. */
+  notes: Record<string, string>;
   xp: number;
   streakDays: number;
   lastActiveDay: string | null; // YYYY-MM-DD
@@ -18,6 +20,7 @@ interface ProgressState {
   isChallengeSolved: (id: string) => boolean;
   isBookmarked: (id: string) => boolean;
   toggleBookmark: (id: string) => void;
+  setNote: (id: string, text: string) => void;
   completeLesson: (id: string, xp?: number) => void;
   solveChallenge: (id: string, xp?: number) => void;
   addXp: (amount: number) => void;
@@ -49,6 +52,7 @@ export const useProgressStore = create<ProgressState>()(
       completedLessons: {},
       solvedChallenges: {},
       bookmarks: {},
+      notes: {},
       xp: 0,
       streakDays: 0,
       lastActiveDay: null,
@@ -65,6 +69,14 @@ export const useProgressStore = create<ProgressState>()(
           if (next[id]) delete next[id];
           else next[id] = true;
           return { bookmarks: next };
+        }),
+
+      setNote: (id, text) =>
+        set((s) => {
+          const next = { ...s.notes };
+          if (text.trim()) next[id] = text;
+          else delete next[id];
+          return { notes: next };
         }),
 
       completeLesson: (id, xp = 20) =>
@@ -97,6 +109,7 @@ export const useProgressStore = create<ProgressState>()(
           completedLessons: {},
           solvedChallenges: {},
           bookmarks: {},
+          notes: {},
           xp: 0,
           streakDays: 0,
           lastActiveDay: null,

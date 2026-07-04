@@ -5,6 +5,8 @@ import { Loader2 } from "lucide-react";
 import Aurora from "../ui/Aurora";
 import CommandPalette from "../ui/CommandPalette";
 import LevelUpToast from "../ui/LevelUpToast";
+import SettingsDialog from "../ui/SettingsDialog";
+import ShortcutsHelp from "../ui/ShortcutsHelp";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 import { useProgressStore } from "../../store/progressStore";
@@ -47,6 +49,8 @@ export default function Layout() {
       </a>
       <Aurora />
       <CommandPalette />
+      <SettingsDialog />
+      <ShortcutsHelp />
       <TopBar onToggleSidebar={() => setOpen((o) => !o)} />
 
       <AnimatePresence>

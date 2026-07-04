@@ -44,7 +44,15 @@ export default function Playground() {
       </p>
 
       <div className="space-y-3">
-        <CodeEditor value={code} onChange={setCode} height={340} filename="scratch.py" />
+        <CodeEditor
+          value={code}
+          onChange={setCode}
+          height={340}
+          filename="scratch.py"
+          onRun={() => {
+            if (!running && ready) run();
+          }}
+        />
         <div className="flex flex-wrap items-center gap-2">
           <button className="btn-primary" onClick={run} disabled={running || !ready}>
             <Play className="h-4 w-4" />

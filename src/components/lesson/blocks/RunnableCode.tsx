@@ -50,6 +50,9 @@ export default function RunnableCode({
           onChange={setCode}
           height={Math.min(360, 60 + code.split("\n").length * 20)}
           filename={block.title ? undefined : "example.py"}
+          onRun={() => {
+            if (!running && ready) run();
+          }}
         />
         <div className="flex items-center gap-2">
           <button className="btn-primary" onClick={run} disabled={running || !ready}>

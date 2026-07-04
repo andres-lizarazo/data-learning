@@ -6,10 +6,13 @@ import { useEffect, useRef } from "react";
 type AnyEditor = {
   deltaDecorations: (oldIds: string[], newDecos: unknown[]) => string[];
   revealLineInCenterIfOutsideViewport: (line: number) => void;
+  addCommand: (keybinding: number, handler: () => void) => void;
 };
 type AnyMonaco = {
   Range: new (a: number, b: number, c: number, d: number) => unknown;
   editor: { defineTheme: (name: string, theme: unknown) => void };
+  KeyMod: { CtrlCmd: number };
+  KeyCode: { Enter: number };
 };
 
 // A Monaco theme tuned to the Aurora-Glass palette (transparent bg blends into glass).
@@ -43,6 +46,8 @@ interface Props {
   filename?: string;
   /** Monaco language id. Defaults to "python". */
   language?: string;
+  /** Called on Cmd/Ctrl+Enter inside the editor — wire this to the Run button. */
+  onRun?: () => void;
 }
 
 export default function CodeEditor({
@@ -53,10 +58,14 @@ export default function CodeEditor({
   highlightLine = null,
   filename,
   language = "python",
+  onRun,
 }: Props) {
   const editorRef = useRef<AnyEditor | null>(null);
   const monacoRef = useRef<AnyMonaco | null>(null);
   const decorationsRef = useRef<string[]>([]);
+  // Monaco registers the command once at mount; keep the latest handler in a ref.
+  const onRunRef = useRef(onRun);
+  onRunRef.current = onRun;
 
   // Re-apply the current-line decoration whenever highlightLine changes.
   useEffect(() => {
@@ -130,8 +139,13 @@ export default function CodeEditor({
           padding: { top: 10, bottom: 10 },
         }}
         onMount={(ed, monaco) => {
-          editorRef.current = ed as unknown as AnyEditor;
-          monacoRef.current = monaco as unknown as AnyMonaco;
+          const anyEd = ed as unknown as AnyEditor;
+          const anyMonaco = monaco as unknown as AnyMonaco;
+          editorRef.current = anyEd;
+          monacoRef.current = anyMonaco;
+          anyEd.addCommand(anyMonaco.KeyMod.CtrlCmd | anyMonaco.KeyCode.Enter, () =>
+            onRunRef.current?.(),
+          );
         }}
       />
     </div>

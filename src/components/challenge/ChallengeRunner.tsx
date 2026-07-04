@@ -106,7 +106,14 @@ export default function ChallengeRunner({ block, id }: Props) {
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{block.prompt}</ReactMarkdown>
         </div>
 
-        <CodeEditor value={code} onChange={setCode} height={260} />
+        <CodeEditor
+          value={code}
+          onChange={setCode}
+          height={260}
+          onRun={() => {
+            if (!running && ready) submit();
+          }}
+        />
 
         <div className="flex flex-wrap items-center gap-2">
           <button className="btn-primary" onClick={submit} disabled={running || !ready}>
