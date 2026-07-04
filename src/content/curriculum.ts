@@ -1,6 +1,8 @@
 import type { Lesson, Module } from "../types/lesson";
 import { basics } from "./modules/basics";
 import { dataStructures } from "./modules/dataStructures";
+import { pythonOop } from "./modules/pythonOop";
+import { pythonEngineering } from "./modules/pythonEngineering";
 import { dsa } from "./modules/dsa";
 import { libraries } from "./modules/libraries";
 import { numpy } from "./modules/numpy";
@@ -9,6 +11,17 @@ import { viz } from "./modules/viz";
 import { ml } from "./modules/ml";
 import { pyspark } from "./modules/pyspark";
 import { postgres } from "./modules/sql/postgres";
+import { solid } from "./modules/design/solid";
+import { designPatterns } from "./modules/design/patterns";
+import { architecture } from "./modules/design/architecture";
+import { dataFundamentals } from "./modules/de/fundamentals";
+import { dataModeling } from "./modules/de/dataModeling";
+import { warehouseLakehouse } from "./modules/de/warehouse";
+import { databricks } from "./modules/de/databricks";
+import { dbt } from "./modules/de/dbt";
+import { orchestration } from "./modules/de/orchestration";
+import { dataQuality } from "./modules/de/dataQuality";
+import { streaming } from "./modules/de/streaming";
 
 // Master curriculum — ordered as the intended learning path. The sidebar, router,
 // and progress tracking all read from here. Modules without a `track` default to the
@@ -16,14 +29,27 @@ import { postgres } from "./modules/sql/postgres";
 export const curriculum: Module[] = [
   basics,
   dataStructures,
+  pythonOop,
+  pythonEngineering,
   dsa,
   libraries,
   numpy,
   pandas,
   viz,
   ml,
-  pyspark,
   postgres,
+  solid,
+  designPatterns,
+  architecture,
+  dataFundamentals,
+  dataModeling,
+  warehouseLakehouse,
+  pyspark,
+  databricks,
+  dbt,
+  orchestration,
+  dataQuality,
+  streaming,
 ];
 
 /** Distinct tracks in curriculum order, e.g. ["Python", "SQL"]. */
