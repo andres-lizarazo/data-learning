@@ -28,7 +28,7 @@ export default function SqlRunnable({
   const run = async () => {
     setRunning(true);
     try {
-      setResult(await sqlClient.exec(sql, { reset: block.resetBefore }));
+      setResult(await sqlClient.exec(sql, { reset: block.resetBefore, seedId: block.seedId }));
     } finally {
       setRunning(false);
     }
@@ -57,6 +57,9 @@ export default function SqlRunnable({
           onChange={setSql}
           language="sql"
           height={Math.min(360, 60 + sql.split("\n").length * 20)}
+          onRun={() => {
+            if (!running && ready) run();
+          }}
         />
         <div className="flex items-center gap-2">
           <button className="btn-primary" onClick={run} disabled={running || !ready}>

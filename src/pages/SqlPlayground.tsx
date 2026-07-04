@@ -4,6 +4,7 @@ import CodeEditor from "../components/editor/CodeEditor";
 import SqlResultTable from "../components/sql/SqlResultTable";
 import SchemaExplorer from "../components/sql/SchemaExplorer";
 import { sqlClient, type SqlExecResult } from "../sql/sqlClient";
+import { SEED_LABELS, type SeedId } from "../sql/seeds";
 import { useSqlStore } from "../store/sqlStore";
 import { useCodeDraft } from "../lib/useCodeDraft";
 
@@ -22,6 +23,7 @@ export default function SqlPlayground() {
   const [sql, setSql, resetSql] = useCodeDraft("sql-playground", DEFAULT);
   const [result, setResult] = useState<SqlExecResult | null>(null);
   const [running, setRunning] = useState(false);
+  const [seedId, setSeedId] = useState<SeedId>("ecommerce");
 
   useEffect(() => {
     boot();
@@ -30,20 +32,26 @@ export default function SqlPlayground() {
   const run = async () => {
     setRunning(true);
     try {
-      setResult(await sqlClient.exec(sql));
+      setResult(await sqlClient.exec(sql, { seedId }));
     } finally {
       setRunning(false);
     }
   };
 
-  const resetDb = async () => {
+  const resetDb = async (target: SeedId = seedId) => {
     setRunning(true);
     try {
-      await sqlClient.reset();
+      await sqlClient.reset(target);
       setResult(null);
     } finally {
       setRunning(false);
     }
+  };
+
+  const switchSeed = (next: SeedId) => {
+    setSeedId(next);
+    // Switching datasets always rebuilds so the explorer matches what's loaded.
+    void resetDb(next);
   };
 
   return (
@@ -55,12 +63,39 @@ export default function SqlPlayground() {
         A scratchpad running real PostgreSQL in your browser. Nothing is sent to a server.
       </p>
 
+      <div className="mb-3 flex items-center gap-2 text-sm">
+        <label htmlFor="seed-picker" className="text-slate-400">
+          Dataset:
+        </label>
+        <select
+          id="seed-picker"
+          value={seedId}
+          onChange={(e) => switchSeed(e.target.value as SeedId)}
+          disabled={running || !ready}
+          className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-slate-200 outline-none focus:border-white/25"
+        >
+          {(Object.keys(SEED_LABELS) as SeedId[]).map((id) => (
+            <option key={id} value={id} className="bg-ink-900">
+              {SEED_LABELS[id].label} — {SEED_LABELS[id].blurb}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div className="mb-5">
-        <SchemaExplorer />
+        <SchemaExplorer seedId={seedId} />
       </div>
 
       <div className="space-y-3">
-        <CodeEditor value={sql} onChange={setSql} language="sql" height={300} />
+        <CodeEditor
+          value={sql}
+          onChange={setSql}
+          language="sql"
+          height={300}
+          onRun={() => {
+            if (!running && ready) run();
+          }}
+        />
         <div className="flex flex-wrap items-center gap-2">
           <button className="btn-primary" onClick={run} disabled={running || !ready}>
             <Play className="h-4 w-4" />
@@ -75,7 +110,7 @@ export default function SqlPlayground() {
           >
             <RotateCcw className="h-4 w-4" /> Reset query
           </button>
-          <button className="btn-ghost" onClick={resetDb} disabled={running || !ready}>
+          <button className="btn-ghost" onClick={() => resetDb()} disabled={running || !ready}>
             <RefreshCw className="h-4 w-4 text-accent-cyan" /> Reset database
           </button>
           {(!ready || (running && status !== "ready")) && (

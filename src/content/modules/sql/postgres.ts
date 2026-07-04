@@ -2525,5 +2525,288 @@ explicit column list, so it isn't always available (it isn't in this browser eng
         },
       ],
     },
+    {
+      id: "bulk-loading",
+      title: "Bulk Loading & Data Generation",
+      summary: "COPY, multi-row INSERT, INSERT…SELECT, and generate_series for volume.",
+      minutes: 12,
+      blocks: [
+        {
+          kind: "prose",
+          markdown: `# Getting data IN, fast
+
+Loading rows one \`INSERT\` at a time is the slowest possible path — each statement
+pays parsing, planning, and a round trip. The fast paths, slowest to fastest:
+
+1. **Multi-row INSERT** — one statement, many tuples:
+   \`INSERT INTO t VALUES (...), (...), (...);\` (hundreds of rows per statement).
+2. **INSERT … SELECT** — set-based: transform and load in one statement, no data
+   ever leaves the server.
+3. **COPY** — Postgres's bulk-load fast lane, streaming CSV/text/binary directly
+   into a table with minimal per-row overhead:
+
+   \`\`\`sql
+   COPY orders FROM '/path/orders.csv' WITH (FORMAT csv, HEADER true);
+   COPY orders FROM STDIN WITH (FORMAT csv);       -- stream from the client
+   \\copy orders FROM 'local.csv' WITH (FORMAT csv) -- psql: client-side file
+   \`\`\`
+
+   \`COPY\` is 10–100× faster than row-by-row inserts and is what tools (and
+   warehouse \`LOAD\`/\`COPY INTO\` commands) build on.
+
+> **In this playground:** \`COPY ... FROM STDIN\` needs a client streaming data,
+> which the browser sandbox doesn't provide — so here we practice the set-based
+> patterns, which are what you'll write inside pipelines anyway.
+
+For **test data**, \`generate_series\` + expressions beat any fixture file.`,
+        },
+        {
+          kind: "sql-runnable",
+          title: "Multi-row INSERT vs INSERT…SELECT",
+          resetBefore: true,
+          sql: `CREATE TABLE load_demo (id int, label text, amount numeric);
+
+-- Multi-row VALUES: fine for small, literal data.
+INSERT INTO load_demo VALUES
+  (1, 'manual-a', 10.0),
+  (2, 'manual-b', 20.0),
+  (3, 'manual-c', 30.0);
+
+-- INSERT…SELECT: set-based — load a transformation of existing data.
+INSERT INTO load_demo
+SELECT 100 + id, 'from-orders-' || id, total
+FROM orders
+WHERE status = 'paid';
+
+SELECT * FROM load_demo ORDER BY id;`,
+        },
+        {
+          kind: "sql-runnable",
+          title: "generate_series: fake 50k rows on demand",
+          resetBefore: true,
+          sql: `-- Synthetic order rows with plausible-looking values, in one statement.
+CREATE TABLE synthetic_orders AS
+SELECT g AS id,
+       1 + (g * 7) % 1000                            AS customer_id,
+       round((10 + (g * 13) % 490)::numeric, 2)      AS total,
+       DATE '2025-01-01' + (g % 730)                 AS created_at,
+       CASE WHEN g % 10 = 0 THEN 'refunded' ELSE 'paid' END AS status
+FROM generate_series(1, 50000) g;
+
+SELECT status, COUNT(*) AS rows, ROUND(AVG(total), 2) AS avg_total
+FROM synthetic_orders GROUP BY status ORDER BY rows DESC;`,
+        },
+        {
+          kind: "sql-challenge",
+          title: "Generate a test dataset",
+          prompt:
+            "Using `generate_series(1, 100)`, return 100 synthetic rows with columns `id` (1–100), `bucket` (`id % 5`), and `is_even` (boolean, true when `id` is even), ordered by `id`.",
+          starterSql: "SELECT g AS id\nFROM generate_series(1, 100) g;",
+          solution:
+            "SELECT g AS id, g % 5 AS bucket, g % 2 = 0 AS is_even FROM generate_series(1, 100) g ORDER BY g;",
+          ordered: true,
+          hints: [
+            "`g % 5` and `g % 2 = 0` compute the derived columns directly.",
+          ],
+          xp: 60,
+        },
+        {
+          kind: "quiz",
+          question: "A nightly job inserts 5 million rows one INSERT at a time and takes hours. The right fix is…",
+          options: [
+            { text: "COPY (or the platform's bulk-load command) — bulk paths skip per-statement overhead", correct: true },
+            { text: "Adding more indexes to the target table first" },
+            { text: "Wrapping each INSERT in its own transaction" },
+            { text: "Switching the table to JSONB" },
+          ],
+          explanation:
+            "Bulk interfaces (COPY, BigQuery load jobs, Snowflake COPY INTO, Spark writes) stream data with minimal per-row cost. Bonus points: drop/rebuild indexes around giant loads — maintaining them row-by-row is a hidden multiplier.",
+        },
+      ],
+    },
+    {
+      id: "table-partitioning",
+      title: "Table Partitioning",
+      summary: "Range, list, and hash partitions; defaults, attach/detach, and maintenance wins.",
+      minutes: 13,
+      blocks: [
+        {
+          kind: "prose",
+          markdown: `# Declarative partitioning
+
+One logical table, many physical children — Postgres routes rows automatically:
+
+\`\`\`sql
+CREATE TABLE events (...) PARTITION BY RANGE (created);
+CREATE TABLE events_2026 PARTITION OF events
+  FOR VALUES FROM ('2026-01-01') TO ('2027-01-01');
+\`\`\`
+
+Three strategies:
+
+- **RANGE** — intervals (dates, ids). The workhorse for time-series facts.
+- **LIST** — explicit values per child (\`FOR VALUES IN ('EU', 'UK')\`) — by
+  region/tenant.
+- **HASH** — even spread when there's no natural key
+  (\`FOR VALUES WITH (MODULUS 4, REMAINDER 0)\`).
+
+Why partition (beyond query pruning — see the Warehouse module for EXPLAIN demos):
+
+- **Maintenance**: \`DROP TABLE events_2023\` deletes a year instantly —
+  vs a \`DELETE\` that rewrites and bloats the table.
+- **Loading**: attach a fully-loaded, pre-validated table as a new partition
+  (\`ATTACH PARTITION\`) — near-zero-downtime loads.
+- A **DEFAULT partition** catches rows that fit no child (safety net, but watch
+  it — rows sitting in DEFAULT block adding overlapping children later).`,
+        },
+        {
+          kind: "sql-runnable",
+          title: "LIST partitioning by region",
+          resetBefore: true,
+          sql: `CREATE TABLE sales_by_region (id int, region text, amount numeric)
+PARTITION BY LIST (region);
+
+CREATE TABLE sales_amer PARTITION OF sales_by_region FOR VALUES IN ('US', 'CA', 'MX');
+CREATE TABLE sales_emea PARTITION OF sales_by_region FOR VALUES IN ('DE', 'FR', 'UK');
+CREATE TABLE sales_other PARTITION OF sales_by_region DEFAULT;
+
+INSERT INTO sales_by_region VALUES
+  (1, 'US', 100), (2, 'DE', 200), (3, 'JP', 300), (4, 'CA', 150), (5, 'FR', 250);
+
+-- Which physical child did each row land in?
+SELECT tableoid::regclass AS partition, region, amount
+FROM sales_by_region ORDER BY id;`,
+        },
+        {
+          kind: "sql-runnable",
+          title: "The maintenance superpower: drop a partition",
+          resetBefore: true,
+          sql: `CREATE TABLE metrics (ts date, v int) PARTITION BY RANGE (ts);
+CREATE TABLE metrics_old  PARTITION OF metrics FOR VALUES FROM ('2024-01-01') TO ('2025-01-01');
+CREATE TABLE metrics_curr PARTITION OF metrics FOR VALUES FROM ('2025-01-01') TO ('2027-01-01');
+
+INSERT INTO metrics
+SELECT DATE '2024-06-01' + (g % 500), g FROM generate_series(1, 1000) g;
+
+SELECT COUNT(*) AS before_drop FROM metrics;
+
+-- Retention policy = one instant DDL statement, not a million-row DELETE:
+DROP TABLE metrics_old;
+
+SELECT COUNT(*) AS after_drop FROM metrics;`,
+        },
+        {
+          kind: "sql-challenge",
+          title: "Route the rows",
+          prompt:
+            "A table is `PARTITION BY LIST (region)` with children for `('US','CA')`, `('DE','FR')`, and a DEFAULT. Without creating anything, classify these staged rows: for each row in `(VALUES ('US'), ('DE'), ('BR'), ('CA'), ('JP')) AS t(region)`, return `region` and `partition` — `'amer'` for US/CA, `'emea'` for DE/FR, `'default'` otherwise. Order by `region`.",
+          starterSql:
+            "SELECT region,\n       CASE /* … */ END AS partition\nFROM (VALUES ('US'), ('DE'), ('BR'), ('CA'), ('JP')) AS t(region)\nORDER BY region;",
+          solution:
+            "SELECT region, CASE WHEN region IN ('US','CA') THEN 'amer' WHEN region IN ('DE','FR') THEN 'emea' ELSE 'default' END AS partition FROM (VALUES ('US'), ('DE'), ('BR'), ('CA'), ('JP')) AS t(region) ORDER BY region;",
+          ordered: true,
+          hints: [
+            "A CASE expression with IN lists mirrors exactly how LIST routing decides.",
+          ],
+          xp: 60,
+        },
+        {
+          kind: "quiz",
+          question:
+            "You must delete all 2023 data from a 2-billion-row table nightly-loaded since 2020. With range partitions by year, the operation is…",
+          options: [
+            { text: "DROP TABLE (or DETACH) on the 2023 partition — instant, no table rewrite, no bloat", correct: true },
+            { text: "DELETE FROM t WHERE year = 2023 — same speed either way" },
+            { text: "TRUNCATE the whole table and reload 2024+" },
+            { text: "Impossible without downtime" },
+          ],
+          explanation:
+            "Partition-level DDL is the whole reason retention policies love partitioning: dropping a child is a metadata operation. The unpartitioned DELETE would log/rewrite hundreds of GB and leave bloat behind.",
+        },
+      ],
+    },
+    {
+      id: "roles-permissions",
+      title: "Roles & Permissions (Concepts)",
+      summary: "GRANT/REVOKE, role hierarchies, and row-level security — the access model.",
+      minutes: 11,
+      blocks: [
+        {
+          kind: "prose",
+          markdown: `# The Postgres access model
+
+> **Heads-up:** this in-browser database runs as a single superuser, so the
+> statements below are shown for reading, not running — the *model* is what
+> transfers to every warehouse you'll touch.
+
+**Roles** are both users and groups (a role can contain roles):
+
+\`\`\`sql
+CREATE ROLE analyst_ro NOLOGIN;                  -- a "group"
+CREATE ROLE dana LOGIN PASSWORD '...';           -- a person
+GRANT analyst_ro TO dana;                        -- membership
+\`\`\`
+
+**Privileges** attach to objects, granted to roles:
+
+\`\`\`sql
+GRANT USAGE ON SCHEMA marts TO analyst_ro;             -- may *enter* the schema
+GRANT SELECT ON ALL TABLES IN SCHEMA marts TO analyst_ro;
+ALTER DEFAULT PRIVILEGES IN SCHEMA marts
+  GRANT SELECT ON TABLES TO analyst_ro;                -- future tables too!
+REVOKE ALL ON staging.raw_orders FROM analyst_ro;
+\`\`\`
+
+Two classic gotchas:
+
+- \`GRANT ... ON ALL TABLES\` covers **existing** tables only —
+  \`ALTER DEFAULT PRIVILEGES\` is what covers future ones.
+- \`USAGE\` on the schema AND \`SELECT\` on the table are BOTH required.
+
+**Row-Level Security** filters *which rows* a role sees:
+
+\`\`\`sql
+ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+CREATE POLICY per_region ON orders
+  USING (region = current_setting('app.region'));
+\`\`\`
+
+The same model — layered schemas × read/write roles × row policies — is exactly
+how warehouse access is designed: engineers write staging/core, analysts read
+marts, and RLS handles multi-tenant or regional data walls.`,
+        },
+        {
+          kind: "quiz",
+          question:
+            "Analysts got SELECT on all tables in `marts` last month. Today's new mart table gives them 'permission denied'. Why?",
+          options: [
+            {
+              text: "GRANT ON ALL TABLES only covered tables existing at grant time — ALTER DEFAULT PRIVILEGES is needed for future tables",
+              correct: true,
+            },
+            { text: "SELECT grants expire after 30 days" },
+            { text: "New tables always require superuser access" },
+            { text: "The analysts lost USAGE on the schema" },
+          ],
+          explanation:
+            "The #1 Postgres permissions surprise. The grant is a snapshot; default privileges are the standing rule that applies to objects created later (per creating-role, per schema).",
+        },
+        {
+          kind: "quiz",
+          question: "Which access design fits the layered warehouse from this track?",
+          options: [
+            {
+              text: "Pipelines get write on staging/core; analysts get read-only on marts (+ core if needed); nobody human writes to staging",
+              correct: true,
+            },
+            { text: "Everyone gets database owner to avoid friction" },
+            { text: "Analysts write to staging so they can fix data quickly" },
+            { text: "One shared login for the whole data team" },
+          ],
+          explanation:
+            "Access mirrors the layer contract: only automated, reviewed pipelines mutate data; humans consume from the serving layers. Hand-edits in staging would break replayability and lineage.",
+        },
+      ],
+    },
   ],
 };

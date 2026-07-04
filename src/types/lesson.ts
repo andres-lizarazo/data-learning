@@ -13,6 +13,7 @@ export type BlockKind =
   | "user-viz"
   | "challenge"
   | "quiz"
+  | "flashcards"
   | "sql-runnable"
   | "sql-challenge";
 
@@ -120,11 +121,36 @@ export interface QuizBlock {
   explanation?: string;
 }
 
+export interface Flashcard {
+  /** Question/term side. Must be unique within the lesson (it keys review state). */
+  front: string;
+  /** Answer side (supports markdown-lite line breaks via \n). */
+  back: string;
+}
+
+/**
+ * A deck of concept flashcards. Grading (Again/Good/Easy) feeds the
+ * spaced-repetition review queue (/review) via the review store.
+ */
+export interface FlashcardsBlock {
+  kind: "flashcards";
+  title?: string;
+  cards: Flashcard[];
+}
+
+/**
+ * Which seed dataset a SQL block runs against. "ecommerce" (default) is the OLTP
+ * shop schema; "warehouse" is the star schema + staging used by the DE track.
+ */
+export type SqlSeedId = "ecommerce" | "warehouse";
+
 /** An editable SQL snippet the learner can run against the seeded Postgres DB. */
 export interface SqlRunnableBlock {
   kind: "sql-runnable";
   title?: string;
   sql: string;
+  /** Seed dataset to run against. Defaults to "ecommerce". */
+  seedId?: SqlSeedId;
   /**
    * Reload the seed schema before running. Use for mutating examples (INSERT/UPDATE/
    * DELETE/DDL) so changes don't leak into later blocks. Default false.
@@ -142,6 +168,8 @@ export interface SqlChallengeBlock {
   kind: "sql-challenge";
   title: string;
   prompt: string; // markdown problem statement
+  /** Seed dataset to grade against. Defaults to "ecommerce". */
+  seedId?: SqlSeedId;
   starterSql: string;
   /** Reference solution; the runner compares the learner's result set to this one. */
   solution: string;
@@ -161,6 +189,7 @@ export type Block =
   | UserVizBlock
   | ChallengeBlock
   | QuizBlock
+  | FlashcardsBlock
   | SqlRunnableBlock
   | SqlChallengeBlock;
 
@@ -176,7 +205,7 @@ export interface Lesson {
 export type ModuleLevel = "Beginner" | "Intermediate" | "Advanced";
 
 /** Top-level grouping shown as a section heading (sidebar + home). */
-export type Track = "Python" | "SQL";
+export type Track = "Python" | "SQL" | "Software Design" | "Data Engineering";
 
 export interface Module {
   id: string; // kebab-case, used in the URL

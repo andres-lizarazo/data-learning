@@ -1,8 +1,9 @@
 import { useEffect, useMemo } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Bookmark, BookmarkCheck, Check, ChevronRight } from "lucide-react";
 import { getLesson, getModule, lessonSequence } from "../content/curriculum";
 import LessonRenderer from "../components/lesson/LessonRenderer";
+import LessonNotes from "../components/lesson/LessonNotes";
 import SchemaExplorer from "../components/sql/SchemaExplorer";
 import { useProgressStore } from "../store/progressStore";
 import { moduleGradient } from "../lib/moduleTheme";
@@ -34,10 +35,37 @@ export default function LessonPage() {
     return { prev: seq[i - 1], next: seq[i + 1] };
   }, [moduleId, lessonId]);
 
+  // `[` / `]` navigate to the previous / next lesson (ignored while typing).
+  const navigate = useNavigate();
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      if (t && t.closest(".monaco-editor")) return;
+      if (e.key === "[" && nav.prev) {
+        navigate(`/learn/${nav.prev.moduleId}/${nav.prev.lessonId}`);
+      } else if (e.key === "]" && nav.next) {
+        navigate(`/learn/${nav.next.moduleId}/${nav.next.lessonId}`);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [nav, navigate]);
+
   if (!found) {
     return <div className="p-8 text-slate-300">Lesson not found.</div>;
   }
   const { module, lesson } = found;
+
+  // Lessons with SQL blocks show the schema panel for whichever seed they query.
+  const sqlBlock = lesson.blocks.find(
+    (b) => b.kind === "sql-runnable" || b.kind === "sql-challenge",
+  );
+  const lessonSeed =
+    sqlBlock && (sqlBlock.kind === "sql-runnable" || sqlBlock.kind === "sql-challenge")
+      ? (sqlBlock.seedId ?? "ecommerce")
+      : null;
 
   const handleComplete = () => {
     completeLesson(lesson.id);
@@ -91,14 +119,16 @@ export default function LessonPage() {
       </div>
 
       {/* SQL lessons show the sample-database schema so the learner knows what to query. */}
-      {module.track === "SQL" && (
+      {lessonSeed && (
         <div className="mb-6">
-          <SchemaExplorer />
+          <SchemaExplorer seedId={lessonSeed} />
         </div>
       )}
 
       {/* key forces a fresh mount per lesson so editable code blocks reset. */}
       <LessonRenderer key={lesson.id} lessonId={lesson.id} blocks={lesson.blocks} />
+
+      <LessonNotes lessonId={lesson.id} />
 
       <div className="mt-9 flex flex-col gap-3 border-t border-white/10 pt-6 sm:flex-row sm:items-center">
         <button

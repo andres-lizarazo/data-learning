@@ -1,11 +1,18 @@
 import { useState } from "react";
 import { Database, ChevronDown, KeyRound } from "lucide-react";
-import { SCHEMA } from "../../sql/seeds";
+import { SCHEMAS, SEED_LABELS, type SeedId } from "../../sql/seeds";
 
 // A collapsible panel listing the seeded tables and their columns so the learner
 // knows what they can query. Shown alongside SQL lessons and the SQL Playground.
-export default function SchemaExplorer({ defaultOpen = false }: { defaultOpen?: boolean }) {
+export default function SchemaExplorer({
+  defaultOpen = false,
+  seedId = "ecommerce",
+}: {
+  defaultOpen?: boolean;
+  seedId?: SeedId;
+}) {
   const [open, setOpen] = useState(defaultOpen);
+  const SCHEMA = SCHEMAS[seedId];
 
   return (
     <div className="glass overflow-hidden">
@@ -17,7 +24,7 @@ export default function SchemaExplorer({ defaultOpen = false }: { defaultOpen?: 
         <Database className="h-4 w-4 text-accent-cyan" />
         Sample database
         <span className="text-xs font-normal text-slate-500">
-          (e-commerce — {SCHEMA.length} tables)
+          ({SEED_LABELS[seedId].label} — {SCHEMA.length} tables)
         </span>
         <ChevronDown
           className={`ml-auto h-4 w-4 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`}

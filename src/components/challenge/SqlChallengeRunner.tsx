@@ -40,9 +40,9 @@ export default function SqlChallengeRunner({ block, id }: Props) {
     setVerdict(null);
     try {
       // Run against a freshly seeded DB so prior blocks/runs can't affect the result.
-      await sqlClient.reset();
+      await sqlClient.reset(block.seedId);
       const expected = await sqlClient.queryRows(block.solution);
-      await sqlClient.reset();
+      await sqlClient.reset(block.seedId);
       const userRows = await sqlClient.queryRows(sql);
 
       // Mirror the result grid using the user's query (re-exec for the display shape).
@@ -89,7 +89,15 @@ export default function SqlChallengeRunner({ block, id }: Props) {
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{block.prompt}</ReactMarkdown>
         </div>
 
-        <CodeEditor value={sql} onChange={setSql} language="sql" height={220} />
+        <CodeEditor
+          value={sql}
+          onChange={setSql}
+          language="sql"
+          height={220}
+          onRun={() => {
+            if (!running && ready) submit();
+          }}
+        />
 
         <div className="flex flex-wrap items-center gap-2">
           <button className="btn-primary" onClick={submit} disabled={running || !ready}>

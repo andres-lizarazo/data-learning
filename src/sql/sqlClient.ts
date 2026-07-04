@@ -6,7 +6,7 @@
 // against tiny seeded tables, so the main thread is plenty fast and we avoid the
 // complexity of bundling the WASM into a nested module worker.
 
-import { SEED_SQL } from "./seeds";
+import { SEEDS, type SeedId } from "./seeds";
 
 export interface SqlExecResult {
   ok: boolean;
@@ -35,6 +35,8 @@ class SqlClient {
   private db: PgliteDb | null = null;
   private bootPromise: Promise<void> | null = null;
   private statusListeners = new Set<(s: string) => void>();
+  /** Which seed the shared engine currently holds. */
+  private currentSeed: SeedId = "ecommerce";
 
   status = "idle";
   ready = false;
@@ -50,7 +52,7 @@ class SqlClient {
     this.statusListeners.forEach((l) => l(s));
   }
 
-  /** Boot PGlite and load the seed schema. Idempotent. */
+  /** Boot PGlite and load the default seed. Idempotent. */
   init(): Promise<void> {
     if (this.bootPromise) return this.bootPromise;
     this.bootPromise = (async () => {
@@ -59,16 +61,27 @@ class SqlClient {
       this.setStatus("Booting Postgres…");
       this.db = (await PGlite.create()) as unknown as PgliteDb;
       this.setStatus("Loading sample data…");
-      await this.db.exec(SEED_SQL);
+      await this.db.exec(SEEDS[this.currentSeed]);
       this.setStatus("ready");
     })();
     return this.bootPromise;
   }
 
-  /** Reload the seed schema, discarding any changes made by previous statements. */
-  async reset(): Promise<void> {
+  /**
+   * Make sure the engine holds `seedId`'s data. Reloads only when switching seeds
+   * (a seed switch always implies a clean rebuild) or when `force` is set.
+   */
+  private async ensureSeed(seedId: SeedId, force: boolean): Promise<void> {
     await this.init();
-    await this.db!.exec(SEED_SQL);
+    if (seedId !== this.currentSeed || force) {
+      await this.db!.exec(SEEDS[seedId]);
+      this.currentSeed = seedId;
+    }
+  }
+
+  /** Reload a seed, discarding any changes made by previous statements. */
+  async reset(seedId?: SeedId): Promise<void> {
+    await this.ensureSeed(seedId ?? this.currentSeed, true);
   }
 
   /**
@@ -76,9 +89,8 @@ class SqlClient {
    * affected-row count for a write). Errors are returned, not thrown, so the UI can
    * render them inline like a real SQL console.
    */
-  async exec(sql: string, opts?: { reset?: boolean }): Promise<SqlExecResult> {
-    await this.init();
-    if (opts?.reset) await this.db!.exec(SEED_SQL);
+  async exec(sql: string, opts?: { reset?: boolean; seedId?: SeedId }): Promise<SqlExecResult> {
+    await this.ensureSeed(opts?.seedId ?? this.currentSeed, !!opts?.reset);
     const notices: string[] = [];
     try {
       const results = await this.db!.exec(sql);
@@ -126,8 +138,9 @@ class SqlClient {
    */
   async queryRows(
     sql: string,
+    seedId?: SeedId,
   ): Promise<{ ok: boolean; columns: string[]; rows: unknown[][]; error: string | null }> {
-    await this.init();
+    await this.ensureSeed(seedId ?? this.currentSeed, false);
     try {
       const res = await this.db!.query(sql);
       const columns = res.fields.map((f) => f.name);
