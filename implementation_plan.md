@@ -378,6 +378,48 @@ Prioritized, phase by phase. Each phase is independently shippable.
 - [x] Unit tests: scheduler transitions, ease floor, interval cap, curriculum-wide card-id
       uniqueness (`store/reviewStore.test.ts` — 9 tests)
 
+## 2026-07 Foundations & Cloud tracks — Git/GitHub, Linux, AWS
+
+> Goal: cover the engineering fundamentals a data engineer needs beyond code — the
+> **environment** (Linux + Git) and the **cloud** (AWS core data services) — following
+> the existing conceptual-module pattern (prose + quiz + flashcards + Python
+> simulations + verified challenges). Two new tracks reframe the learning path:
+> **Foundations & Tooling opens** it (before Python), **Cloud closes** it (after DE).
+
+- [x] `Track` union extended: added `"Foundations & Tooling"` and `"Cloud"`
+      (`src/types/lesson.ts`). Sidebar/Home/Roadmap already iterate `tracks()` /
+      `modulesByTrack()` dynamically, so the two new sections appear at the right spot
+      with no UI wiring; added `TRACK_BLURBS` entries in `Roadmap.tsx` and accent colors
+      in `lib/moduleTheme.ts` (`linux`, `git-github`, `aws`)
+- [x] New module **Linux & the Command Line** (`platform/linux.ts`, 8 lessons, deep):
+      shell & filesystem, files/directories + **globbing** (implement shell globbing),
+      viewing & searching text (grep/head/tail/wc), **pipes & the Unix philosophy**
+      (rebuild `grep|sort|uniq -c`; implement a word-count pipeline), CLI data wrangling
+      (cut/sort/awk streaming group-by), permissions (rwx, why secrets are `600`),
+      processes & exit codes, environment & **cron** (implement a cron matcher) — with
+      runnable Python simulations, 3 challenges, quizzes, and flashcard decks
+- [x] New module **Git & GitHub** (`platform/git.ts`, 8 lessons, deep): the **commit
+      DAG** (build & walk it in Python), core add/commit/diff loop, branching & merging
+      (compute a merge-base), rebase vs merge + golden rule, remotes/GitHub & the **PR
+      workflow**, undoing safely (reset/revert/reflog — compute a branch tip after ops),
+      **Git for data teams** (never commit data/secrets, LFS/DVC), **CI/CD with GitHub
+      Actions** (pytest/dbt tests on PRs) — runnable DAG sims, 2 challenges, quizzes,
+      flashcards
+- [x] New module **AWS for Data** (`cloud/aws.ts`, 8 lessons, deep): AWS mental model
+      (regions/AZs, shared responsibility, IaC), **IAM** least privilege (implement
+      policy allow/deny evaluation), **S3 data lakes** (keys-as-prefixes, partition
+      pruning as a prefix filter — implement it, storage classes/lifecycle), compute
+      (EC2/Spot vs Lambda vs Fargate), databases (RDS/DynamoDB/Redshift = OLTP/NoSQL/
+      OLAP), the **AWS data stack** (Glue/Athena/EMR/Kinesis/Step Functions mapped to
+      Spark/warehouse/Kafka/Airflow, with an Athena scan-cost simulation), building &
+      operating a lakehouse (cost + CloudWatch/CloudTrail) — 2 challenges, quizzes,
+      flashcards
+- [x] Registered in `curriculum.ts`: `linux` + `gitGithub` first (before `basics`),
+      `aws` last (after `streaming`); README curriculum tables + track list updated
+- [x] Verified: all 7 new Python challenge solutions pass under real python3
+      (`scripts/verify-python-challenges.mjs`); flashcard card-id uniqueness test still
+      green; typecheck + build clean
+
 ### Phase E — Platform & accounts
 - [x] Deploy the static app to **GitHub Pages** via Actions (`.github/workflows/deploy.yml`,
       `DEPLOY_BASE` subpath + router basename + `404.html` fallback). Local dev unchanged at
@@ -398,6 +440,17 @@ Prioritized, phase by phase. Each phase is independently shippable.
 - [ ] 🚧 i18n: ES/EN content + UI toggle
 
 ## Decisions Log
+- **Two new tracks framing the path (Foundations & Tooling first, Cloud last):** Git
+  and Linux are environment prerequisites every engineer needs before writing code, so
+  they open the curriculum; AWS core data services are the capstone that ties the
+  earlier concepts to real cloud infra (S3=lake, Redshift=warehouse, Glue=ETL,
+  Kinesis=streaming), so it closes it. A single "Platform & Tools" track couldn't sit
+  both first and last (a track renders as one contiguous section, positioned at its
+  first module), which is why it's split into two tracks. Git/Linux/AWS can't run
+  natively in Pyodide/PGlite, so they follow the `de/streaming.ts` conceptual pattern:
+  prose + quiz + flashcards + **Python simulations** of the mechanics (commit DAG,
+  shell pipeline, IAM evaluation, S3 prefix pruning, Athena scan cost) + verified
+  challenges — no new block kinds or infra.
 - **PGlite for SQL (not SQLite/sql.js):** the sql-learning content is heavily
   Postgres-specific (JSONB `@>`/`?`, arrays, window functions, recursive CTEs, `FILTER`,
   `generate_series`, `DISTINCT ON`, `PERCENTILE_CONT`, PL/pgSQL, full-text search). Only

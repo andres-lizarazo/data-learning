@@ -9,6 +9,9 @@ export interface ModuleTheme {
 }
 
 const THEMES: Record<string, ModuleTheme> = {
+  linux: { from: "#fbbf24", to: "#34d399", solid: "#fbbf24" },
+  "git-github": { from: "#fb923c", to: "#f472b6", solid: "#fb923c" },
+  aws: { from: "#fb923c", to: "#38bdf8", solid: "#fb923c" },
   basics: { from: "#8b5cf6", to: "#22d3ee", solid: "#a78bfa" },
   "data-structures": { from: "#22d3ee", to: "#a3e635", solid: "#22d3ee" },
   "python-oop": { from: "#6366f1", to: "#f472b6", solid: "#818cf8" },

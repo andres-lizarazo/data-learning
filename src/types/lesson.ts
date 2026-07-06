@@ -205,7 +205,13 @@ export interface Lesson {
 export type ModuleLevel = "Beginner" | "Intermediate" | "Advanced";
 
 /** Top-level grouping shown as a section heading (sidebar + home). */
-export type Track = "Python" | "SQL" | "Software Design" | "Data Engineering";
+export type Track =
+  | "Foundations & Tooling"
+  | "Python"
+  | "SQL"
+  | "Software Design"
+  | "Data Engineering"
+  | "Cloud";
 
 export interface Module {
   id: string; // kebab-case, used in the URL

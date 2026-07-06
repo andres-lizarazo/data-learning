@@ -10,10 +10,12 @@ import type { Module } from "../types/lesson";
 // numbered as one continuous journey, with progress and a "you are here" marker.
 
 const TRACK_BLURBS: Record<string, string> = {
+  "Foundations & Tooling": "The engineer's environment: Linux & the command line, plus Git & GitHub.",
   Python: "Foundations: the language, data structures, algorithms, and the analysis stack.",
   SQL: "Real PostgreSQL in your browser — from SELECT to data-engineering patterns.",
   "Software Design": "Write code that survives: SOLID, design patterns, and architecture.",
   "Data Engineering": "Modeling, warehouses, Spark, Databricks, dbt, orchestration, and quality.",
+  Cloud: "Ship it for real: AWS core data services — IAM, S3 lakes, compute, and the data stack.",
 };
 
 function moduleProgress(m: Module, completed: Record<string, true>) {

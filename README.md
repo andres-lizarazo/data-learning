@@ -7,9 +7,12 @@ no installs: a full CPython interpreter runs client-side via
 [Pyodide](https://pyodide.org), and a full Postgres engine via
 [PGlite](https://pglite.dev) — both WebAssembly.
 
-The platform is organized into four **tracks**, in recommended learning order (see the
+The platform is organized into six **tracks**, in recommended learning order (see the
 in-app **/roadmap** page for the full numbered path):
 
+- **Foundations & Tooling** — **Linux & the command line** (shell, pipes & CLI data
+  wrangling, permissions, processes, cron) and **Git & GitHub** (the commit DAG,
+  branching, rebase, PRs, and CI for data) — the environment every data job runs in.
 - **Python** — basics → data structures → **OOP** → DSA → libraries → NumPy/Pandas → viz → ML.
 - **SQL** — a **PostgreSQL** subsection where every example runs against a seeded
   e-commerce database and most lessons end with a checked query exercise.
@@ -17,8 +20,11 @@ in-app **/roadmap** page for the full numbered path):
   patterns (hexagonal, DI, reliability) — all as runnable Python with
   refactor-to-pass-the-tests challenges.
 - **Data Engineering** — data fundamentals, dimensional modeling (star schemas, SCD2),
-  warehouse/lakehouse/medallion — with more coming: Spark & Databricks, dbt,
-  orchestration, data quality, streaming.
+  warehouse/lakehouse/medallion, Spark & Databricks, dbt, orchestration, data quality,
+  and streaming.
+- **Cloud** — **AWS for Data**: IAM & least privilege, S3 data lakes, compute
+  (EC2/Lambda/Fargate), databases (RDS/DynamoDB/Redshift), and the managed data stack
+  (Glue, Athena, EMR, Kinesis, Step Functions) — mapped to everything you already built.
 
 ## What you can do
 
@@ -48,6 +54,15 @@ in-app **/roadmap** page for the full numbered path):
 
 ## Curriculum
 
+### Foundations & Tooling track
+
+| Module | Status | Highlights |
+|---|---|---|
+| 🐧 Linux & the Command Line | **deep** | the shell & filesystem, files/globbing (implement shell globbing), viewing & searching text (grep/head/tail/wc), **pipes & the Unix philosophy** (rebuild a `grep\|sort\|uniq -c` pipeline + a word-count challenge), CLI data wrangling (cut/sort/awk streaming group-by), permissions (why secrets are `600`), processes & exit codes, environment & **cron** (implement a cron matcher) |
+| 🌿 Git & GitHub | **deep** | snapshots & the **commit DAG** (build & walk it in Python), the core add/commit/diff loop, branching & merging (compute a merge-base), rebase vs merge & the golden rule, remotes/GitHub & the **PR workflow**, undoing safely (reset/revert/reflog — compute a branch tip after ops), **Git for data teams** (never commit data/secrets, LFS/DVC), and **CI/CD with GitHub Actions** (pytest/dbt tests on every PR) |
+
+### Python track
+
 | Module | Status | Highlights |
 |---|---|---|
 | 🐍 Python Basics | **deep** | types, operators, strings, conditionals, **loops (visualized)**, functions, comprehensions, errors |
@@ -60,7 +75,6 @@ in-app **/roadmap** page for the full numbered path):
 | 🔢 NumPy | **deep** | arrays & vectorization, indexing/reshaping, aggregations/broadcasting (+ challenges) |
 | 🐼 Pandas | **deep** | DataFrames, selecting/filtering, cleaning, group-by/agg, merge/join (+ challenges) |
 | 📈 Data Visualization | **deep** | matplotlib, customizing plots, plotting from pandas, seaborn (distribution & categorical) |
-| ⚡ PySpark | starter (conceptual) | Spark model, lazy eval, pandas↔PySpark cheat sheet |
 
 ### SQL track
 
@@ -89,6 +103,12 @@ in-app **/roadmap** page for the full numbered path):
 | 🗓️ Orchestration (Airflow) | **deep** | DAGs & execution waves, TaskFlow/operators/XCom, logical dates & backfills, idempotent loads — capstone: **build a mini orchestrator** (topological sort + cycle detection) |
 | ✅ Data Quality | **deep** | DQ dimensions, constraints (watch the DB reject bad rows), **reconciliation audits that catch a real planted discrepancy in the seed**, expectations-style validation in Python, observability & incident response |
 | 🌊 Streaming & Kafka | starter | event time vs processing time & watermarks, Kafka partitions/offsets/consumer groups (simulated), tumbling windows (implement one), delivery semantics, Structured Streaming, lambda vs kappa |
+
+### Cloud track
+
+| Module | Status | Highlights |
+|---|---|---|
+| ☁️ AWS for Data | **deep** | the AWS mental model (regions/AZs, shared responsibility, IaC), **IAM** (least privilege — implement policy allow/deny evaluation), **S3 data lakes** (keys as prefixes, partition pruning as a prefix filter — implement it, storage classes/lifecycle), compute (EC2/Spot vs Lambda vs Fargate), databases (RDS/DynamoDB/Redshift = OLTP/NoSQL/OLAP), the **AWS data stack** (Glue, Athena, EMR, Kinesis, Step Functions — mapped to Spark/warehouse/Kafka/Airflow, with an Athena scan-cost simulation), and building/operating a lakehouse (cost & CloudWatch/CloudTrail) |
 
 > SQL lessons declare which seeded dataset they use: the OLTP **e-commerce** schema or the
 > dimensional **warehouse** star schema (`seedId` on SQL blocks). The SQL Playground has a
@@ -162,9 +182,10 @@ in `src/content/modules/`, appending a `Lesson` whose `blocks` array mixes:
 `prose` · `runnable` · `visualized` · `dsa-viz` · `challenge` · `quiz` ·
 `flashcards` · `sql-runnable` · `sql-challenge`
 
-A module's `track` field (`"Python"` | `"SQL"` | `"Software Design"` |
-`"Data Engineering"`, default `"Python"`) controls which section it appears under in
-the sidebar/home and where it slots into the `/roadmap` learning path. SQL blocks run against the seeded DB in
+A module's `track` field (`"Foundations & Tooling"` | `"Python"` | `"SQL"` |
+`"Software Design"` | `"Data Engineering"` | `"Cloud"`, default `"Python"`) controls
+which section it appears under in the sidebar/home and where it slots into the
+`/roadmap` learning path (tracks render dynamically in curriculum order). SQL blocks run against the seeded DB in
 `src/sql/seeds.ts`; a `sql-challenge` is graded by comparing your result set to its
 `solution` query (order-insensitive unless `ordered: true`). See `src/types/lesson.ts`
 for the full shape, `modules/basics.ts` for Python examples, and

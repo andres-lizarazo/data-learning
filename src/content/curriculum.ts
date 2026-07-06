@@ -1,4 +1,6 @@
 import type { Lesson, Module } from "../types/lesson";
+import { linux } from "./modules/platform/linux";
+import { gitGithub } from "./modules/platform/git";
 import { basics } from "./modules/basics";
 import { dataStructures } from "./modules/dataStructures";
 import { pythonOop } from "./modules/pythonOop";
@@ -22,11 +24,14 @@ import { dbt } from "./modules/de/dbt";
 import { orchestration } from "./modules/de/orchestration";
 import { dataQuality } from "./modules/de/dataQuality";
 import { streaming } from "./modules/de/streaming";
+import { aws } from "./modules/cloud/aws";
 
 // Master curriculum — ordered as the intended learning path. The sidebar, router,
 // and progress tracking all read from here. Modules without a `track` default to the
 // "Python" section; SQL modules carry `track: "SQL"`.
 export const curriculum: Module[] = [
+  linux,
+  gitGithub,
   basics,
   dataStructures,
   pythonOop,
@@ -50,6 +55,7 @@ export const curriculum: Module[] = [
   orchestration,
   dataQuality,
   streaming,
+  aws,
 ];
 
 /** Distinct tracks in curriculum order, e.g. ["Python", "SQL"]. */
