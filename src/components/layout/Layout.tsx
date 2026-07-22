@@ -9,6 +9,7 @@ import SettingsDialog from "../ui/SettingsDialog";
 import ShortcutsHelp from "../ui/ShortcutsHelp";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
+import ErrorBoundary from "./ErrorBoundary";
 import { useProgressStore } from "../../store/progressStore";
 import { levelFromXp } from "../../lib/level";
 import { bigCelebrate } from "../../lib/confetti";
@@ -102,15 +103,17 @@ export default function Layout() {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.25, ease: "easeOut" }}
             >
-              <Suspense
-                fallback={
-                  <div className="grid place-items-center py-32 text-slate-400">
-                    <Loader2 className="h-6 w-6 animate-spin text-accent-violet" />
-                  </div>
-                }
-              >
-                <Outlet />
-              </Suspense>
+              <ErrorBoundary resetKey={location.pathname}>
+                <Suspense
+                  fallback={
+                    <div className="grid place-items-center py-32 text-slate-400">
+                      <Loader2 className="h-6 w-6 animate-spin text-accent-violet" />
+                    </div>
+                  }
+                >
+                  <Outlet />
+                </Suspense>
+              </ErrorBoundary>
             </motion.div>
           </AnimatePresence>
         </main>

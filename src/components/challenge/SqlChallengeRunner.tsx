@@ -64,6 +64,15 @@ export default function SqlChallengeRunner({ block, id }: Props) {
         if (!alreadySolved) celebrate();
         solveChallenge(id, block.xp ?? 50);
       }
+    } catch (err) {
+      // Engine-level failure (PGlite failed to init / crashed), not a wrong-answer verdict.
+      setVerdict({
+        pass: false,
+        reason:
+          err instanceof Error
+            ? `The SQL engine failed to run: ${err.message}`
+            : "The SQL engine did not respond. Try reloading the page.",
+      });
     } finally {
       setRunning(false);
     }

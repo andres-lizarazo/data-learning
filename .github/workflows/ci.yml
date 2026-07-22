@@ -1,0 +1,30 @@
+name: CI
+
+# Quality gate: typecheck, lint, unit tests, and the Python-challenge verifier all run on
+# every push and PR. Deploy (deploy.yml) runs independently on push to main; this makes the
+# test suite — which already exists — actually enforced instead of advisory.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Unit tests (incl. every SQL block end-to-end in PGlite)
+        run: npm test
+      - name: Verify every Python challenge solution passes its own tests
+        run: npm run verify:py

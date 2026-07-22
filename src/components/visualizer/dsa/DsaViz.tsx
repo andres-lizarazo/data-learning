@@ -58,6 +58,9 @@ export default function DsaViz({ block }: { block: DsaVizBlock }) {
     case "dijkstra":
       return <DijkstraViz {...common} adjacency={data?.adjacency} start={data?.start} />;
     default:
+      if (import.meta.env.DEV) {
+        console.warn(`DsaViz: unknown viz "${block.viz}" — nothing rendered.`);
+      }
       return null;
   }
 }

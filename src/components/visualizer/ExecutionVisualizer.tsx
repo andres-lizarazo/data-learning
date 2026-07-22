@@ -37,6 +37,7 @@ export default function ExecutionVisualizer({ initialCode, title, draftKey }: Pr
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(600); // ms per step
   const [loading, setLoading] = useState(false);
+  const [engineError, setEngineError] = useState(""); // worker-level failure, not a Python error
   const [watch, setWatch] = useState(""); // comma-separated names to pin
   const [view, setView] = useState<"table" | "objects">("table");
   const prevLocals = useRef<Record<string, string>>({});
@@ -52,10 +53,19 @@ export default function ExecutionVisualizer({ initialCode, title, draftKey }: Pr
     setLoading(true);
     setPlaying(false);
     setTrace(null);
+    setEngineError("");
     setIdx(0);
     try {
       const t = await pyodideClient.trace(code);
       setTrace(t);
+    } catch (err) {
+      // Engine-level failure (worker crashed / never booted) — Python errors come back
+      // on the trace result instead. Surface it rather than failing silently.
+      setEngineError(
+        err instanceof Error
+          ? `The Python engine failed: ${err.message}`
+          : "The Python engine did not respond. Try reloading the page.",
+      );
     } finally {
       setLoading(false);
     }
@@ -189,6 +199,12 @@ export default function ExecutionVisualizer({ initialCode, title, draftKey }: Pr
               </>
             )}
           </div>
+
+          {engineError && (
+            <pre className="rounded-lg border border-brand-red/40 bg-brand-red/10 px-3 py-2 font-mono text-xs text-brand-red">
+              {engineError}
+            </pre>
+          )}
 
           {steps.length > 0 && (
             <div className="space-y-1">

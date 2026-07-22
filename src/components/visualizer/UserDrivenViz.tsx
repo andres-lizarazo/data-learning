@@ -70,6 +70,15 @@ export default function UserDrivenViz({
       const parsed = JSON.parse(line.slice(MARKER.length)) as VizFrame[];
       setFrames(parsed);
       stepper.setIdx(0);
+    } catch (err) {
+      // Engine-level failure (worker crashed / never booted) — distinct from a Python
+      // error, which comes back on `res`. Surface it instead of failing silently.
+      setError(
+        err instanceof Error
+          ? `Could not run your code: ${err.message}`
+          : "Could not run your code — the Python engine did not respond.",
+      );
+      setFrames([]);
     } finally {
       setRunning(false);
     }
