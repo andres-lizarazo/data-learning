@@ -29,7 +29,11 @@ nums.append(40)     # add to end
 nums.insert(0, 5)   # insert at index
 nums.pop()          # remove & return last
 nums[1] = 99        # mutate in place
-\`\`\``,
+\`\`\`
+
+\`nums.sort()\` sorts **in place** and returns \`None\`. The builtin \`sorted(nums)\`
+instead **returns a new sorted list** and leaves \`nums\` untouched — reach for it
+whenever you need the original order preserved.`,
         },
         {
           kind: "dsa-viz",
@@ -48,7 +52,11 @@ print(nums)
 print("len:", len(nums))
 print("slice:", nums[1:3])
 nums.sort(reverse=True)
-print("sorted desc:", nums)`,
+print("sorted desc (in place):", nums)
+
+original = [3, 1, 2]
+brand_new = sorted(original)
+print("sorted():", brand_new, "| original untouched:", original)`,
         },
         {
           kind: "visualized",
@@ -74,9 +82,16 @@ print("c:", c)`,
             { name: "dupes", assertion: "assert second_largest([5,5,4]) == 4" },
             { name: "neg", assertion: "assert second_largest([-1,-2,-3]) == -2", hidden: true },
           ],
+          hints: [
+            "First build a list of the *distinct* values in `nums` — loop through and only keep a value the first time you see it (use `in` to check if you've already collected it).",
+            "Once you have the distinct values, `sorted(...)` them — the second largest is the second-from-the-end of that sorted list.",
+          ],
           solution: `def second_largest(nums):
-    distinct = sorted(set(nums))
-    return distinct[-2]`,
+    distinct = []
+    for n in nums:
+        if n not in distinct:
+            distinct.append(n)
+    return sorted(distinct)[-2]`,
           xp: 60,
         },
       ],

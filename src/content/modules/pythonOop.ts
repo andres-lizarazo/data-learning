@@ -495,12 +495,16 @@ print(repr(shout.run("  quiet words  ")))`,
           tests: [
             {
               name: "chains",
-              assertion: `p = Pipeline().add(lambda x: x + 1).add(lambda x: x * 10)
+              assertion: `def add1(x): return x + 1
+def times10(x): return x * 10
+p = Pipeline().add(add1).add(times10)
 assert p.run(2) == 30`,
             },
             {
               name: "order matters",
-              assertion: `p = Pipeline().add(lambda x: x * 10).add(lambda x: x + 1)
+              assertion: `def add1(x): return x + 1
+def times10(x): return x * 10
+p = Pipeline().add(times10).add(add1)
 assert p.run(2) == 21`,
             },
             {

@@ -138,6 +138,11 @@ except ValueError as err:
 
 The traceback shows BOTH: your domain error and the original cause underneath.
 
+Notice the \`!r\` inside \`{raw!r}\` — it calls \`repr()\` on the value instead of
+\`str()\`, so \`"eighty"\` prints as \`'eighty'\` (with quotes). That extra precision
+matters in error messages: it's the difference between "got " (a blank you can't
+debug) and "got '  '" (aha, trailing whitespace).
+
 **3. Catch narrowly, fail loudly.** \`except Exception: pass\` is how pipelines
 "succeed" with half the data (the silent failures from the Data Quality module).
 Catch the specific type you can actually handle; let the rest crash the task —
@@ -171,7 +176,13 @@ def parse_port_bad(raw):
 try:
     parse_port_bad("eighty")
 except ConfigError as e:
-    print("\\nanti-pattern:", e, "| cause preserved?", e.__cause__ is not None)`,
+    print("\\nanti-pattern:", e, "| cause preserved?", e.__cause__ is not None)
+
+# .splitlines() splits on any newline style and drops the trailing blank —
+# handy for line-oriented text like config files:
+text = "a=1\\n\\nb=2\\n"
+print("\\nsplitlines:", text.splitlines())
+print("split('\\\\n'): ", text.split("\\n"))  # keeps the trailing empty string`,
         },
         {
           kind: "challenge",

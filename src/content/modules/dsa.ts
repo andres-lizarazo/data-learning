@@ -83,7 +83,16 @@ Dicts/sets give average **O(1)** membership and counting. Many "find a pair / fi
 a duplicate / group by" problems become linear with a hash map.
 
 Under the hood, a hash table maps each key to a **bucket** via \`hash(key) % n\`. When
-two keys land in the same bucket (a **collision**), they're kept in a small chain.`,
+two keys land in the same bucket (a **collision**), they're kept in a small chain.
+
+When you need both the **index** and the **value** while looping — handy when you're
+about to store one of them in a hash map — use \`enumerate(...)\` instead of a manual
+counter. It yields \`(index, value)\` pairs:
+
+\`\`\`python
+for i, x in enumerate([10, 20, 30]):
+    print(i, x)   # 0 10 | 1 20 | 2 30
+\`\`\``,
         },
         {
           kind: "dsa-viz",
@@ -127,7 +136,10 @@ two keys land in the same bucket (a **collision**), they're kept in a small chai
 
 When a problem asks about **contiguous** sub-arrays/substrings of a fixed (or growing)
 size, slide a window across the data and update an aggregate incrementally instead of
-recomputing it each time — O(n) instead of O(n·k).`,
+recomputing it each time — O(n) instead of O(n·k).
+
+Track the best value seen so far with the builtin \`max(a, b)\` (returns whichever is
+larger) — e.g. \`best = max(best, window)\` updates \`best\` only when \`window\` beats it.`,
         },
         {
           kind: "dsa-viz",

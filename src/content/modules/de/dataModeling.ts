@@ -573,7 +573,7 @@ and insert). That detection query is your challenge.`,
           title: "Which staged updates require action?",
           seedId: "warehouse",
           prompt:
-            "Compare `staging.customer_updates` to the **current** rows of `dim_customer` (natural key `customer_id`). Return `customer_id` and `name` of every staged row that is a **new customer** (no current dim row) **or** differs from the current row in `name`, `segment`, or `city`. Order by `customer_id`.\n\n*Tip: `IS DISTINCT FROM` compares like `<>` but treats NULLs sanely.*",
+            "Compare `staging.customer_updates` to the **current** rows of `dim_customer` (natural key `customer_id`). Return `customer_id` and `name` of every staged row that is a **new customer** (no current dim row) **or** differs from the current row in `name`, `segment`, or `city`. Order by `customer_id`.\n\n*Tip: `IS DISTINCT FROM` compares like `<>` but treats NULLs sanely — and you can compare several columns at once by wrapping them in parentheses on both sides, e.g. `(a, b) IS DISTINCT FROM (x, y)`.*",
           starterSql:
             "SELECT u.customer_id, u.name\nFROM staging.customer_updates u\nLEFT JOIN dim_customer c\n  ON c.customer_id = u.customer_id AND c.is_current\nWHERE -- new customer OR changed attributes\n;",
           solution:

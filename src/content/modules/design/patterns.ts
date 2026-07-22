@@ -716,6 +716,20 @@ learned. Recognizing them turns "memorizing an API" into "oh, it's that shape":
 | Great Expectations | one \`Expectation\` class per check | **Strategy** + **Factory** (from config) |
 | This app | one shared Pyodide/PGlite engine | **Singleton** (module-level instance) |
 
+Two rows worth unpacking, since you'll meet both tools properly later in the
+Data Engineering track:
+
+- **Spark's laziness is Builder.** \`.filter(...)\`/\`.select(...)\` don't touch data —
+  each call just appends a step to a logical plan (the object under construction).
+  Only a terminal **action** like \`.count()\` or \`.collect()\` "builds" — i.e. actually
+  runs the plan. That's why the chain returns instantly but the action is slow: all
+  the real work was deferred to one call, which also lets the engine optimize the
+  whole plan before running it.
+- **dbt's \`materialized\` config is Strategy.** The SELECT you write never changes;
+  \`view\`/\`table\`/\`incremental\` are three interchangeable *build behaviors* wrapped
+  around that same SQL, picked by a config line instead of a code branch — exactly
+  the "swap the algorithm, keep the interface" shape Strategy describes.
+
 Two takeaways:
 
 1. **Read new frameworks pattern-first.** "Where's the template? What's

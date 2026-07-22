@@ -248,7 +248,11 @@ prices = pd.DataFrame({"item": ["a", "b", "c"], "price": [10, 25, 4]})
 m = orders.merge(prices, on="item")
 m["cost"] = m["qty"] * m["price"]
 print(m)
-print("\\ntotal cost:", m["cost"].sum())`,
+print("\\ntotal cost:", m["cost"].sum())
+
+# .iterrows() walks row by row when you need per-row values, not a vectorized column
+for _, row in m.iterrows():
+    print(row["item"], "->", row["cost"])`,
         },
         {
           kind: "challenge",

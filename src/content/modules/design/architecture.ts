@@ -421,8 +421,8 @@ Networks blip, pods die, APIs rate-limit. Reliable pipelines assume it:
 
 *Running twice = running once.* The write patterns:
 
-- **Upsert / MERGE by key** — instead of blind INSERT (you built this in the
-  warehouse module).
+- **Upsert / MERGE by key** — instead of blind INSERT (you practiced this with
+  \`ON CONFLICT\` / \`MERGE\` in the PostgreSQL module).
 - **Delete-then-insert the partition** — recompute a day? Wipe exactly that day
   first, then write it.
 - **Idempotency keys** — dedupe requests/events by a caller-supplied unique key.
