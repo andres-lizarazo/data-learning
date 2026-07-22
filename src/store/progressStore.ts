@@ -28,19 +28,24 @@ interface ProgressState {
   reset: () => void;
 }
 
-function today(): string {
-  return new Date().toISOString().slice(0, 10);
+/** Local calendar day as YYYY-MM-DD, so a streak rolls over at the learner's midnight
+ *  (not UTC's, which would flip at an odd local hour). */
+function localDay(d = new Date()): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 function touchStreak(state: {
   streakDays: number;
   lastActiveDay: string | null;
 }): { streakDays: number; lastActiveDay: string } {
-  const day = today();
+  const day = localDay();
   if (state.lastActiveDay === day) {
     return { streakDays: state.streakDays || 1, lastActiveDay: day };
   }
-  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  const yesterday = localDay(new Date(Date.now() - 86400000));
   const streakDays =
     state.lastActiveDay === yesterday ? state.streakDays + 1 : 1;
   return { streakDays, lastActiveDay: day };
@@ -117,6 +122,26 @@ export const useProgressStore = create<ProgressState>()(
           lastLessonId: null,
         }),
     }),
-    { name: "pylearn-progress" },
+    {
+      name: "pylearn-progress",
+      version: 1,
+      // Heals localStorage written before a field existed (or by an older shape): fills any
+      // missing key with its default so a returning learner never hydrates a broken store.
+      // Only data fields are returned; persist re-attaches the actions from the initializer.
+      migrate: (persisted) => {
+        const s = (persisted ?? {}) as Partial<ProgressState>;
+        return {
+          completedLessons: s.completedLessons ?? {},
+          solvedChallenges: s.solvedChallenges ?? {},
+          bookmarks: s.bookmarks ?? {},
+          notes: s.notes ?? {},
+          xp: s.xp ?? 0,
+          streakDays: s.streakDays ?? 0,
+          lastActiveDay: s.lastActiveDay ?? null,
+          lastModuleId: s.lastModuleId ?? null,
+          lastLessonId: s.lastLessonId ?? null,
+        } as ProgressState;
+      },
+    },
   ),
 );

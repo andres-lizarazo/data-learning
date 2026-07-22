@@ -121,7 +121,15 @@ export const useReviewStore = create<ReviewState>()(
 
       reset: () => set({ cards: {} }),
     }),
-    { name: "pylearn-review" },
+    {
+      name: "pylearn-review",
+      version: 1,
+      // Defensive heal for pre-versioning storage: guarantee a `cards` map exists.
+      migrate: (persisted) => {
+        const s = (persisted ?? {}) as Partial<ReviewState>;
+        return { cards: s.cards ?? {} } as ReviewState;
+      },
+    },
   ),
 );
 
