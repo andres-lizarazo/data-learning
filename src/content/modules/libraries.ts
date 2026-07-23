@@ -63,6 +63,10 @@ def most_common(items):
             { name: "strings", assertion: "assert most_common(['a','b','b']) == 'b'" },
             { name: "single", assertion: "assert most_common([7]) == 7", hidden: true },
           ],
+          hints: [
+            "`Counter(items)` tallies how many times each value appears in one line.",
+            "`.most_common(1)` returns `[(value, count)]` for the top item — index `[0][0]` pulls out just the value.",
+          ],
           solution: `from collections import Counter
 
 def most_common(items):
@@ -155,6 +159,10 @@ def summary(nums):
             { name: "odd count", assertion: "assert summary([1,2,3,4,10]) == (4, 3)" },
             { name: "single", assertion: "assert summary([7]) == (7, 7)", hidden: true },
           ],
+          hints: [
+            "The `statistics` module has this built in — no manual math needed.",
+            "Return both as a tuple: `(st.mean(nums), st.median(nums))`.",
+          ],
           solution: `import statistics as st
 
 def summary(nums):
@@ -216,11 +224,27 @@ def product(nums):
             { name: "empty", assertion: "assert product([]) == 1" },
             { name: "with zero", assertion: "assert product([5,0,9]) == 0", hidden: true },
           ],
+          hints: [
+            "`reduce(fn, iterable, initial)` folds a two-argument function across the sequence, carrying an accumulator.",
+            "Multiply pairs with `lambda a, b: a * b`, and start the accumulator at `1` so an empty list returns 1.",
+          ],
           solution: `from functools import reduce
 
 def product(nums):
     return reduce(lambda a, b: a * b, nums, 1)`,
           xp: 60,
+        },
+        {
+          kind: "quiz",
+          question: "You need to count occurrences of each item in a list. The cleanest tool is…",
+          options: [
+            { text: "collections.Counter(items)", correct: true },
+            { text: "functools.reduce over the list" },
+            { text: "sorted(items) then manual counting" },
+            { text: "itertools.count()" },
+          ],
+          explanation:
+            "`Counter` is purpose-built for tallying — `Counter(items)` gives a dict-like of counts, plus `.most_common(n)`. `itertools.count()` is an infinite counter (unrelated), and reduce/sorted are needless work here.",
         },
       ],
     },

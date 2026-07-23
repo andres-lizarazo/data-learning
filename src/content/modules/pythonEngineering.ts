@@ -563,6 +563,142 @@ assert raised`,
       ],
     },
     {
+      id: "decorators",
+      title: "Decorators",
+      summary: "Wrap a function to add behavior — logging, timing, caching — without touching it.",
+      minutes: 12,
+      blocks: [
+        {
+          kind: "prose",
+          markdown: `# Decorators
+
+A **decorator** is a function that takes a function and returns a new function that
+*wraps* it — adding behavior before/after, without editing the original. You've already
+*used* them: \`@property\`, \`@dataclass\`, \`@lru_cache\`. Now you'll *write* one.
+
+The shape is always the same: define an inner \`wrapper\`, call the original inside it,
+and return \`wrapper\`.
+
+\`\`\`python
+import functools
+
+def log_calls(fn):
+    @functools.wraps(fn)          # keep fn's name/docstring on the wrapper
+    def wrapper(*args, **kwargs):  # accept ANY arguments and forward them
+        print(f"calling {fn.__name__}")
+        result = fn(*args, **kwargs)
+        print(f"{fn.__name__} -> {result!r}")
+        return result
+    return wrapper
+
+@log_calls              # same as: greet = log_calls(greet)
+def greet(name):
+    return f"hi {name}"
+\`\`\`
+
+Two things make it general:
+
+- **\`*args, **kwargs\`** let the wrapper accept and forward whatever arguments the
+  wrapped function takes — so one decorator works on any signature.
+- **\`functools.wraps(fn)\`** copies \`fn\`'s name and docstring onto \`wrapper\`, so the
+  decorated function doesn't masquerade as \`wrapper\` in tracebacks and \`help()\`.`,
+        },
+        {
+          kind: "runnable",
+          title: "A timing decorator",
+          code: `import functools, time
+
+def timed(fn):
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        start = time.perf_counter()
+        result = fn(*args, **kwargs)
+        elapsed = (time.perf_counter() - start) * 1000
+        print(f"{fn.__name__} took {elapsed:.2f} ms")
+        return result
+    return wrapper
+
+@timed
+def work(n):
+    return sum(i * i for i in range(n))
+
+print("result:", work(100_000))
+print("name is preserved:", work.__name__)   # 'work', not 'wrapper'`,
+        },
+        {
+          kind: "challenge",
+          title: "Write @count_calls",
+          prompt: `Write a decorator \`count_calls\` that records how many times the wrapped
+function has been called, exposed as a \`.calls\` attribute on the decorated function.
+
+- The wrapper must forward all arguments and return the original result.
+- Before the first call, \`.calls\` is \`0\`; it increments by 1 on every call.`,
+          starterCode: `import functools
+
+def count_calls(fn):
+    pass`,
+          tests: [
+            {
+              name: "counts up",
+              assertion: `@count_calls
+def add(a, b): return a + b
+assert add.calls == 0
+assert add(2, 3) == 5
+assert add(1, 1) == 2
+assert add.calls == 2`,
+            },
+            {
+              name: "forwards kwargs",
+              assertion: `@count_calls
+def greet(name, excited=False): return name + ("!" if excited else "")
+assert greet("ana", excited=True) == "ana!"
+assert greet.calls == 1`,
+            },
+            {
+              name: "each function counts independently",
+              assertion: `@count_calls
+def f(): return 1
+@count_calls
+def g(): return 2
+f(); f(); g()
+assert (f.calls, g.calls) == (2, 1)`,
+              hidden: true,
+            },
+          ],
+          hints: [
+            "Define `wrapper(*args, **kwargs)` inside `count_calls`, decorate it with `@functools.wraps(fn)`, and `return wrapper` at the end.",
+            "Store the count ON the wrapper itself: set `wrapper.calls = 0` before returning it.",
+            "Inside the wrapper, do `wrapper.calls += 1`, then `return fn(*args, **kwargs)`.",
+          ],
+          solution: `import functools
+
+def count_calls(fn):
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        wrapper.calls += 1
+        return fn(*args, **kwargs)
+    wrapper.calls = 0
+    return wrapper`,
+          xp: 80,
+        },
+        {
+          kind: "quiz",
+          question: "Why do production decorators wrap with `@functools.wraps(fn)`?",
+          options: [
+            {
+              text: "It copies the wrapped function's name and docstring onto the wrapper, so tracebacks and help() still identify the real function",
+              correct: true,
+            },
+            { text: "It makes the decorator run faster" },
+            { text: "It's required syntax — the decorator errors without it" },
+            { text: "It caches the function's return values" },
+          ],
+          explanation:
+            "Without `functools.wraps`, the decorated function reports itself as `wrapper` with no docstring, which muddies debugging and introspection. It's cosmetic-but-important, not required for the decorator to run.",
+        },
+      ],
+    },
+    {
       id: "files-pathlib",
       title: "Files & pathlib",
       summary: "Real file I/O — reading, writing, CSVs, and paths as objects.",
@@ -643,28 +779,31 @@ def read_total(path):
           tests: [
             {
               name: "round trip",
-              assertion: `import tempfile, os
-p = os.path.join(tempfile.gettempdir(), "pylearn_report_a.csv")
+              assertion: `import tempfile
+from pathlib import Path
+p = Path(tempfile.gettempdir()) / "pylearn_report_a.csv"
 assert write_report(p, [("ana", 10.5), ("bob", 2.5)]) == 2
 assert read_total(p) == 13.0
-os.remove(p)`,
+p.unlink()`,
             },
             {
               name: "empty file",
-              assertion: `import tempfile, os
-p = os.path.join(tempfile.gettempdir(), "pylearn_report_b.csv")
+              assertion: `import tempfile
+from pathlib import Path
+p = Path(tempfile.gettempdir()) / "pylearn_report_b.csv"
 write_report(p, [])
 assert read_total(p) == 0.0
-os.remove(p)`,
+p.unlink()`,
             },
             {
               name: "overwrites cleanly",
-              assertion: `import tempfile, os
-p = os.path.join(tempfile.gettempdir(), "pylearn_report_c.csv")
+              assertion: `import tempfile
+from pathlib import Path
+p = Path(tempfile.gettempdir()) / "pylearn_report_c.csv"
 write_report(p, [("x", 100.0)])
 write_report(p, [("y", 1.0)])
 assert read_total(p) == 1.0
-os.remove(p)`,
+p.unlink()`,
               hidden: true,
             },
           ],
@@ -969,6 +1108,18 @@ types.
           ],
           explanation:
             "The 'check at the boundaries' principle: one validated edge means everything inside can trust its inputs (and skip re-checking). It's the runtime mirror of typing your function boundaries — and it closes the loop with the Data Quality module.",
+        },
+        {
+          kind: "flashcards",
+          title: "Production Python — habits",
+          cards: [
+            { front: "`raise NewError(...) from err`", back: "Chains exceptions: the traceback shows both your domain error and the original cause. Never swallow the root cause." },
+            { front: "Why `except Exception: pass` is dangerous", back: "It launders failure into silent success — the pipeline 'succeeds' on missing/partial data, no retry, no alert. Catch narrowly, fail loudly." },
+            { front: "generator vs list", back: "A generator (`yield`, or `(x for x in ...)`) produces items lazily, one at a time — constant memory over a huge/infinite stream. A list materializes them all." },
+            { front: "Context manager (`with`)", back: "Guarantees setup/teardown even on exceptions (`with open(...) as f:` closes the file). Write your own with `@contextmanager` + `yield`." },
+            { front: "`x: int | None` type hint", back: "Documents that the value may be absent; a type checker then forces callers to handle the None case. Annotations are free at runtime." },
+            { front: "pytest basics", back: "Plain `assert` statements in `test_*` functions; pytest rewrites them to show the values on failure. Fixtures inject setup (e.g. `tmp_path`)." },
+          ],
         },
       ],
     },

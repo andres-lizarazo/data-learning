@@ -129,8 +129,13 @@ print(not (1 == 1))`,
             { name: "7 -> odd", assertion: 'assert parity(7) == "odd"' },
             { name: "0 -> even", assertion: 'assert parity(0) == "even"', hidden: true },
           ],
+          hints: [
+            "A number is even when the remainder of dividing by 2 is zero: `n % 2 == 0`.",
+            'You can pick between two values on one line with a conditional expression: `"even" if n % 2 == 0 else "odd"`.',
+          ],
           solution: `def parity(n):
     return "even" if n % 2 == 0 else "odd"`,
+          xp: 50,
         },
       ],
     },
@@ -179,9 +184,14 @@ print("-".join(["a", "b", "c"]))`,
             { name: "'Level'", assertion: "assert is_palindrome('Level') is True" },
             { name: "'hello'", assertion: "assert is_palindrome('hello') is False", hidden: true },
           ],
+          hints: [
+            "Normalize case first so 'Level' counts — lowercase the whole string with `text.lower()`.",
+            "Reverse a string with the slice `t[::-1]`, then a palindrome is just `t == t[::-1]`.",
+          ],
           solution: `def is_palindrome(text):
     t = text.lower()
     return t == t[::-1]`,
+          xp: 50,
         },
       ],
     },
@@ -245,6 +255,7 @@ print("Grade:", grade)`,
     if n % 5 == 0:
         return "Buzz"
     return str(n)`,
+          xp: 50,
         },
       ],
     },
@@ -390,11 +401,16 @@ print(result)`,
             { name: "9,1,4", assertion: "assert largest(9,1,4) == 9" },
             { name: "equal", assertion: "assert largest(5,5,5) == 5", hidden: true },
           ],
+          hints: [
+            "Assume the first value is the largest so far: `m = a`.",
+            "Compare the other two against `m` one at a time, updating `m` whenever you find something bigger (`if b > m: m = b`).",
+          ],
           solution: `def largest(a, b, c):
     m = a
     if b > m: m = b
     if c > m: m = c
     return m`,
+          xp: 50,
         },
       ],
     },
@@ -439,8 +455,13 @@ print(lengths)`,
             { name: "empty", assertion: "assert even_squares([]) == []" },
             { name: "all odd", assertion: "assert even_squares([1,3,5]) == []", hidden: true },
           ],
+          hints: [
+            "A list comprehension can both transform and filter: `[expr for x in nums if condition]`.",
+            "Keep only evens with `if x % 2 == 0`, and square each kept value with `x*x`.",
+          ],
           solution: `def even_squares(nums):
     return [x*x for x in nums if x % 2 == 0]`,
+          xp: 60,
         },
       ],
     },
@@ -490,11 +511,28 @@ print(safe_div(10, 0))`,
             { name: "'oops'", assertion: "assert parse_int('oops', -1) == -1" },
             { name: "'3.5'", assertion: "assert parse_int('3.5', 0) == 0", hidden: true },
           ],
+          hints: [
+            "Wrap the `int(s)` conversion in a `try` so a bad string doesn't crash the function.",
+            "`int('oops')` raises `ValueError` and `int(None)` raises `TypeError` — catch both and `return default`. (Note `int('3.5')` also raises, so it falls back too.)",
+          ],
           solution: `def parse_int(s, default=0):
     try:
         return int(s)
     except (ValueError, TypeError):
         return default`,
+          xp: 60,
+        },
+        {
+          kind: "flashcards",
+          title: "Python basics — key facts",
+          cards: [
+            { front: "`//` vs `/`", back: "`/` is float division (`7/2 == 3.5`); `//` is floor division (`7//2 == 3`). `%` is the remainder." },
+            { front: "Reverse a string/list", back: "Slice with a step of -1: `s[::-1]`. Works for any sequence." },
+            { front: "`\"even\" if n % 2 == 0 else \"odd\"`", back: "A conditional (ternary) expression: `A if cond else B` — picks a value inline without a full if-block." },
+            { front: "Truthiness of empty containers", back: "`[]`, `{}`, `\"\"`, `0`, and `None` are all falsy. Non-empty containers and non-zero numbers are truthy." },
+            { front: "try / except / finally", back: "`try` runs risky code; `except SomeError` handles a specific failure; `finally` always runs (cleanup), error or not." },
+            { front: "f-string", back: "`f\"{name} is {age}\"` interpolates expressions inside `{}`. Add `:.2f` for 2 decimals, `!r` for repr()." },
+          ],
         },
       ],
     },

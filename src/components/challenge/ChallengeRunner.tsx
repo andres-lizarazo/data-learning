@@ -79,6 +79,14 @@ export default function ChallengeRunner({ block, id }: Props) {
         if (!alreadySolved) celebrate();
         solveChallenge(id, block.xp ?? 50);
       }
+    } catch (err) {
+      // Engine-level failure (worker crashed / never booted), not a test failure.
+      setStderr(
+        err instanceof Error
+          ? `The Python engine failed to run your code: ${err.message}`
+          : "The Python engine did not respond. Try reloading the page.",
+      );
+      setResults(block.tests.map((t) => ({ name: t.name, ok: false, hidden: t.hidden })));
     } finally {
       setRunning(false);
     }

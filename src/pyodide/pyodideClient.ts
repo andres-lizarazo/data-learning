@@ -47,11 +47,18 @@ type Pending = {
   reject: (e: Error) => void;
 };
 
+// Inactivity watchdog. The worker posts a status message before every long step (boot,
+// each package install), so any real work keeps resetting this timer. Only a truly silent
+// worker — e.g. user code stuck in `while True:` — lets it elapse, at which point we reject
+// the in-flight call and restart the interpreter instead of hanging the promise forever.
+const INACTIVITY_MS = 60_000;
+
 class PyodideClient {
   private worker: Worker | null = null;
   private seq = 0;
   private pending = new Map<number, Pending>();
   private statusListeners = new Set<(s: string) => void>();
+  private watchdog: ReturnType<typeof setTimeout> | null = null;
 
   status = "idle";
   ready = false;
@@ -67,6 +74,7 @@ class PyodideClient {
         this.status = msg.message;
         if (msg.message === "ready") this.ready = true;
         this.statusListeners.forEach((l) => l(msg.message));
+        this.armWatchdog();
         return;
       }
       const p = this.pending.get(msg.id);
@@ -74,7 +82,48 @@ class PyodideClient {
       this.pending.delete(msg.id);
       if (msg.ok) p.resolve(msg.result);
       else p.reject(new Error(msg.error));
+      this.armWatchdog();
     };
+  }
+
+  private armWatchdog() {
+    if (this.watchdog) clearTimeout(this.watchdog);
+    this.watchdog = this.pending.size
+      ? setTimeout(() => this.handleTimeout(), INACTIVITY_MS)
+      : null;
+  }
+
+  private rejectAll(err: Error) {
+    this.pending.forEach((p) => p.reject(err));
+    this.pending.clear();
+  }
+
+  private handleTimeout() {
+    this.rejectAll(
+      new Error(
+        "The Python engine stopped responding (a possible infinite loop). It was restarted — try running again.",
+      ),
+    );
+    this.restart();
+  }
+
+  /**
+   * Tear down and re-create the worker. Rejects any in-flight calls and emits a "restarted"
+   * status so the boot store can re-initialize. Used by the watchdog and available to the UI.
+   */
+  restart() {
+    if (this.worker) {
+      this.worker.terminate();
+      this.worker = null;
+    }
+    if (this.watchdog) {
+      clearTimeout(this.watchdog);
+      this.watchdog = null;
+    }
+    this.ready = false;
+    this.status = "restarted";
+    this.rejectAll(new Error("Python engine restarted."));
+    this.statusListeners.forEach((l) => l("restarted"));
   }
 
   private call<T>(type: string, payload?: unknown): Promise<T> {
@@ -86,6 +135,7 @@ class PyodideClient {
         reject,
       });
       this.worker!.postMessage({ id, type, payload });
+      this.armWatchdog();
     });
   }
 

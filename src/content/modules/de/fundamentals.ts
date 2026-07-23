@@ -415,5 +415,155 @@ Principles that show up at every stage:
         },
       ],
     },
+    {
+      id: "sql-from-python",
+      title: "SQL from Python & API Ingestion",
+      summary: "Run real SQL from Python with SQLAlchemy, and load an API's JSON into a table.",
+      minutes: 13,
+      blocks: [
+        {
+          kind: "prose",
+          markdown: `# Connecting Python to a database
+
+You've learned Python and SQL separately. In a pipeline they meet: Python **drives**
+the database — creating tables, loading data, and running queries — while SQL does the
+set-based work. The standard tool is **SQLAlchemy**, whose *Core* layer is a thin,
+portable wrapper over raw SQL.
+
+> **Browser note:** real pipelines connect to a server with a driver like \`psycopg\`
+> (Postgres) and pull from APIs with \`requests\`. Those need network sockets, which this
+> in-browser Python (Pyodide) doesn't have. So here we run the *identical* SQLAlchemy code
+> against an **in-memory SQLite** database — the API and driver differ, the pattern is the same.
+
+## Parametrized queries — never format SQL by hand
+
+\`\`\`python
+# ✅ pass values as parameters — the driver escapes them
+conn.execute(text("INSERT INTO product (name, price) VALUES (:n, :p)"), {"n": name, "p": price})
+
+# ❌ never build SQL with f-strings — this is how SQL injection happens
+conn.execute(text(f"INSERT INTO product VALUES ('{name}', {price})"))
+\`\`\`
+
+Parameters (\`:name\`) also let the database **reuse the query plan** and pass a *list* of
+dicts for a fast bulk insert.`,
+        },
+        {
+          kind: "runnable",
+          title: "Create, insert, query — with SQLAlchemy Core",
+          packages: ["sqlalchemy"],
+          code: `from sqlalchemy import create_engine, text
+
+engine = create_engine("sqlite:///:memory:")   # a real DB, just in-memory
+
+with engine.begin() as conn:                    # begin() = transaction, auto-commit on exit
+    conn.execute(text("CREATE TABLE product (id INTEGER PRIMARY KEY, name TEXT, price REAL)"))
+    conn.execute(
+        text("INSERT INTO product (name, price) VALUES (:n, :p)"),
+        [{"n": "pen", "p": 2.5}, {"n": "mug", "p": 8.0}, {"n": "lamp", "p": 20.0}],
+    )
+
+with engine.connect() as conn:
+    rows = conn.execute(
+        text("SELECT name, price FROM product WHERE price >= :min ORDER BY price DESC"),
+        {"min": 5},
+    ).fetchall()
+
+for name, price in rows:
+    print(f"{name}: {price}")`,
+        },
+        {
+          kind: "runnable",
+          title: "Ingest an API payload into the table",
+          packages: ["sqlalchemy"],
+          code: `import json
+from sqlalchemy import create_engine, text
+
+# In a real job: resp = requests.get(url); records = resp.json()
+# Here we stand in for the API response with a JSON string.
+api_response = '[{"name": "desk", "price": 120.0}, {"name": "chair", "price": 45.0}]'
+records = json.loads(api_response)   # list[dict] — parsed straight into rows
+
+engine = create_engine("sqlite:///:memory:")
+with engine.begin() as conn:
+    conn.execute(text("CREATE TABLE product (name TEXT, price REAL)"))
+    # one execute, a whole batch of rows — the bulk-load idiom
+    conn.execute(text("INSERT INTO product (name, price) VALUES (:name, :price)"), records)
+
+with engine.connect() as conn:
+    total = conn.execute(text("SELECT SUM(price) FROM product")).scalar()
+print("rows loaded:", len(records), "| total price:", total)`,
+        },
+        {
+          kind: "challenge",
+          title: "Load records and query them",
+          packages: ["sqlalchemy"],
+          prompt: `Write \`expensive(records, min_price)\`:
+
+- \`records\` is a list of dicts \`{"name": str, "price": float}\`.
+- Load them into an **in-memory SQLite** table using SQLAlchemy, then run a SQL query
+  that returns the **names** of products whose \`price\` is **≥ \`min_price\`**, ordered by
+  price **descending**.
+- Return that list of names.
+
+Use \`text(...)\` with a bound parameter for \`min_price\` — no f-strings in the SQL.`,
+          starterCode: `from sqlalchemy import create_engine, text
+
+def expensive(records, min_price):
+    pass`,
+          tests: [
+            {
+              name: "filters and orders",
+              assertion: `rows = [{"name": "a", "price": 5.0}, {"name": "b", "price": 20.0}, {"name": "c", "price": 12.0}]
+assert expensive(rows, 10) == ["b", "c"]`,
+            },
+            {
+              name: "boundary is inclusive",
+              assertion: `rows = [{"name": "x", "price": 10.0}, {"name": "y", "price": 9.99}]
+assert expensive(rows, 10) == ["x"]`,
+            },
+            {
+              name: "empty when nothing qualifies",
+              assertion: `assert expensive([{"name": "z", "price": 1.0}], 100) == []`,
+              hidden: true,
+            },
+          ],
+          hints: [
+            "Make the engine with `create_engine(\"sqlite:///:memory:\")`, then inside `engine.begin()` create the table and bulk-insert `records` (pass the list straight to one `execute`).",
+            "Query with a bound parameter: `text(\"SELECT name FROM product WHERE price >= :min ORDER BY price DESC\")` and `{\"min\": min_price}`.",
+            "`.fetchall()` returns rows; pull the first column of each with `[r[0] for r in rows]`.",
+          ],
+          solution: `from sqlalchemy import create_engine, text
+
+def expensive(records, min_price):
+    engine = create_engine("sqlite:///:memory:")
+    with engine.begin() as conn:
+        conn.execute(text("CREATE TABLE product (name TEXT, price REAL)"))
+        conn.execute(text("INSERT INTO product (name, price) VALUES (:name, :price)"), records)
+    with engine.connect() as conn:
+        rows = conn.execute(
+            text("SELECT name FROM product WHERE price >= :min ORDER BY price DESC"),
+            {"min": min_price},
+        ).fetchall()
+    return [r[0] for r in rows]`,
+          xp: 90,
+        },
+        {
+          kind: "quiz",
+          question: "Why pass values as `:params` instead of building the SQL string with an f-string?",
+          options: [
+            {
+              text: "The driver escapes parameters safely — it prevents SQL injection and lets the DB reuse the query plan",
+              correct: true,
+            },
+            { text: "f-strings don't work inside text()" },
+            { text: "Parameters make the query run on more rows at once" },
+            { text: "It's the only way to select multiple columns" },
+          ],
+          explanation:
+            "String-formatting user input into SQL is the classic SQL-injection hole. Bound parameters are escaped by the driver and let the database cache the compiled plan across calls — safer AND faster.",
+        },
+      ],
+    },
   ],
 };

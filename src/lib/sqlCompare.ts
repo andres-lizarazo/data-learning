@@ -19,6 +19,8 @@ function cell(v: unknown): string {
   return s;
 }
 
+// Joins cells with a U+0001 delimiter (never present in real data) so adjacent columns
+// can't merge into an ambiguous key — e.g. ["1","23"] and ["12","3"] must stay distinct.
 function rowKey(row: unknown[]): string {
   return row.map(cell).join("");
 }

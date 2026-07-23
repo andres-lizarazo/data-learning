@@ -188,6 +188,10 @@ print(counts)`,
               hidden: true,
             },
           ],
+          hints: [
+            "Start with an empty dict and loop over `words`, tallying each one.",
+            "`counts.get(w, 0)` returns the current count (or 0 the first time you see `w`), so `counts[w] = counts.get(w, 0) + 1` increments safely.",
+          ],
           solution: `def word_count(words):
     counts = {}
     for w in words:
@@ -241,8 +245,13 @@ print("difference:", a - b)`,
             { name: "none", assertion: "assert common([1],[2]) == []" },
             { name: "dupes", assertion: "assert common([1,1,2],[2,2,1]) == [1,2]", hidden: true },
           ],
+          hints: [
+            "Turn each list into a `set` so membership is fast and duplicates collapse.",
+            "The values in both are the set intersection `set(a) & set(b)`; wrap it in `sorted(...)` to return a sorted list.",
+          ],
           solution: `def common(a, b):
     return sorted(set(a) & set(b))`,
+          xp: 60,
         },
       ],
     },
@@ -313,6 +322,18 @@ q.popleft()          # 1  (FIFO)
                 return False
     return not stack`,
           xp: 70,
+        },
+        {
+          kind: "flashcards",
+          title: "Data structures — pick the right one",
+          cards: [
+            { front: "list vs tuple", back: "Both ordered sequences; a **list** is mutable (`.append`, item assignment), a **tuple** is immutable — usable as a dict key or set member." },
+            { front: "When to reach for a dict", back: "Key→value lookups in average O(1). Counting, grouping, caching, 'find by id'." },
+            { front: "What a set gives you", back: "Unique elements + O(1) membership + set algebra (`|` union, `&` intersect, `-` difference). No order, no duplicates." },
+            { front: "`dict.get(k, default)`", back: "Returns the value for `k`, or `default` if the key is missing — no `KeyError`. Great for counters: `d[k] = d.get(k, 0) + 1`." },
+            { front: "Stack (LIFO) vs Queue (FIFO)", back: "Stack: push/pop the same end (a list's `.append`/`.pop`). Queue: add one end, remove the other (`collections.deque`)." },
+            { front: "Aliasing vs copying a list", back: "`b = a` makes both names point at the SAME list; `c = a[:]` (or `list(a)`) makes an independent copy." },
+          ],
         },
       ],
     },

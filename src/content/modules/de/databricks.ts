@@ -259,6 +259,68 @@ The standing problem: files keep landing in a bucket; load each exactly once.
           explanation:
             "Bronze's job is to never lose data AND never block: capture everything, quarantine what doesn't fit, keep flowing. Silver decides what to do with the rescued values — a data-quality decision, not an ingestion failure.",
         },
+        {
+          kind: "challenge",
+          title: "Simulate the silver MERGE (dedup to latest)",
+          packages: ["pandas"],
+          prompt: `The bronze→silver step is a Delta \`MERGE\`: for each business key, keep only the
+**latest** version. Simulate its core in pandas.
+
+Write \`to_silver(bronze)\` where \`bronze\` is a DataFrame with columns \`id\`,
+\`value\`, and \`version\` (an integer; higher = newer). Return one row per \`id\` —
+the one with the highest \`version\` — with columns \`id\` and \`value\`, sorted by
+\`id\`, with a fresh 0..n index.`,
+          starterCode: `import pandas as pd
+
+def to_silver(bronze):
+    pass`,
+          tests: [
+            {
+              name: "keeps the latest per id",
+              assertion: `import pandas as pd
+b = pd.DataFrame({
+    "id": [1, 1, 2],
+    "value": ["old", "new", "only"],
+    "version": [1, 2, 1],
+})
+out = to_silver(b)
+assert list(out.columns) == ["id", "value"]
+assert out.to_dict("records") == [
+    {"id": 1, "value": "new"},
+    {"id": 2, "value": "only"},
+]`,
+            },
+            {
+              name: "handles out-of-order versions",
+              assertion: `import pandas as pd
+b = pd.DataFrame({"id": [5, 5, 5], "value": ["a", "c", "b"], "version": [3, 1, 2]})
+out = to_silver(b)
+assert out.to_dict("records") == [{"id": 5, "value": "a"}]`,
+            },
+            {
+              name: "index is reset and sorted by id",
+              assertion: `import pandas as pd
+b = pd.DataFrame({"id": [2, 1], "value": ["x", "y"], "version": [1, 1]})
+out = to_silver(b)
+assert list(out.index) == [0, 1] and out.iloc[0]["id"] == 1`,
+              hidden: true,
+            },
+          ],
+          hints: [
+            "Sort by version so the newest row per id comes last (or first), e.g. `bronze.sort_values(\"version\")`.",
+            "`drop_duplicates(subset=\"id\", keep=\"last\")` keeps one row per id — the latest after sorting ascending by version.",
+            "Select just `id` and `value`, then `.sort_values(\"id\").reset_index(drop=True)`.",
+          ],
+          solution: `import pandas as pd
+
+def to_silver(bronze):
+    latest = (
+        bronze.sort_values("version")
+        .drop_duplicates(subset="id", keep="last")
+    )
+    return latest[["id", "value"]].sort_values("id").reset_index(drop=True)`,
+          xp: 90,
+        },
       ],
     },
     {

@@ -49,4 +49,12 @@ describe("compareResultSets", () => {
     const expected = { columns: ["a"], rows: [[0]] };
     expect(compareResultSets(user, expected).pass).toBe(false);
   });
+
+  it("does not merge adjacent columns into an ambiguous key", () => {
+    // Regression guard: if rowKey joined cells without a delimiter, ["1","23"] and
+    // ["12","3"] would both key to "123" and wrongly compare equal.
+    const user = { columns: ["a", "b"], rows: [["1", "23"]] };
+    const expected = { columns: ["a", "b"], rows: [["12", "3"]] };
+    expect(compareResultSets(user, expected).pass).toBe(false);
+  });
 });

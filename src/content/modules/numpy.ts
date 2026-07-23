@@ -67,6 +67,10 @@ def scale(nums):
             { name: "empty", assertion: "assert scale([]) == []" },
             { name: "floats", assertion: "assert scale([0.5, 1.5]) == [5.0, 15.0]", hidden: true },
           ],
+          hints: [
+            "Turn the list into an array first (`np.array(nums)`) so arithmetic applies to every element at once.",
+            "Multiplying an array by a scalar is vectorized: `np.array(nums) * 10`. Convert back with `.tolist()` to return a plain list.",
+          ],
           solution: `import numpy as np
 
 def scale(nums):
@@ -139,6 +143,10 @@ def to_rows(nums, r):
             { name: "1 row", assertion: "assert to_rows([1,2,3], 1) == [[1,2,3]]" },
             { name: "3x2", assertion: "assert to_rows([1,2,3,4,5,6], 3) == [[1,2],[3,4],[5,6]]", hidden: true },
           ],
+          hints: [
+            "`np.array(nums).reshape(rows, cols)` rearranges the same values into a 2-D shape.",
+            "You know the row count `r` but not the columns — pass `-1` and NumPy computes it: `.reshape(r, -1)`. Finish with `.tolist()`.",
+          ],
           solution: `import numpy as np
 
 def to_rows(nums, r):
@@ -208,11 +216,27 @@ def column_sums(matrix):
             { name: "3x3", assertion: "assert column_sums([[1,1,1],[2,2,2],[3,3,3]]) == [6, 6, 6]" },
             { name: "single row", assertion: "assert column_sums([[5,9]]) == [5, 9]", hidden: true },
           ],
+          hints: [
+            "Make a 2-D array from `matrix`, then reduce it with `.sum(...)`.",
+            "`axis=0` collapses the rows and sums *down each column* (`axis=1` would sum across each row). Return `.tolist()`.",
+          ],
           solution: `import numpy as np
 
 def column_sums(matrix):
     return np.array(matrix).sum(axis=0).tolist()`,
           xp: 70,
+        },
+        {
+          kind: "quiz",
+          question: "For a 2-D array `a` shaped (rows, cols), what does `a.sum(axis=0)` return?",
+          options: [
+            { text: "One value per column (sums down each column)", correct: true },
+            { text: "One value per row (sums across each row)" },
+            { text: "A single scalar — the grand total" },
+            { text: "The same array unchanged" },
+          ],
+          explanation:
+            "`axis=0` collapses the rows, leaving one number per column. `axis=1` would collapse the columns (one per row), and omitting `axis` sums everything to a scalar.",
         },
       ],
     },

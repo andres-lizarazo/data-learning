@@ -51,6 +51,11 @@ export default function LessonRenderer({ lessonId, blocks }: Props) {
           case "flashcards":
             return <Flashcards key={i} block={block} lessonId={lessonId} />;
           default:
+            if (import.meta.env.DEV) {
+              console.warn(
+                `LessonRenderer: unknown block kind "${(block as { kind?: string }).kind}" in lesson "${lessonId}" — nothing rendered.`,
+              );
+            }
             return null;
         }
       })}
