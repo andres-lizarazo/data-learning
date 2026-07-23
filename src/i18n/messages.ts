@@ -61,6 +61,16 @@ export type MessageKey =
   | "home.learningPath"
   | "home.open"
   | "home.lessons"
+  // lesson page
+  | "lesson.notFound"
+  | "lesson.save"
+  | "lesson.saved"
+  | "lesson.bookmarkAdd"
+  | "lesson.bookmarkRemove"
+  | "lesson.completed"
+  | "lesson.markComplete"
+  | "lesson.previous"
+  | "lesson.next"
   // onboarding
   | "onb.welcome"
   | "onb.intro"
@@ -135,6 +145,15 @@ const en: Dict = {
   "home.learningPath": "Learning path",
   "home.open": "Open",
   "home.lessons": "lessons",
+  "lesson.notFound": "Lesson not found.",
+  "lesson.save": "Save",
+  "lesson.saved": "Saved",
+  "lesson.bookmarkAdd": "Bookmark this lesson",
+  "lesson.bookmarkRemove": "Remove bookmark",
+  "lesson.completed": "Completed",
+  "lesson.markComplete": "Mark lesson complete (+20 XP)",
+  "lesson.previous": "Previous",
+  "lesson.next": "Next",
   "onb.welcome": "Welcome to",
   "onb.intro": "An interactive way to learn Python & SQL. A few things worth knowing:",
   "onb.close": "Close",
@@ -212,6 +231,15 @@ const es: Partial<Dict> = {
   "home.learningPath": "Ruta de aprendizaje",
   "home.open": "Abrir",
   "home.lessons": "lecciones",
+  "lesson.notFound": "Lección no encontrada.",
+  "lesson.save": "Guardar",
+  "lesson.saved": "Guardada",
+  "lesson.bookmarkAdd": "Guardar esta lección",
+  "lesson.bookmarkRemove": "Quitar de guardadas",
+  "lesson.completed": "Completada",
+  "lesson.markComplete": "Marcar lección como completada (+20 XP)",
+  "lesson.previous": "Anterior",
+  "lesson.next": "Siguiente",
   "onb.welcome": "Bienvenido a",
   "onb.intro": "Una forma interactiva de aprender Python y SQL. Algunas cosas que conviene saber:",
   "onb.close": "Cerrar",

@@ -6,6 +6,7 @@ import { useProgressStore } from "../../store/progressStore";
 import { useLocaleStore } from "../../store/localeStore";
 import { moduleTheme } from "../../lib/moduleTheme";
 import { useT, trackLabel, moduleTitle } from "../../i18n";
+import { localizedLessonTitle } from "../../content/i18n";
 
 export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const completed = useProgressStore((s) => s.completedLessons);
@@ -77,7 +78,9 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                           ) : (
                             <Circle className="h-4 w-4 shrink-0 text-slate-600" />
                           )}
-                          <span className="truncate">{l.title}</span>
+                          <span className="truncate">
+                            {localizedLessonTitle(l.id, l.title, locale)}
+                          </span>
                         </>
                       )}
                     </NavLink>

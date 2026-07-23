@@ -445,8 +445,20 @@ Prioritized, phase by phase. Each phase is independently shippable.
       Sidebar, Home (hero + module cards), Settings dialog, Theme/Locale toggles, and the
       first-run Onboarding modal. Verified end-to-end in-browser (EN⇄ES toggle + Spanish
       onboarding). **Local-first, no backend** — fits the architecture.
-  - [ ] 🚧 i18n phase 2 — translate lesson bodies (prose/quizzes/challenges) + remaining pages
-        (Profile, Practice, Roadmap, Reference, CommandPalette, ShortcutsHelp).
+  - [x] **i18n phase 2 — lesson-content pipeline + first module.** New overlay engine
+        (`src/content/i18n/overlay.ts`): a per-lesson Spanish overlay supplies **only text**
+        (prose, titles, prompts, hints, quiz question/options/explanation, flashcards),
+        index-matched to the English blocks; all executable fields (code, tests, solutions,
+        quiz `correct` flags) always come from the English source, so a translation can never
+        drift the logic. `getLocalizedLesson()` applied in `LessonPage`; lesson titles
+        localized in the Sidebar; lesson-page chrome (bookmark/complete/nav) translated.
+        **Python Basics** fully translated (all 8 lessons) as the pilot. Verified in-browser:
+        Spanish prose/quiz/challenge render, code stays Python, sidebar titles localized.
+        (Note: flashcard fronts are translated, so review-queue state is per-language.)
+  - [ ] 🚧 i18n phase 2 continued — translate the remaining 25 modules' lesson content
+        (same overlay pattern, one `src/content/i18n/es/<module>.ts` each) and the editor/
+        challenge/notes component chrome (Run/Submit/Reset/Show solution/console) + remaining
+        pages (Profile, Practice, Roadmap, Reference, CommandPalette, ShortcutsHelp).
 
 ## 2026-07 Quality, robustness & UX hardening (DONE)
 

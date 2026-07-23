@@ -2,10 +2,13 @@ import { useEffect, useMemo } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Bookmark, BookmarkCheck, Check, ChevronRight } from "lucide-react";
 import { getLesson, getModule, lessonSequence } from "../content/curriculum";
+import { getLocalizedLesson } from "../content/i18n";
 import LessonRenderer from "../components/lesson/LessonRenderer";
 import LessonNotes from "../components/lesson/LessonNotes";
 import SchemaExplorer from "../components/sql/SchemaExplorer";
 import { useProgressStore } from "../store/progressStore";
+import { useLocaleStore } from "../store/localeStore";
+import { useT, moduleTitle } from "../i18n";
 import { moduleGradient } from "../lib/moduleTheme";
 import { celebrate, bigCelebrate } from "../lib/confetti";
 
@@ -13,6 +16,8 @@ export default function LessonPage() {
   const { moduleId, lessonId } = useParams();
   const found = moduleId && lessonId ? getLesson(moduleId, lessonId) : undefined;
 
+  const locale = useLocaleStore((s) => s.locale);
+  const t = useT();
   const completeLesson = useProgressStore((s) => s.completeLesson);
   const isComplete = useProgressStore((s) =>
     lessonId ? s.isLessonComplete(lessonId) : false,
@@ -54,9 +59,10 @@ export default function LessonPage() {
   }, [nav, navigate]);
 
   if (!found) {
-    return <div className="p-8 text-slate-300">Lesson not found.</div>;
+    return <div className="p-8 text-slate-300">{t("lesson.notFound")}</div>;
   }
-  const { module, lesson } = found;
+  const { module } = found;
+  const lesson = getLocalizedLesson(found.lesson, locale);
 
   // Lessons with SQL blocks show the schema panel for whichever seed they query.
   const sqlBlock = lesson.blocks.find(
@@ -87,7 +93,7 @@ export default function LessonPage() {
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <Link to={`/learn/${module.id}`} className="ml-1 hover:text-white">
-          {module.icon} {module.title}
+          {module.icon} {moduleTitle(module, locale)}
         </Link>
         <ChevronRight className="h-4 w-4 text-slate-600" />
         <span className="text-slate-300">{lesson.title}</span>
@@ -105,14 +111,16 @@ export default function LessonPage() {
           <button
             className="btn-ghost shrink-0"
             onClick={() => toggleBookmark(lesson.id)}
-            aria-label={bookmarked ? "Remove bookmark" : "Bookmark this lesson"}
+            aria-label={bookmarked ? t("lesson.bookmarkRemove") : t("lesson.bookmarkAdd")}
           >
             {bookmarked ? (
               <BookmarkCheck className="h-4 w-4 text-accent-lime" />
             ) : (
               <Bookmark className="h-4 w-4" />
             )}
-            <span className="hidden sm:inline">{bookmarked ? "Saved" : "Save"}</span>
+            <span className="hidden sm:inline">
+              {bookmarked ? t("lesson.saved") : t("lesson.save")}
+            </span>
           </button>
         </div>
         <p className="mb-7 mt-1 text-slate-400">{lesson.summary}</p>
@@ -138,10 +146,10 @@ export default function LessonPage() {
         >
           {isComplete ? (
             <>
-              <Check className="h-4 w-4" /> Completed
+              <Check className="h-4 w-4" /> {t("lesson.completed")}
             </>
           ) : (
-            "Mark lesson complete (+20 XP)"
+            t("lesson.markComplete")
           )}
         </button>
         <div className="flex gap-2 sm:ml-auto">
@@ -150,7 +158,7 @@ export default function LessonPage() {
               to={`/learn/${nav.prev.moduleId}/${nav.prev.lessonId}`}
               className="btn-ghost"
             >
-              <ArrowLeft className="h-4 w-4" /> Previous
+              <ArrowLeft className="h-4 w-4" /> {t("lesson.previous")}
             </Link>
           )}
           {nav.next && (
@@ -158,7 +166,7 @@ export default function LessonPage() {
               to={`/learn/${nav.next.moduleId}/${nav.next.lessonId}`}
               className="btn-primary"
             >
-              Next <ArrowRight className="h-4 w-4" />
+              {t("lesson.next")} <ArrowRight className="h-4 w-4" />
             </Link>
           )}
         </div>
