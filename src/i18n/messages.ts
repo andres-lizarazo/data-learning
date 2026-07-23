@@ -95,6 +95,64 @@ export type MessageKey =
   | "challenge.errBeforeTests"
   | "challenge.engineFailed"
   | "challenge.engineNoResponse"
+  // playground pages
+  | "pg.pySubtitle"
+  | "pg.sqlSubtitle"
+  | "pg.dataset"
+  | "pg.resetQuery"
+  | "pg.resetDb"
+  // review page
+  | "rv.intro"
+  | "rv.cardsInCurriculum"
+  | "rv.seenBefore"
+  | "rv.caughtUp"
+  | "rv.caughtUpHint"
+  | "rv.findLesson"
+  // reference page
+  | "ref.title"
+  | "ref.subtitle"
+  | "ref.sqlGuide"
+  | "ref.pyCheatsheet"
+  | "ref.onThisPage"
+  // profile page
+  | "pf.title"
+  | "pf.toLevel"
+  | "pf.statXp"
+  | "pf.statStreak"
+  | "pf.statLessons"
+  | "pf.statChallenges"
+  | "pf.moduleProgress"
+  | "pf.achievements"
+  | "pf.unlocked"
+  | "pf.savedLessons"
+  | "pf.resetAll"
+  | "pf.resetConfirm"
+  // practice page
+  | "pr.title"
+  | "pr.subA"
+  | "pr.solved"
+  | "pr.filterModule"
+  | "pr.allModules"
+  | "pr.stAll"
+  | "pr.stUnsolved"
+  | "pr.stSolved"
+  | "pr.any"
+  | "pr.easy"
+  | "pr.medium"
+  | "pr.hard"
+  | "pr.shown"
+  | "pr.noMatch"
+  // roadmap page
+  | "rm.intro"
+  | "rm.stage"
+  | "rm.youAreHere"
+  | "rm.footer"
+  | "rm.blurbFoundations"
+  | "rm.blurbPython"
+  | "rm.blurbSQL"
+  | "rm.blurbDesign"
+  | "rm.blurbDE"
+  | "rm.blurbCloud"
   // keyboard shortcuts help
   | "sc.title"
   | "sc.close"
@@ -299,6 +357,67 @@ const en: Dict = {
   "challenge.errBeforeTests": "Your code raised an error before tests could run.",
   "challenge.engineFailed": "The Python engine failed to run your code:",
   "challenge.engineNoResponse": "The Python engine did not respond. Try reloading the page.",
+  "pg.pySubtitle": "A scratchpad running real Python in your browser. Nothing is sent to a server.",
+  "pg.sqlSubtitle":
+    "A scratchpad running real PostgreSQL in your browser. Nothing is sent to a server.",
+  "pg.dataset": "Dataset:",
+  "pg.resetQuery": "Reset query",
+  "pg.resetDb": "Reset database",
+  "rv.intro":
+    "Spaced repetition over every flashcard deck in the curriculum. Cards you rate “Good” or “Easy” come back at growing intervals; “Again” brings them right back.",
+  "rv.cardsInCurriculum": "cards in the curriculum",
+  "rv.seenBefore": "seen before",
+  "rv.caughtUp": "Nothing due — you're caught up! 🎉",
+  "rv.caughtUpHint":
+    "Decks live inside concept lessons. Study one to seed the queue, or come back when scheduled cards fall due.",
+  "rv.findLesson": "Find a lesson on the roadmap",
+  "ref.title": "Reference",
+  "ref.subtitle":
+    "An always-open cheatsheet — search it fast with ⌘K, or jump around with the contents on the left.",
+  "ref.sqlGuide": "PostgreSQL guide",
+  "ref.pyCheatsheet": "Python cheatsheet",
+  "ref.onThisPage": "On this page",
+  "pf.title": "Your profile",
+  "pf.toLevel": "to level",
+  "pf.statXp": "XP",
+  "pf.statStreak": "Day streak",
+  "pf.statLessons": "Lessons",
+  "pf.statChallenges": "Challenges",
+  "pf.moduleProgress": "Module progress",
+  "pf.achievements": "Achievements",
+  "pf.unlocked": "unlocked",
+  "pf.savedLessons": "Saved lessons",
+  "pf.resetAll": "Reset all progress",
+  "pf.resetConfirm": "Reset all progress? This cannot be undone.",
+  "pr.title": "Practice",
+  "pr.subA": "Every challenge in one place —",
+  "pr.solved": "solved",
+  "pr.filterModule": "Filter by module",
+  "pr.allModules": "All modules",
+  "pr.stAll": "All",
+  "pr.stUnsolved": "Unsolved",
+  "pr.stSolved": "Solved",
+  "pr.any": "Any",
+  "pr.easy": "Easy",
+  "pr.medium": "Medium",
+  "pr.hard": "Hard",
+  "pr.shown": "shown",
+  "pr.noMatch": "No challenges match these filters.",
+  "rm.intro":
+    "The recommended order for a Data / Analytics Engineer — top to bottom. Each stage builds on the previous one.",
+  "rm.stage": "STAGE",
+  "rm.youAreHere": "You are here",
+  "rm.footer":
+    "New stages unlock nothing — jump anywhere. The order is a recommendation, not a gate.",
+  "rm.blurbFoundations":
+    "The engineer's environment: Linux & the command line, plus Git & GitHub.",
+  "rm.blurbPython":
+    "Foundations: the language, data structures, algorithms, and the analysis stack.",
+  "rm.blurbSQL": "Real PostgreSQL in your browser — from SELECT to data-engineering patterns.",
+  "rm.blurbDesign": "Write code that survives: SOLID, design patterns, and architecture.",
+  "rm.blurbDE": "Modeling, warehouses, Spark, Databricks, dbt, orchestration, and quality.",
+  "rm.blurbCloud":
+    "Ship it for real: AWS core data services — IAM, S3 lakes, compute, and the data stack.",
   "sc.title": "Keyboard shortcuts",
   "sc.close": "Close shortcuts help",
   "sc.search": "Search lessons, modules & pages",
@@ -499,6 +618,70 @@ const es: Partial<Dict> = {
   "challenge.errBeforeTests": "Tu código lanzó un error antes de poder correr los tests.",
   "challenge.engineFailed": "El motor de Python no pudo ejecutar tu código:",
   "challenge.engineNoResponse": "El motor de Python no respondió. Intenta recargar la página.",
+  "pg.pySubtitle": "Un borrador que corre Python de verdad en tu navegador. No se envía nada a un servidor.",
+  "pg.sqlSubtitle":
+    "Un borrador que corre PostgreSQL de verdad en tu navegador. No se envía nada a un servidor.",
+  "pg.dataset": "Conjunto de datos:",
+  "pg.resetQuery": "Reiniciar consulta",
+  "pg.resetDb": "Reiniciar base de datos",
+  "rv.intro":
+    "Repetición espaciada sobre cada mazo de flashcards del temario. Las tarjetas que calificas “Bien” o “Fácil” vuelven a intervalos crecientes; “Otra vez” las trae de inmediato.",
+  "rv.cardsInCurriculum": "tarjetas en el temario",
+  "rv.seenBefore": "vistas antes",
+  "rv.caughtUp": "Nada pendiente — ¡estás al día! 🎉",
+  "rv.caughtUpHint":
+    "Los mazos viven dentro de las lecciones de conceptos. Estudia una para alimentar la cola, o vuelve cuando venzan las tarjetas programadas.",
+  "rv.findLesson": "Encuentra una lección en el roadmap",
+  "ref.title": "Referencia",
+  "ref.subtitle":
+    "Una chuleta siempre abierta — búscala rápido con ⌘K, o navega con el índice de la izquierda.",
+  "ref.sqlGuide": "Guía de PostgreSQL",
+  "ref.pyCheatsheet": "Chuleta de Python",
+  "ref.onThisPage": "En esta página",
+  "pf.title": "Tu perfil",
+  "pf.toLevel": "para el nivel",
+  "pf.statXp": "XP",
+  "pf.statStreak": "Racha de días",
+  "pf.statLessons": "Lecciones",
+  "pf.statChallenges": "Retos",
+  "pf.moduleProgress": "Progreso por módulo",
+  "pf.achievements": "Logros",
+  "pf.unlocked": "desbloqueados",
+  "pf.savedLessons": "Lecciones guardadas",
+  "pf.resetAll": "Reiniciar todo el progreso",
+  "pf.resetConfirm": "¿Reiniciar todo el progreso? Esto no se puede deshacer.",
+  "pr.title": "Práctica",
+  "pr.subA": "Todos los retos en un solo lugar —",
+  "pr.solved": "resueltos",
+  "pr.filterModule": "Filtrar por módulo",
+  "pr.allModules": "Todos los módulos",
+  "pr.stAll": "Todos",
+  "pr.stUnsolved": "Sin resolver",
+  "pr.stSolved": "Resueltos",
+  "pr.any": "Cualquiera",
+  "pr.easy": "Fácil",
+  "pr.medium": "Medio",
+  "pr.hard": "Difícil",
+  "pr.shown": "mostrados",
+  "pr.noMatch": "Ningún reto coincide con estos filtros.",
+  "rm.intro":
+    "El orden recomendado para un Ingeniero de Datos / Analytics — de arriba abajo. Cada etapa se apoya en la anterior.",
+  "rm.stage": "ETAPA",
+  "rm.youAreHere": "Estás aquí",
+  "rm.footer":
+    "Las etapas no bloquean nada — salta a donde quieras. El orden es una recomendación, no una barrera.",
+  "rm.blurbFoundations":
+    "El entorno del ingeniero: Linux y la línea de comandos, más Git y GitHub.",
+  "rm.blurbPython":
+    "Fundamentos: el lenguaje, estructuras de datos, algoritmos y el stack de análisis.",
+  "rm.blurbSQL":
+    "PostgreSQL real en tu navegador — de SELECT a patrones de ingeniería de datos.",
+  "rm.blurbDesign":
+    "Escribe código que sobrevive: SOLID, patrones de diseño y arquitectura.",
+  "rm.blurbDE":
+    "Modelado, warehouses, Spark, Databricks, dbt, orquestación y calidad.",
+  "rm.blurbCloud":
+    "Llévalo a producción: servicios de datos de AWS — IAM, lakes en S3, cómputo y el stack de datos.",
   "sc.title": "Atajos de teclado",
   "sc.close": "Cerrar ayuda de atajos",
   "sc.search": "Buscar lecciones, módulos y páginas",

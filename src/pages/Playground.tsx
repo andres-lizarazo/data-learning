@@ -6,6 +6,7 @@ import PlotPanel from "../components/plot/PlotPanel";
 import { pyodideClient, type RunResult } from "../pyodide/pyodideClient";
 import { usePyodideStore } from "../store/pyodideStore";
 import { useCodeDraft } from "../lib/useCodeDraft";
+import { useT } from "../i18n";
 
 const DEFAULT = `# Free playground — write anything and Run.
 # numpy / pandas / matplotlib / seaborn are available (installed on first use).
@@ -16,6 +17,7 @@ for i in range(1, 6):
 
 export default function Playground() {
   const { ready, boot, status } = usePyodideStore();
+  const t = useT();
   const [code, setCode, resetCode] = useCodeDraft("playground", DEFAULT);
   const [result, setResult] = useState<RunResult | null>(null);
   const [running, setRunning] = useState(false);
@@ -37,11 +39,9 @@ export default function Playground() {
   return (
     <div className="mx-auto max-w-4xl px-5 py-10">
       <h1 className="flex items-center gap-2 font-display text-2xl font-bold text-white">
-        <Sparkles className="h-6 w-6 text-accent-cyan" /> Playground
+        <Sparkles className="h-6 w-6 text-accent-cyan" /> {t("nav.playground")}
       </h1>
-      <p className="mb-5 text-slate-400">
-        A scratchpad running real Python in your browser. Nothing is sent to a server.
-      </p>
+      <p className="mb-5 text-slate-400">{t("pg.pySubtitle")}</p>
 
       <div className="space-y-3">
         <CodeEditor
@@ -56,7 +56,7 @@ export default function Playground() {
         <div className="flex flex-wrap items-center gap-2">
           <button className="btn-primary" onClick={run} disabled={running || !ready}>
             <Play className="h-4 w-4" />
-            {running ? "Running…" : ready ? "Run" : "Loading Python…"}
+            {running ? t("editor.running") : ready ? t("editor.run") : t("editor.loadingPython")}
           </button>
           <button
             className="btn-ghost"
@@ -65,7 +65,7 @@ export default function Playground() {
               setResult(null);
             }}
           >
-            <RotateCcw className="h-4 w-4" /> Reset
+            <RotateCcw className="h-4 w-4" /> {t("editor.reset")}
           </button>
           {(!ready || (running && status !== "ready")) && (
             <span className="text-xs text-slate-400">{status}</span>

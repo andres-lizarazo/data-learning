@@ -3,19 +3,21 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Check, Map as MapIcon, Play } from "lucide-react";
 import { curriculum, modulesByTrack, tracks } from "../content/curriculum";
 import { useProgressStore } from "../store/progressStore";
+import { useLocaleStore } from "../store/localeStore";
 import { moduleGradient, moduleTheme } from "../lib/moduleTheme";
-import type { Module } from "../types/lesson";
+import { useT, trackLabel, levelLabel, moduleTitle, moduleBlurb, type MessageKey } from "../i18n";
+import type { Module, Track } from "../types/lesson";
 
 // The recommended learning path: every module in curriculum order, grouped by track,
 // numbered as one continuous journey, with progress and a "you are here" marker.
 
-const TRACK_BLURBS: Record<string, string> = {
-  "Foundations & Tooling": "The engineer's environment: Linux & the command line, plus Git & GitHub.",
-  Python: "Foundations: the language, data structures, algorithms, and the analysis stack.",
-  SQL: "Real PostgreSQL in your browser — from SELECT to data-engineering patterns.",
-  "Software Design": "Write code that survives: SOLID, design patterns, and architecture.",
-  "Data Engineering": "Modeling, warehouses, Spark, Databricks, dbt, orchestration, and quality.",
-  Cloud: "Ship it for real: AWS core data services — IAM, S3 lakes, compute, and the data stack.",
+const TRACK_BLURB_KEY: Record<Track, MessageKey> = {
+  "Foundations & Tooling": "rm.blurbFoundations",
+  Python: "rm.blurbPython",
+  SQL: "rm.blurbSQL",
+  "Software Design": "rm.blurbDesign",
+  "Data Engineering": "rm.blurbDE",
+  Cloud: "rm.blurbCloud",
 };
 
 function moduleProgress(m: Module, completed: Record<string, true>) {
@@ -25,6 +27,8 @@ function moduleProgress(m: Module, completed: Record<string, true>) {
 
 export default function Roadmap() {
   const completed = useProgressStore((s) => s.completedLessons);
+  const locale = useLocaleStore((s) => s.locale);
+  const t = useT();
 
   // "You are here" = the first module in path order that isn't fully complete.
   const currentModuleId = useMemo(() => {
@@ -46,19 +50,16 @@ export default function Roadmap() {
   return (
     <div className="mx-auto max-w-3xl px-5 py-10">
       <h1 className="flex items-center gap-2 font-display text-3xl font-bold tracking-tight text-white">
-        <MapIcon className="h-7 w-7 text-accent-cyan" /> Learning path
+        <MapIcon className="h-7 w-7 text-accent-cyan" /> {t("home.learningPath")}
       </h1>
-      <p className="mt-1 text-slate-400">
-        The recommended order for a Data / Analytics Engineer — top to bottom. Each stage
-        builds on the previous one.
-      </p>
+      <p className="mt-1 text-slate-400">{t("rm.intro")}</p>
 
       {continueTarget && (
         <Link
           to={`/learn/${continueTarget.moduleId}/${continueTarget.lessonId}`}
           className="btn-primary mt-5 inline-flex"
         >
-          <Play className="h-4 w-4" /> Continue: {continueTarget.title}
+          <Play className="h-4 w-4" /> {t("home.continue")}: {continueTarget.title}
         </Link>
       )}
 
@@ -66,10 +67,12 @@ export default function Roadmap() {
         {tracks().map((track, ti) => (
           <section key={track}>
             <div className="mb-1 flex items-baseline gap-3">
-              <span className="font-mono text-xs text-slate-500">STAGE {ti + 1}</span>
-              <h2 className="font-display text-xl font-bold text-white">{track}</h2>
+              <span className="font-mono text-xs text-slate-500">{t("rm.stage")} {ti + 1}</span>
+              <h2 className="font-display text-xl font-bold text-white">
+                {trackLabel(track, locale)}
+              </h2>
             </div>
-            <p className="mb-4 text-sm text-slate-400">{TRACK_BLURBS[track]}</p>
+            <p className="mb-4 text-sm text-slate-400">{t(TRACK_BLURB_KEY[track])}</p>
 
             <ol className="relative ml-3 space-y-3 border-l border-white/10 pl-6">
               {modulesByTrack(track).map((m) => {
@@ -100,23 +103,23 @@ export default function Roadmap() {
                     >
                       <div className="flex flex-wrap items-center gap-2">
                         <span aria-hidden>{m.icon}</span>
-                        <span className="font-semibold text-white">{m.title}</span>
+                        <span className="font-semibold text-white">{moduleTitle(m, locale)}</span>
                         <span className="pill border-white/10 bg-white/5 text-[10px] text-slate-400">
-                          {m.level}
+                          {levelLabel(m.level, locale)}
                         </span>
                         {isHere && (
                           <span
                             className="pill border-transparent text-[10px] font-semibold"
                             style={{ background: `${theme.solid}22`, color: theme.solid }}
                           >
-                            You are here
+                            {t("rm.youAreHere")}
                           </span>
                         )}
                         <span className="ml-auto font-mono text-xs text-slate-400">
                           {done}/{total}
                         </span>
                       </div>
-                      <p className="mt-1 text-sm text-slate-400">{m.blurb}</p>
+                      <p className="mt-1 text-sm text-slate-400">{moduleBlurb(m, locale)}</p>
                       <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
                         <div
                           className="h-full rounded-full transition-[width] duration-500"
@@ -134,7 +137,7 @@ export default function Roadmap() {
 
       <div className="mt-10 flex items-center gap-2 text-sm text-slate-500">
         <ArrowRight className="h-4 w-4" />
-        New stages unlock nothing — jump anywhere. The order is a recommendation, not a gate.
+        {t("rm.footer")}
       </div>
     </div>
   );

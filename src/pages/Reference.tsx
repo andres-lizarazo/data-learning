@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { BookText, Code2 } from "lucide-react";
+import { useT } from "../i18n";
 // The PostgreSQL study guide lives at the repo root (source of truth the SQL module was
 // ported from). Import it raw so it's always in sync — no copy to maintain.
 import sqlGuide from "../../sql-reference/concepts.md?raw";
@@ -75,17 +76,15 @@ const mdComponents = {
 
 export default function Reference() {
   const [tab, setTab] = useState<Tab>("sql");
+  const t = useT();
   const source = tab === "sql" ? sqlGuide : PY_CHEATSHEET;
   const toc = useMemo(() => headings(source), [source]);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-100">Reference</h1>
-        <p className="mt-1 text-sm text-slate-400">
-          An always-open cheatsheet — search it fast with ⌘K, or jump around with the contents on
-          the left.
-        </p>
+        <h1 className="text-2xl font-bold text-slate-100">{t("ref.title")}</h1>
+        <p className="mt-1 text-sm text-slate-400">{t("ref.subtitle")}</p>
       </div>
 
       <div className="mb-6 flex gap-2">
@@ -94,14 +93,14 @@ export default function Reference() {
           onClick={() => setTab("sql")}
           aria-pressed={tab === "sql"}
         >
-          <BookText className="h-4 w-4" /> PostgreSQL guide
+          <BookText className="h-4 w-4" /> {t("ref.sqlGuide")}
         </button>
         <button
           className={`pill inline-flex items-center gap-1.5 ${tab === "python" ? "bg-accent-violet/20 text-white" : "text-slate-400"}`}
           onClick={() => setTab("python")}
           aria-pressed={tab === "python"}
         >
-          <Code2 className="h-4 w-4" /> Python cheatsheet
+          <Code2 className="h-4 w-4" /> {t("ref.pyCheatsheet")}
         </button>
       </div>
 
@@ -109,7 +108,7 @@ export default function Reference() {
         {/* Sticky table of contents */}
         <nav className="sticky top-6 hidden max-h-[80vh] w-56 shrink-0 overflow-y-auto lg:block">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-            On this page
+            {t("ref.onThisPage")}
           </p>
           <ul className="space-y-1 text-sm">
             {toc.map((h) => (

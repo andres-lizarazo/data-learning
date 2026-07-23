@@ -7,6 +7,7 @@ import { sqlClient, type SqlExecResult } from "../sql/sqlClient";
 import { SEED_LABELS, type SeedId } from "../sql/seeds";
 import { useSqlStore } from "../store/sqlStore";
 import { useCodeDraft } from "../lib/useCodeDraft";
+import { useT } from "../i18n";
 
 const DEFAULT = `-- Free SQL playground — real PostgreSQL in your browser (PGlite).
 -- Query the sample e-commerce database. Open "Sample database" below for the schema.
@@ -20,6 +21,7 @@ ORDER BY paid DESC NULLS LAST;
 
 export default function SqlPlayground() {
   const { ready, boot, status } = useSqlStore();
+  const t = useT();
   const [sql, setSql, resetSql] = useCodeDraft("sql-playground", DEFAULT);
   const [result, setResult] = useState<SqlExecResult | null>(null);
   const [running, setRunning] = useState(false);
@@ -57,15 +59,13 @@ export default function SqlPlayground() {
   return (
     <div className="mx-auto max-w-4xl px-5 py-10">
       <h1 className="flex items-center gap-2 font-display text-2xl font-bold text-white">
-        <Database className="h-6 w-6 text-accent-cyan" /> SQL Playground
+        <Database className="h-6 w-6 text-accent-cyan" /> {t("cmd.pSqlPlayground")}
       </h1>
-      <p className="mb-5 text-slate-400">
-        A scratchpad running real PostgreSQL in your browser. Nothing is sent to a server.
-      </p>
+      <p className="mb-5 text-slate-400">{t("pg.sqlSubtitle")}</p>
 
       <div className="mb-3 flex items-center gap-2 text-sm">
         <label htmlFor="seed-picker" className="text-slate-400">
-          Dataset:
+          {t("pg.dataset")}
         </label>
         <select
           id="seed-picker"
@@ -99,7 +99,7 @@ export default function SqlPlayground() {
         <div className="flex flex-wrap items-center gap-2">
           <button className="btn-primary" onClick={run} disabled={running || !ready}>
             <Play className="h-4 w-4" />
-            {running ? "Running…" : ready ? "Run" : "Loading Postgres…"}
+            {running ? t("editor.running") : ready ? t("editor.run") : t("sql.loadingPostgres")}
           </button>
           <button
             className="btn-ghost"
@@ -108,10 +108,10 @@ export default function SqlPlayground() {
               setResult(null);
             }}
           >
-            <RotateCcw className="h-4 w-4" /> Reset query
+            <RotateCcw className="h-4 w-4" /> {t("pg.resetQuery")}
           </button>
           <button className="btn-ghost" onClick={() => resetDb()} disabled={running || !ready}>
-            <RefreshCw className="h-4 w-4 text-accent-cyan" /> Reset database
+            <RefreshCw className="h-4 w-4 text-accent-cyan" /> {t("pg.resetDb")}
           </button>
           {(!ready || (running && status !== "ready")) && (
             <span className="text-xs text-slate-400">{status}</span>

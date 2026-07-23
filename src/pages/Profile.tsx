@@ -2,9 +2,12 @@ import { Link } from "react-router-dom";
 import { Bookmark, Flame, RotateCcw, Star, Target, Trophy } from "lucide-react";
 import { curriculum, totalLessons } from "../content/curriculum";
 import { useProgressStore } from "../store/progressStore";
+import { useLocaleStore } from "../store/localeStore";
 import { levelProgress } from "../lib/level";
 import { computeBadges } from "../lib/badges";
 import { moduleGradient } from "../lib/moduleTheme";
+import { useT, moduleTitle } from "../i18n";
+import { localizedLessonTitle } from "../content/i18n";
 import ProgressRing from "../components/ui/ProgressRing";
 import Badge from "../components/ui/Badge";
 import Reveal from "../components/ui/Reveal";
@@ -12,12 +15,19 @@ import Reveal from "../components/ui/Reveal";
 export default function Profile() {
   const { completedLessons, solvedChallenges, bookmarks, xp, streakDays, reset } =
     useProgressStore();
+  const locale = useLocaleStore((s) => s.locale);
+  const t = useT();
 
   // Resolve bookmarked lesson ids to their module/lesson for links.
   const bookmarked = curriculum.flatMap((m) =>
     m.lessons
       .filter((l) => bookmarks[l.id])
-      .map((l) => ({ moduleId: m.id, lessonId: l.id, title: l.title, moduleTitle: m.title })),
+      .map((l) => ({
+        moduleId: m.id,
+        lessonId: l.id,
+        title: localizedLessonTitle(l.id, l.title, locale),
+        moduleTitle: moduleTitle(m, locale),
+      })),
   );
   const { level, pct, intoLevel, span } = levelProgress(xp);
   const lessonsDone = Object.keys(completedLessons).length;
@@ -26,27 +36,29 @@ export default function Profile() {
   const unlocked = badges.filter((b) => b.unlocked).length;
 
   const stats = [
-    { label: "XP", value: xp, icon: Star, color: "text-accent-violet" },
-    { label: "Day streak", value: streakDays, icon: Flame, color: "text-orange-400" },
-    { label: "Lessons", value: `${lessonsDone}/${totalLessons()}`, icon: Trophy, color: "text-accent-cyan" },
-    { label: "Challenges", value: solved, icon: Target, color: "text-accent-lime" },
+    { label: t("pf.statXp"), value: xp, icon: Star, color: "text-accent-violet" },
+    { label: t("pf.statStreak"), value: streakDays, icon: Flame, color: "text-orange-400" },
+    { label: t("pf.statLessons"), value: `${lessonsDone}/${totalLessons()}`, icon: Trophy, color: "text-accent-cyan" },
+    { label: t("pf.statChallenges"), value: solved, icon: Target, color: "text-accent-lime" },
   ];
 
   return (
     <div className="mx-auto max-w-4xl px-5 py-10">
-      <h1 className="mb-6 font-display text-2xl font-bold text-white">Your profile</h1>
+      <h1 className="mb-6 font-display text-2xl font-bold text-white">{t("pf.title")}</h1>
 
       {/* Level + stats */}
       <div className="glass flex flex-col items-center gap-6 p-6 sm:flex-row sm:items-center">
         <ProgressRing pct={pct}>
           <div>
             <div className="font-display text-3xl font-bold text-white">{level}</div>
-            <div className="text-[10px] uppercase tracking-wide text-slate-400">Level</div>
+            <div className="text-[10px] uppercase tracking-wide text-slate-400">
+              {t("home.statLevel")}
+            </div>
           </div>
         </ProgressRing>
         <div className="flex-1">
           <div className="mb-3 text-sm text-slate-400">
-            {intoLevel}/{span} XP to level {level + 1}
+            {intoLevel}/{span} XP {t("pf.toLevel")} {level + 1}
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {stats.map((s) => {
@@ -64,7 +76,7 @@ export default function Profile() {
       </div>
 
       {/* Per-module progress */}
-      <h2 className="mb-3 mt-8 font-display text-lg font-bold text-white">Module progress</h2>
+      <h2 className="mb-3 mt-8 font-display text-lg font-bold text-white">{t("pf.moduleProgress")}</h2>
       <div className="space-y-2.5">
         {curriculum.map((m) => {
           const done = m.lessons.filter((l) => completedLessons[l.id]).length;
@@ -79,7 +91,7 @@ export default function Profile() {
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex justify-between text-sm">
-                  <span className="text-white">{m.title}</span>
+                  <span className="text-white">{moduleTitle(m, locale)}</span>
                   <span className="text-slate-400">
                     {done}/{m.lessons.length}
                   </span>
@@ -98,9 +110,9 @@ export default function Profile() {
 
       {/* Badges */}
       <div className="mb-3 mt-8 flex items-center justify-between">
-        <h2 className="font-display text-lg font-bold text-white">Achievements</h2>
+        <h2 className="font-display text-lg font-bold text-white">{t("pf.achievements")}</h2>
         <span className="pill border-white/10 bg-white/5 text-slate-300">
-          {unlocked}/{badges.length} unlocked
+          {unlocked}/{badges.length} {t("pf.unlocked")}
         </span>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
@@ -115,7 +127,7 @@ export default function Profile() {
       {bookmarked.length > 0 && (
         <>
           <h2 className="mb-3 mt-8 flex items-center gap-2 font-display text-lg font-bold text-white">
-            <Bookmark className="h-5 w-5 text-accent-lime" /> Saved lessons
+            <Bookmark className="h-5 w-5 text-accent-lime" /> {t("pf.savedLessons")}
           </h2>
           <div className="space-y-2">
             {bookmarked.map((b) => (
@@ -138,10 +150,10 @@ export default function Profile() {
         <button
           className="btn-ghost text-brand-red"
           onClick={() => {
-            if (confirm("Reset all progress? This cannot be undone.")) reset();
+            if (confirm(t("pf.resetConfirm"))) reset();
           }}
         >
-          <RotateCcw className="h-4 w-4" /> Reset all progress
+          <RotateCcw className="h-4 w-4" /> {t("pf.resetAll")}
         </button>
       </div>
     </div>
