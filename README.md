@@ -47,10 +47,17 @@ in-app **/roadmap** page for the full numbered path):
 - **Remember it** — flashcard decks in concept lessons feed a **spaced-repetition
   review queue** (`/review`, SM-2-style scheduling, due-count badge in the top bar).
 - **Take notes** — a personal notes panel on every lesson, saved with your progress.
+- **Look things up** — a standalone **Reference** page (`/reference`) with the full
+  PostgreSQL study guide (sticky table of contents) and a Python cheatsheet, plus
+  **full-text ⌘K search** that searches lesson *content*, not just titles.
+- **Learn your way** — a **light / dark theme** toggle (persisted; follows your OS
+  preference on first visit) and a first-run tour of the visualizer, shortcuts, and
+  local-execution model.
 - **Back up & restore** — export/import all progress, notes, and code drafts as JSON
   from the settings dialog (move between devices without any account).
 - **Keyboard shortcuts** — `⌘/Ctrl+Enter` runs the focused editor, `[` / `]` jump
-  between lessons, `⌘K` searches, `?` shows the cheat sheet.
+  between lessons, `⌘K` searches lessons by title *and* content, `?` shows the cheat
+  sheet; in the review queue, Space flips a card and `1`/`2`/`3` grade it.
 
 ## Curriculum
 
@@ -68,7 +75,7 @@ in-app **/roadmap** page for the full numbered path):
 | 🐍 Python Basics | **deep** | types, operators, strings, conditionals, **loops (visualized)**, functions, comprehensions, errors |
 | 🧱 Data Structures | **deep** | lists, tuples, dicts, sets, stacks/queues (with visualizers) |
 | 🏗️ Python OOP | **deep** | classes & objects, dunder methods, inheritance & super(), composition over inheritance, dataclasses, properties/classmethods — the bridge into the Software Design track |
-| 🛠️ Python Engineering | **deep** | type hints (TypedDict/Protocol), custom exceptions & `raise from`, generators & lazy pipelines, context managers (build a transactional dict), files & pathlib (real I/O), pytest concepts (build a mini test runner), pydantic-style validation |
+| 🛠️ Python Engineering | **deep** | type hints (TypedDict/Protocol), custom exceptions & `raise from`, generators & lazy pipelines, context managers (build a transactional dict), **decorators** (write `@count_calls` with `functools.wraps`), files & pathlib (real I/O), pytest concepts (build a mini test runner), pydantic-style validation |
 | 🧠 DSA — Algorithms | **deep** | two pointers, hashing (hash-table viz), sliding window, recursion, backtracking, sorting, binary search, linked lists, trees, heaps, graphs (BFS/DFS), tries, DP (incl. coin change) — with a call-stack panel + watch variables in the visualizer |
 | 🤖 Intro to ML | starter | scikit-learn in the browser: train/test split, fit/evaluate, decision-tree classifier |
 | 📦 Core Libraries | **deep** | collections/itertools, datetime/random/json, math/statistics, functools (+ challenges) |
@@ -94,7 +101,7 @@ in-app **/roadmap** page for the full numbered path):
 
 | Module | Status | Highlights |
 |---|---|---|
-| 🧭 Data Fundamentals | **deep** | data-team roles & the modern stack, OLTP vs OLAP (real `EXPLAIN` plans on a 20k-row table), file formats (CSV/JSON/Avro/Parquet with a row-vs-columnar Python simulation), batch vs streaming, the data lifecycle |
+| 🧭 Data Fundamentals | **deep** | data-team roles & the modern stack, OLTP vs OLAP (real `EXPLAIN` plans on a 20k-row table), file formats (CSV/JSON/Avro/Parquet with a row-vs-columnar Python simulation), batch vs streaming, the data lifecycle, **SQL from Python & API ingestion** (SQLAlchemy Core against in-memory SQLite — parametrized queries, bulk load, JSON-as-API) |
 | 💠 Data Modeling | **deep** | normalization → grain → **star schemas** (Kimball), fact-table types & additivity, surrogate keys, the date dimension, **SCD Type 2 hands-on** (close-and-insert on a real dimension with history), as-was vs as-is analytics, One Big Table & Data Vault — every lab runs on a seeded **warehouse star schema** in PGlite |
 | 🏔️ Warehouse, Lake & Lakehouse | **deep** | staging→core→marts built with real Postgres schemas, ETL vs ELT, data lakes & the swamp problem, **Delta/Iceberg table formats** (build a mini transaction log + time travel in Python), **medallion bronze/silver/gold lab**, incremental loads & CDC (high-water mark, idempotent anti-join), partitioning & pruning with `EXPLAIN` |
 | ⚡ Spark & PySpark | **deep** | driver/executors/partitions (hash-partitioning simulation), DataFrame API with **pandas-graded translation challenges**, joins & shuffles (broadcast vs sort-merge), Spark SQL as runnable ANSI labs, window functions, performance (**skew & salting simulation**, caching, AQE), reading/writing (save modes, partitioned writes) |
@@ -173,6 +180,23 @@ and boots, then seeds the sample database. Both are cached by the service worker
 offline use after the first visit.
 
 Build for production: `npm run build` then `npm run preview`.
+
+## Quality & testing
+
+Every push and PR runs a CI gate (`.github/workflows/ci.yml`) that must pass before the
+Pages deploy:
+
+```bash
+npm run typecheck   # tsc --noEmit
+npm run lint        # ESLint (flat config) + Prettier available via npm run format
+npm test            # Vitest — incl. running EVERY SQL block end-to-end in real PGlite
+npm run verify:py   # runs every Python challenge's reference solution against its tests
+npm run test:e2e    # Playwright smoke tests (boot Pyodide + PGlite in a real browser)
+```
+
+`verify:py` uses the system `python3` (CI installs numpy/pandas/matplotlib/scikit-learn/
+scipy/sqlalchemy so package-backed challenges are verified, not skipped). This means a
+broken lesson solution or a regression in the engines fails CI rather than shipping.
 
 ## Adding a lesson
 

@@ -439,7 +439,64 @@ Prioritized, phase by phase. Each phase is independently shippable.
 - [ ] 🚧 Optional **FastAPI + Spark (Docker)** backend so PySpark lessons run for real
 - [ ] 🚧 i18n: ES/EN content + UI toggle
 
+## 2026-07 Quality, robustness & UX hardening (DONE)
+
+A four-phase pass after an audit found the platform feature-complete and clean but with
+gaps in enforcement, robustness, content hints, and theming. All shipped to `main` with a
+green CI gate + Playwright e2e.
+
+### Phase 1 — Safety net
+- [x] **Gated CI** (`.github/workflows/ci.yml`): typecheck + lint + unit tests + `verify:py`
+      on every push/PR. CI installs the scientific stack so package-backed challenges are
+      verified, not skipped. (The suite already existed but nothing enforced it.)
+- [x] **Runner error handling**: the four runners (Python/SQL challenge, execution &
+      user-driven visualizers) now `catch` engine-level failures and surface them.
+- [x] **ErrorBoundary** around the router outlet (recoverable panel, no white-screen).
+- [x] **ESLint (flat config) + Prettier**; `lint`/`verify:py`/`format` scripts.
+- [x] Dev-time warning on unknown block/viz kinds; `sqlCompare` row-key regression test.
+
+### Phase 2 — Hygiene / logic
+- [x] `version` + `migrate` on both persisted zustand stores (heal old localStorage).
+- [x] Streak rolls over at the learner's **local** midnight (was UTC).
+- [x] Pyodide **inactivity watchdog + restart** (infinite loops no longer hang forever).
+
+### Phase 3 — Content depth
+- [x] Progressive **hints** on every previously hint-less hard challenge (DSA, basics,
+      numpy, libraries, pandas); explicit **XP** on every Python & SQL challenge.
+- [x] **Flashcard decks** for the Python core + PostgreSQL (feed the `/review` queue).
+- [x] Quizzes for DSA/numpy/libraries; first **viz** challenges; first **PySpark** &
+      **Databricks** hands-on challenges.
+- [x] New **Decorators** lesson (Python Engineering).
+- [x] New **SQL-from-Python & API ingestion** lesson (SQLAlchemy Core + in-memory SQLite;
+      verified it micropip-installs and runs in Pyodide).
+
+### Phase 4 — UX
+- [x] **Light/dark theme** toggle: CSS-variable palette via `html.light`, persisted,
+      OS-aware on first visit; shared primitives + common utilities remap in one place.
+- [x] **Full-text ⌘K search** over lesson content (prose/prompts/quizzes/flashcards).
+- [x] **Reference page** (`/reference`) surfacing the PostgreSQL study guide + a Python
+      cheatsheet (sticky TOC).
+- [x] **Visualize** button on pure-Python runnable blocks (opens the step-through
+      visualizer on the same code); first-run **onboarding** modal.
+- [x] **Difficulty** badges + filter on `/practice` (derived from XP).
+- [x] A11y: reusable **focus-trap** on the command palette + onboarding; **keyboard
+      grading** for flashcards (Space to flip, 1/2/3 to grade).
+
 ## Decisions Log
+- **Light theme via CSS variables + `.light` utility remaps (not a full `dark:` rewrite):**
+  the app was authored dark-only with no `dark:` prefixes, so inverting every className was
+  infeasible. Instead the shared primitives (glass/btn/prose) consume CSS variables switched
+  by an `html.light` class, and the handful of pervasive inline utilities (`text-slate-*`,
+  `bg-white/*`, `border-white/*`) are remapped once under `.light`. Code blocks deliberately
+  stay dark for contrast. Delivers a coherent theme with a contained, low-risk change.
+- **SQL-from-Python taught with SQLAlchemy + in-memory SQLite (not psycopg/requests):**
+  Pyodide has no sockets, so real DB drivers and `requests` can't run in-browser. SQLAlchemy
+  Core micropip-installs and runs against `sqlite:///:memory:`, so the *pattern* (engine,
+  parametrized queries, bulk load) is taught with real, runnable code; JSON parsing stands in
+  for the API call. Verified end-to-end in Pyodide before shipping.
+- **XP as the difficulty signal (no separate `difficulty` field):** challenges were already
+  authored with XP scaling by effort, so the Practice difficulty filter/badges derive
+  Easy/Medium/Hard from XP thresholds — zero content churn, no new field to keep in sync.
 - **Two new tracks framing the path (Foundations & Tooling first, Cloud last):** Git
   and Linux are environment prerequisites every engineer needs before writing code, so
   they open the curriculum; AWS core data services are the capstone that ties the

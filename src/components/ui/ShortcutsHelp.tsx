@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Keyboard, X } from "lucide-react";
+import { useFocusTrap } from "../../lib/useFocusTrap";
 
 // Global "?" opens a cheat-sheet of the app's keyboard shortcuts.
 
@@ -15,6 +16,8 @@ const SHORTCUTS: { keys: string[]; what: string }[] = [
 
 export default function ShortcutsHelp() {
   const [open, setOpen] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(dialogRef, open);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -42,11 +45,13 @@ export default function ShortcutsHelp() {
             onClick={() => setOpen(false)}
           />
           <motion.div
+            ref={dialogRef}
             className="glass relative w-full max-w-sm overflow-hidden"
             initial={{ opacity: 0, y: -12, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -12, scale: 0.98 }}
             role="dialog"
+            aria-modal="true"
             aria-label="Keyboard shortcuts"
           >
             <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3">
