@@ -553,4 +553,119 @@ costosas que pueden estar ligeramente desactualizadas.
       },
     ],
   },
+  "functions-plpgsql": {
+    title: "Funciones, Procedimientos y Triggers",
+    summary: "Encapsula lógica en PL/pgSQL — funciones escalares/de tabla, procedimientos y triggers.",
+    blocks: [
+      {
+        markdown: `## Lógica del lado del servidor
+
+Una **función** devuelve un valor (escalar o una tabla) y se usa en SQL: \`SELECT my_fn(…)\`. Un
+**procedimiento** se llama con \`CALL\` y puede hacer \`COMMIT\`/\`ROLLBACK\`. Un **trigger** corre una
+función automáticamente en \`INSERT\`/\`UPDATE\`/\`DELETE\`, con las filas \`NEW\`/\`OLD\` disponibles.
+
+PL/pgSQL añade control de flujo: \`DECLARE\`, \`IF/ELSIF\`, \`LOOP\`/\`WHILE\`/\`FOR\`, y \`RAISE\`.`,
+      },
+      { title: "Una función escalar con un nivel basado en CASE" },
+      { title: "Un trigger que marca la hora de las actualizaciones" },
+      {
+        markdown: `### Control de flujo dentro de una función
+
+PL/pgSQL es un lenguaje procedural de verdad. Dentro de \`BEGIN … END\` puedes ramificar y hacer bucles:
+
+- **\`IF / ELSIF / ELSE\`** para ramificar.
+- **\`LOOP … EXIT WHEN\`**, **\`WHILE … LOOP\`**, y **\`FOR i IN 1..n LOOP\`** para iterar
+  (\`FOR … IN REVERSE\` cuenta hacia atrás; \`CONTINUE WHEN\` salta una iteración).
+- **\`FOR row IN SELECT … LOOP\`** para iterar sobre los resultados de una consulta fila por fila.
+- **\`RAISE NOTICE / WARNING / EXCEPTION\`** para loguear o abortar.`,
+      },
+      { title: "Bucles + IF: suma de los números impares 1..n" },
+      { title: "FOR sobre una consulta: cuenta filas por encima de un umbral" },
+      { title: "Manejo de excepciones: captura una violación de restricción" },
+      {
+        markdown: `### Procedimientos — llamados con \`CALL\`
+
+Un **procedimiento** es como una función pero se invoca con \`CALL\` en vez de \`SELECT\`, no devuelve
+nada directamente, y (a diferencia de una función) puede hacer \`COMMIT\`/\`ROLLBACK\` de sus propias
+transacciones — útil para trabajos por lotes que hacen commit en trozos.`,
+      },
+      { title: "Un procedimiento que muta datos, ejecutado con CALL" },
+      {
+        question: "¿Qué es cierto de un **procedimiento** PL/pgSQL (vs. una función)?",
+        options: [
+          "Puede hacer COMMIT/ROLLBACK de transacciones y se invoca con CALL",
+          "Debe devolver un valor",
+          "Se puede usar dentro de una lista SELECT",
+          "No puede tomar parámetros",
+        ],
+        explanation:
+          "Los procedimientos se llaman con `CALL`, no devuelven nada (o vía parámetros INOUT), y —a diferencia de las funciones— pueden gestionar transacciones internamente. Las funciones devuelven un valor y son usables en expresiones SQL.",
+      },
+      {
+        title: "Factorial con un CTE recursivo",
+        prompt:
+          "Calcula **6! (= 720)** en una sola consulta usando un CTE `WITH RECURSIVE`. Devuelve una columna llamada `result`.\n\n(Las funciones PL/pgSQL se muestran en los runnables de arriba; el ejercicio calificado usa un CTE recursivo para que sea una sola sentencia.)",
+        hints: [
+          "Fila ancla: `SELECT 1, 1`. Paso recursivo: `SELECT n + 1, fact * (n + 1) FROM f WHERE n < 6`.",
+          "El factorial final es el mayor `fact`: `SELECT max(fact) AS result FROM f`.",
+        ],
+      },
+    ],
+  },
+  "builtin-functions": {
+    title: "Funciones de String, Fecha, Math y NULL",
+    summary: "La caja de herramientas diaria — manipulación de texto, matemática de fechas, redondeo y manejo de NULL.",
+    blocks: [
+      {
+        markdown: `## La caja de herramientas diaria
+
+- **Strings:** \`||\` concatena, \`upper/lower/initcap\`, \`trim\`, \`substring\`, \`split_part\`,
+  \`replace\`, \`length\`, \`to_char\`, regex con \`~\` / \`regexp_replace\`. Agrega con \`string_agg\`.
+- **Fechas:** \`now()\`, \`current_date\`, \`extract(field FROM ts)\`, \`date_trunc('month', ts)\`,
+  matemática de intervalos (\`now() - interval '7 days'\`), \`to_char\`/\`to_date\`, y \`generate_series\` para rellenar huecos.
+- **Math/NULL:** \`round/floor/ceil\`, \`coalesce(a,b)\` (primer no-null), \`nullif(a,b)\` (null cuando son iguales —
+  genial para división segura: \`x / nullif(y,0)\`).
+
+> **vs MySQL:** \`||\` es OR lógico en MySQL — usa \`CONCAT()\`; \`string_agg\`→\`GROUP_CONCAT\`;
+> \`date_trunc\`/\`generate_series\` no existen (emúlalos con \`DATE_FORMAT\` / una tabla de números).`,
+      },
+      { title: "Formateo de strings y fechas" },
+      { title: "Regex y modelado de strings" },
+      { title: "Rellena huecos de fechas con generate_series" },
+      {
+        title: "Mes de registro por usuario",
+        prompt:
+          "Devuelve el `name` de cada usuario y su mes de registro como texto en formato `YYYY-MM` (llámalo `month`), ordenado por `name`.",
+        hints: ["`to_char(created_at, 'YYYY-MM')`."],
+      },
+    ],
+  },
+  "full-text-search": {
+    title: "Búsqueda de Texto Completo",
+    summary: "Busca texto en lenguaje natural con tsvector / tsquery y rankea las coincidencias.",
+    blocks: [
+      {
+        markdown: `## Buscar texto correctamente
+
+\`to_tsvector(lang, text)\` convierte el texto en lexemas normalizados; \`to_tsquery\` / \`plainto_tsquery\` /
+\`websearch_to_tsquery\` construyen una consulta; el operador \`@@\` prueba una coincidencia. \`ts_rank\`
+puntúa los resultados, y un índice **GIN** sobre el tsvector lo hace rápido.
+
+> **vs MySQL:** MySQL usa \`MATCH … AGAINST\` con un índice \`FULLTEXT\` — sin \`tsvector\`/\`tsquery\`/\`ts_rank\`.`,
+      },
+      { title: "Coincidir nombres de producto" },
+      { title: "Rankear coincidencias por relevancia" },
+      {
+        question: "¿Por qué preferir `to_tsvector(...) @@ to_tsquery(...)` sobre `name ILIKE '%book%'` para buscar?",
+        options: [
+          "Normaliza palabras (stemming) y puede usar un índice GIN para velocidad/ranking",
+          "ILIKE no se puede usar en WHERE",
+          "tsquery es la única forma de hacer coincidencia insensible a mayúsculas",
+          "No hay diferencia real",
+        ],
+        explanation:
+          "La búsqueda de texto completo lematiza los tokens (así 'running' coincide con 'run'), ignora stop-words, soporta consultas booleanas/de frase y ranking, y se acelera con índice GIN — mucho más allá de un escaneo de substring con `LIKE`.",
+      },
+    ],
+  },
 };
