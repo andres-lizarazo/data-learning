@@ -9,8 +9,10 @@ import {
 } from "../content/curriculum";
 import type { Module } from "../types/lesson";
 import { useProgressStore } from "../store/progressStore";
+import { useLocaleStore, type Locale } from "../store/localeStore";
 import { levelProgress } from "../lib/level";
 import { moduleGradient } from "../lib/moduleTheme";
+import { useT, trackLabel, levelLabel, moduleTitle, moduleBlurb } from "../i18n";
 import Reveal from "../components/ui/Reveal";
 import AnimatedCounter from "../components/ui/AnimatedCounter";
 
@@ -59,6 +61,8 @@ export default function Home() {
   const doneCount = Object.keys(completed).length;
   const total = totalLessons();
   const { level } = levelProgress(xp);
+  const locale = useLocaleStore((s) => s.locale);
+  const t = useT();
 
   // "Continue where you left off" target, if it still exists in the curriculum.
   const cont =
@@ -79,7 +83,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             className="pill mb-4 border-white/10 bg-white/5 text-slate-300"
           >
-            <Sparkles className="h-3.5 w-3.5 text-accent-cyan" /> Runs 100% in your browser
+            <Sparkles className="h-3.5 w-3.5 text-accent-cyan" /> {t("home.badge")}
           </motion.span>
           <motion.h1
             initial={{ opacity: 0, y: 16 }}
@@ -87,9 +91,9 @@ export default function Home() {
             transition={{ duration: 0.6 }}
             className="font-display text-4xl font-bold leading-[1.05] tracking-tight text-white sm:text-6xl"
           >
-            Learn Data,
+            {t("home.title")}
             <br />
-            <span className="gradient-text">visually.</span>
+            <span className="gradient-text">{t("home.titleAccent")}</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 16 }}
@@ -97,9 +101,7 @@ export default function Home() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="mt-4 max-w-xl text-lg text-slate-300"
           >
-            An interactive, CodeSignal-style playground. Run real Python <i>and</i> SQL,{" "}
-            <b className="text-white">watch loops and algorithms animate step by step</b>, and
-            solve challenges — from basics to data wrangling, DSA, and PostgreSQL.
+            {t("home.intro")}
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -112,30 +114,30 @@ export default function Home() {
                 to={`/learn/${cont.module.id}/${cont.lesson.id}`}
                 className="btn-primary text-base"
               >
-                Continue: {cont.lesson.title} <ArrowRight className="h-4 w-4" />
+                {t("home.continue")}: {cont.lesson.title} <ArrowRight className="h-4 w-4" />
               </Link>
             ) : (
               <Link to="/learn/basics/variables-and-types" className="btn-primary text-base">
-                Start learning <ArrowRight className="h-4 w-4" />
+                {t("home.start")} <ArrowRight className="h-4 w-4" />
               </Link>
             )}
             <Link
               to="/learn/basics/variables-and-types"
               className={cont ? "btn-ghost text-base" : "hidden"}
             >
-              Start over
+              {t("home.startOver")}
             </Link>
             <Link to="/playground" className="btn-ghost text-base">
-              <Play className="h-4 w-4 text-accent-cyan" /> Playground
+              <Play className="h-4 w-4 text-accent-cyan" /> {t("nav.playground")}
             </Link>
           </motion.div>
 
           {/* Stat chips */}
           <div className="mt-8 flex flex-wrap gap-3">
             {[
-              { label: "Level", value: level },
-              { label: "XP earned", value: xp },
-              { label: "Lessons done", value: doneCount, of: total },
+              { label: t("home.statLevel"), value: level },
+              { label: t("home.statXp"), value: xp },
+              { label: t("home.statLessons"), value: doneCount, of: total },
             ].map((s) => (
               <div key={s.label} className="glass px-4 py-3">
                 <div className="font-display text-2xl font-bold text-white">
@@ -152,9 +154,9 @@ export default function Home() {
           {/* Tech chips */}
           <div className="mt-6 flex flex-wrap gap-2">
             {["Data Structures", "DSA", "NumPy", "Pandas", "Matplotlib", "PostgreSQL"].map(
-              (t) => (
-                <span key={t} className="pill border-white/10 bg-white/5 text-slate-300">
-                  {t}
+              (tech) => (
+                <span key={tech} className="pill border-white/10 bg-white/5 text-slate-300">
+                  {tech}
                 </span>
               ),
             )}
@@ -167,15 +169,15 @@ export default function Home() {
       </section>
 
       {/* Module grid, grouped into sections (Python / SQL). */}
-      <h2 className="mb-1 font-display text-xl font-bold text-white">Learning path</h2>
+      <h2 className="mb-1 font-display text-xl font-bold text-white">{t("home.learningPath")}</h2>
       {tracks().map((track) => (
         <section key={track} className="mb-10">
           <h3 className="mb-3 mt-5 text-xs font-bold uppercase tracking-[0.15em] text-slate-500">
-            {track}
+            {trackLabel(track, locale)}
           </h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {modulesByTrack(track).map((m, i) => (
-              <ModuleCard key={m.id} m={m} i={i} completed={completed} />
+              <ModuleCard key={m.id} m={m} i={i} completed={completed} locale={locale} />
             ))}
           </div>
         </section>
@@ -188,11 +190,14 @@ function ModuleCard({
   m,
   i,
   completed,
+  locale,
 }: {
   m: Module;
   i: number;
   completed: Record<string, true>;
+  locale: Locale;
 }) {
+  const t = useT();
   const done = m.lessons.filter((l) => completed[l.id]).length;
   const pct = Math.round((done / m.lessons.length) * 100);
   const allDone = done === m.lessons.length;
@@ -219,20 +224,24 @@ function ModuleCard({
             <div className="flex items-center gap-2">
               {allDone && (
                 <span className="pill border-accent-lime/30 bg-accent-lime/10 text-accent-lime">
-                  <Award className="h-3 w-3" /> Done
+                  <Award className="h-3 w-3" /> {t("common.done")}
                 </span>
               )}
-              <span className="pill border-white/10 bg-white/5 text-slate-300">{m.level}</span>
+              <span className="pill border-white/10 bg-white/5 text-slate-300">
+                {levelLabel(m.level, locale)}
+              </span>
             </div>
           </div>
-          <h3 className="mt-3 font-display text-lg font-semibold text-white">{m.title}</h3>
-          <p className="mt-1 text-sm text-slate-400">{m.blurb}</p>
+          <h3 className="mt-3 font-display text-lg font-semibold text-white">
+            {moduleTitle(m, locale)}
+          </h3>
+          <p className="mt-1 text-sm text-slate-400">{moduleBlurb(m, locale)}</p>
           <div className="mt-4 flex items-center justify-between text-xs text-slate-400">
             <span>
-              {done}/{m.lessons.length} lessons
+              {done}/{m.lessons.length} {t("home.lessons")}
             </span>
             <span className="inline-flex items-center gap-1 text-slate-300 opacity-0 transition-opacity group-hover:opacity-100">
-              Open <ArrowRight className="h-3 w-3" />
+              {t("home.open")} <ArrowRight className="h-3 w-3" />
             </span>
           </div>
           <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/5">

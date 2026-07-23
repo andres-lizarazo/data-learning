@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Download, Settings as SettingsIcon, Trash2, Upload, X } from "lucide-react";
 import { useProgressStore } from "../../store/progressStore";
+import { useLocaleStore } from "../../store/localeStore";
 import { useFocusTrap } from "../../lib/useFocusTrap";
+import { useT } from "../../i18n";
 
 // Local-first settings: back up / restore everything (progress, notes, drafts) as a
 // JSON file of the app's localStorage keys, plus a full reset. Opened from the TopBar
@@ -27,6 +29,9 @@ export default function SettingsDialog() {
   const dialogRef = useRef<HTMLDivElement>(null);
   useFocusTrap(dialogRef, open);
   const reset = useProgressStore((s) => s.reset);
+  const locale = useLocaleStore((s) => s.locale);
+  const setLocale = useLocaleStore((s) => s.set);
+  const t = useT();
 
   useEffect(() => {
     const onOpen = () => setOpen(true);
@@ -56,7 +61,7 @@ export default function SettingsDialog() {
     a.download = `pylearn-backup-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    setMessage("Backup downloaded.");
+    setMessage(t("settings.exported"));
   };
 
   const importFile = async (file: File) => {
@@ -66,7 +71,7 @@ export default function SettingsDialog() {
         data?: Record<string, string>;
       };
       if (parsed.app !== "pylearn" || !parsed.data) {
-        setMessage("That file doesn't look like a PyLearn backup.");
+        setMessage(t("settings.notBackup"));
         return;
       }
       for (const [key, value] of Object.entries(parsed.data)) {
@@ -75,7 +80,7 @@ export default function SettingsDialog() {
       // Zustand stores read localStorage at init — reload to pick the restore up.
       location.reload();
     } catch {
-      setMessage("Could not read that file — is it valid JSON?");
+      setMessage(t("settings.badJson"));
     }
   };
 
@@ -89,7 +94,7 @@ export default function SettingsDialog() {
     }
     doomed.forEach((k) => localStorage.removeItem(k));
     setConfirmReset(false);
-    setMessage("Progress and drafts reset.");
+    setMessage(t("settings.resetDone"));
   };
 
   return (
@@ -111,15 +116,15 @@ export default function SettingsDialog() {
             exit={{ opacity: 0, y: -12, scale: 0.98 }}
             role="dialog"
             aria-modal="true"
-            aria-label="Settings"
+            aria-label={t("settings.title")}
           >
             <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3">
               <SettingsIcon className="h-4 w-4 text-accent-cyan" />
-              <span className="text-sm font-semibold text-white">Settings</span>
+              <span className="text-sm font-semibold text-white">{t("settings.title")}</span>
               <button
                 className="btn-ghost ml-auto px-2"
                 onClick={() => setOpen(false)}
-                aria-label="Close settings"
+                aria-label={t("settings.close")}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -127,17 +132,35 @@ export default function SettingsDialog() {
 
             <div className="space-y-5 p-4 text-sm">
               <section>
-                <h3 className="mb-1 font-semibold text-slate-200">Backup & restore</h3>
-                <p className="mb-2 text-slate-400">
-                  Everything lives in this browser. Export a backup to move your XP,
-                  progress, notes, and code drafts to another device.
-                </p>
+                <h3 className="mb-1 font-semibold text-slate-200">{t("settings.language")}</h3>
+                <p className="mb-2 text-slate-400">{t("settings.languageHint")}</p>
+                <div className="inline-flex rounded-lg border border-white/10 bg-white/5 p-0.5">
+                  {(["en", "es"] as const).map((l) => (
+                    <button
+                      key={l}
+                      onClick={() => setLocale(l)}
+                      aria-pressed={locale === l}
+                      className={`rounded-md px-3 py-1 text-xs font-semibold transition-colors ${
+                        locale === l
+                          ? "bg-accent-cyan/20 text-white"
+                          : "text-slate-400 hover:text-slate-200"
+                      }`}
+                    >
+                      {l === "en" ? "English" : "Español"}
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              <section>
+                <h3 className="mb-1 font-semibold text-slate-200">{t("settings.backupTitle")}</h3>
+                <p className="mb-2 text-slate-400">{t("settings.backupHint")}</p>
                 <div className="flex flex-wrap gap-2">
                   <button className="btn-primary" onClick={download}>
-                    <Download className="h-4 w-4" /> Export backup
+                    <Download className="h-4 w-4" /> {t("settings.export")}
                   </button>
                   <button className="btn-ghost" onClick={() => fileRef.current?.click()}>
-                    <Upload className="h-4 w-4" /> Import backup
+                    <Upload className="h-4 w-4" /> {t("settings.import")}
                   </button>
                   <input
                     ref={fileRef}
@@ -154,26 +177,24 @@ export default function SettingsDialog() {
               </section>
 
               <section>
-                <h3 className="mb-1 font-semibold text-slate-200">Danger zone</h3>
-                <p className="mb-2 text-slate-400">
-                  Wipe all progress, XP, notes, and drafts on this device.
-                </p>
+                <h3 className="mb-1 font-semibold text-slate-200">{t("settings.dangerTitle")}</h3>
+                <p className="mb-2 text-slate-400">{t("settings.dangerHint")}</p>
                 {confirmReset ? (
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-rose-300">Are you sure? This can't be undone.</span>
+                    <span className="text-rose-300">{t("settings.resetConfirm")}</span>
                     <button
                       className="btn-ghost border-rose-400/40 text-rose-300"
                       onClick={doReset}
                     >
-                      Yes, reset everything
+                      {t("settings.resetYes")}
                     </button>
                     <button className="btn-ghost" onClick={() => setConfirmReset(false)}>
-                      Cancel
+                      {t("settings.cancel")}
                     </button>
                   </div>
                 ) : (
                   <button className="btn-ghost" onClick={() => setConfirmReset(true)}>
-                    <Trash2 className="h-4 w-4 text-rose-300" /> Reset all progress
+                    <Trash2 className="h-4 w-4 text-rose-300" /> {t("settings.reset")}
                   </button>
                 )}
               </section>

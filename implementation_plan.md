@@ -437,7 +437,16 @@ Prioritized, phase by phase. Each phase is independently shippable.
 - [ ] 🚧 Optional accounts + cross-device sync (e.g. Supabase) for progress/XP
 - [ ] 🚧 Leaderboard, daily goals, shareable profile/achievement cards
 - [ ] 🚧 Optional **FastAPI + Spark (Docker)** backend so PySpark lessons run for real
-- [ ] 🚧 i18n: ES/EN content + UI toggle
+- [x] **i18n phase 1 — infrastructure + UI chrome (ES/EN).** Language toggle in the TopBar +
+      Settings (persisted `pylearn-locale`, browser-language default), applied to `<html lang>`.
+      New i18n layer (`src/i18n/` + `src/store/localeStore.ts`): `useT()` hook over a keyed
+      message dict (English is the fallback), plus content helpers that localize **module
+      titles/blurbs, track names, and difficulty levels**. Translated chrome: TopBar nav,
+      Sidebar, Home (hero + module cards), Settings dialog, Theme/Locale toggles, and the
+      first-run Onboarding modal. Verified end-to-end in-browser (EN⇄ES toggle + Spanish
+      onboarding). **Local-first, no backend** — fits the architecture.
+  - [ ] 🚧 i18n phase 2 — translate lesson bodies (prose/quizzes/challenges) + remaining pages
+        (Profile, Practice, Roadmap, Reference, CommandPalette, ShortcutsHelp).
 
 ## 2026-07 Quality, robustness & UX hardening (DONE)
 

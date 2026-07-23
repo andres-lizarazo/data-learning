@@ -3,10 +3,14 @@ import { motion } from "framer-motion";
 import { CheckCircle2, Circle, Home } from "lucide-react";
 import { modulesByTrack, tracks } from "../../content/curriculum";
 import { useProgressStore } from "../../store/progressStore";
+import { useLocaleStore } from "../../store/localeStore";
 import { moduleTheme } from "../../lib/moduleTheme";
+import { useT, trackLabel, moduleTitle } from "../../i18n";
 
 export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const completed = useProgressStore((s) => s.completedLessons);
+  const locale = useLocaleStore((s) => s.locale);
+  const t = useT();
 
   return (
     <nav className="glass m-3 h-[calc(100%-1.5rem)] overflow-y-auto rounded-2xl px-2.5 py-3">
@@ -20,13 +24,13 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           }`
         }
       >
-        <Home className="h-4 w-4" /> Home
+        <Home className="h-4 w-4" /> {t("nav.home")}
       </NavLink>
 
       {tracks().map((track) => (
         <div key={track} className="mb-2">
           <div className="px-3 pb-1 pt-3 text-[11px] font-bold uppercase tracking-[0.15em] text-slate-500">
-            {track}
+            {trackLabel(track, locale)}
           </div>
           {modulesByTrack(track).map((m) => {
         const theme = moduleTheme(m.id);
@@ -39,7 +43,7 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                 className="inline-block h-2 w-2 rounded-full"
                 style={{ background: theme.solid, boxShadow: `0 0 8px ${theme.solid}` }}
               />
-              <span className="text-slate-300">{m.title}</span>
+              <span className="text-slate-300">{moduleTitle(m, locale)}</span>
               {allDone && <span className="ml-auto text-[11px] text-accent-lime">★</span>}
             </div>
             <ul className="mt-0.5">

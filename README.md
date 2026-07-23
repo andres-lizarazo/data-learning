@@ -53,6 +53,9 @@ in-app **/roadmap** page for the full numbered path):
 - **Learn your way** — a **light / dark theme** toggle (persisted; follows your OS
   preference on first visit) and a first-run tour of the visualizer, shortcuts, and
   local-execution model.
+- **Español / English** — a **language toggle** (persisted; defaults to your browser
+  language) localizes the interface — navigation, home, settings, the onboarding tour,
+  and module titles. (Lesson bodies are English for now.)
 - **Back up & restore** — export/import all progress, notes, and code drafts as JSON
   from the settings dialog (move between devices without any account).
 - **Keyboard shortcuts** — `⌘/Ctrl+Enter` runs the focused editor, `[` / `]` jump
