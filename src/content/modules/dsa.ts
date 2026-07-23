@@ -127,6 +127,18 @@ for i, x in enumerate([10, 20, 30]):
     return []`,
           xp: 70,
         },
+        {
+          kind: "quiz",
+          question: "Why does the one-pass two-sum use a dict (hash map) instead of a nested loop?",
+          options: [
+            { text: "Membership/lookup in a dict is O(1), turning the O(n²) pair scan into O(n)", correct: true },
+            { text: "A dict keeps the numbers sorted for binary search" },
+            { text: "Dicts use less memory than a list" },
+            { text: "It avoids recursion" },
+          ],
+          explanation:
+            "As you scan, you store each value→index and ask the dict whether the needed complement was already seen — an O(1) question. That replaces the inner loop, so total work drops from O(n²) to O(n) (trading O(n) space for it).",
+        },
       ],
     },
     {

@@ -234,6 +234,18 @@ def product(nums):
     return reduce(lambda a, b: a * b, nums, 1)`,
           xp: 60,
         },
+        {
+          kind: "quiz",
+          question: "You need to count occurrences of each item in a list. The cleanest tool is…",
+          options: [
+            { text: "collections.Counter(items)", correct: true },
+            { text: "functools.reduce over the list" },
+            { text: "sorted(items) then manual counting" },
+            { text: "itertools.count()" },
+          ],
+          explanation:
+            "`Counter` is purpose-built for tallying — `Counter(items)` gives a dict-like of counts, plus `.most_common(n)`. `itertools.count()` is an infinite counter (unrelated), and reduce/sorted are needless work here.",
+        },
       ],
     },
   ],

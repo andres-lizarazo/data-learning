@@ -40,6 +40,44 @@ axes[1].bar(["A", "B", "C", "D"], [5, 9, 3, 7], color="#3776ab")
 axes[1].set_title("Categories")
 fig.tight_layout()`,
         },
+        {
+          kind: "challenge",
+          title: "Plot two lines with a title",
+          prompt: `Write \`compare(x, y1, y2)\` that draws **both** \`y1\` and \`y2\` against \`x\` on the same axes, sets the title to exactly \`"Comparison"\`, and **returns the Axes object**.
+
+Create the axes with \`fig, ax = plt.subplots()\` and draw with \`ax.plot(...)\`.`,
+          packages: ["matplotlib"],
+          starterCode: `import matplotlib.pyplot as plt
+
+def compare(x, y1, y2):
+    pass`,
+          tests: [
+            {
+              name: "draws two lines",
+              assertion: `ax = compare([0, 1, 2], [0, 1, 2], [0, 2, 4])
+assert len(ax.lines) == 2`,
+            },
+            {
+              name: "sets the title",
+              assertion: `ax = compare([0, 1], [1, 2], [2, 3])
+assert ax.get_title() == "Comparison"`,
+            },
+          ],
+          hints: [
+            "Make the figure/axes with `fig, ax = plt.subplots()`.",
+            "Call `ax.plot(x, y1)` and `ax.plot(x, y2)` — two calls make two lines.",
+            "`ax.set_title(\"Comparison\")`, then `return ax`.",
+          ],
+          solution: `import matplotlib.pyplot as plt
+
+def compare(x, y1, y2):
+    fig, ax = plt.subplots()
+    ax.plot(x, y1)
+    ax.plot(x, y2)
+    ax.set_title("Comparison")
+    return ax`,
+          xp: 70,
+        },
       ],
     },
     {
@@ -93,6 +131,47 @@ fig.tight_layout()`,
             { text: "plt.show()" },
           ],
           explanation: "`ax.legend()` reads the `label=` you passed to plot/bar/etc.",
+        },
+        {
+          kind: "challenge",
+          title: "A labelled bar chart",
+          prompt: `Write \`bars(labels, values)\` that draws a bar chart, labels the y-axis exactly \`"count"\`, and **returns the Axes**. One bar per (label, value).`,
+          packages: ["matplotlib"],
+          starterCode: `import matplotlib.pyplot as plt
+
+def bars(labels, values):
+    pass`,
+          tests: [
+            {
+              name: "one bar per value",
+              assertion: `ax = bars(["a", "b", "c"], [3, 5, 2])
+assert len(ax.patches) == 3`,
+            },
+            {
+              name: "bar heights match",
+              assertion: `ax = bars(["a", "b"], [4, 7])
+assert sorted(round(p.get_height()) for p in ax.patches) == [4, 7]`,
+            },
+            {
+              name: "labels the y-axis",
+              assertion: `ax = bars(["a"], [1])
+assert ax.get_ylabel() == "count"`,
+              hidden: true,
+            },
+          ],
+          hints: [
+            "Make the axes with `fig, ax = plt.subplots()`, then `ax.bar(labels, values)`.",
+            "Each bar is a patch — `ax.bar` creates one per value automatically.",
+            "`ax.set_ylabel(\"count\")`, then `return ax`.",
+          ],
+          solution: `import matplotlib.pyplot as plt
+
+def bars(labels, values):
+    fig, ax = plt.subplots()
+    ax.bar(labels, values)
+    ax.set_ylabel("count")
+    return ax`,
+          xp: 70,
         },
       ],
     },

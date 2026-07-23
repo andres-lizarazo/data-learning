@@ -226,6 +226,18 @@ def column_sums(matrix):
     return np.array(matrix).sum(axis=0).tolist()`,
           xp: 70,
         },
+        {
+          kind: "quiz",
+          question: "For a 2-D array `a` shaped (rows, cols), what does `a.sum(axis=0)` return?",
+          options: [
+            { text: "One value per column (sums down each column)", correct: true },
+            { text: "One value per row (sums across each row)" },
+            { text: "A single scalar — the grand total" },
+            { text: "The same array unchanged" },
+          ],
+          explanation:
+            "`axis=0` collapses the rows, leaving one number per column. `axis=1` would collapse the columns (one per row), and omitting `axis` sums everything to a scalar.",
+        },
       ],
     },
   ],
