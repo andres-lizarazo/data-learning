@@ -83,7 +83,7 @@ in-app **/roadmap** page for the full numbered path):
 | 🤖 Intro to ML | **deep** | scikit-learn in the browser: workflow & train/test split, fitting classifiers, **regression + metrics (MAE/RMSE/R²)**, **preprocessing & Pipelines**, **cross-validation & over/underfitting**, **classification metrics (precision/recall/F1/ROC)** |
 | 📦 Core Libraries | **deep** | collections/itertools, datetime/random/json, math/statistics, functools, **regular expressions (`re`)** (+ challenges) |
 | 🔢 NumPy | **deep** | arrays & vectorization, indexing/reshaping, aggregations/broadcasting, **linear algebra & random** (+ challenges) |
-| 🐼 Pandas | **deep** | DataFrames, selecting/filtering, cleaning, group-by/agg, merge/join (+ challenges) |
+| 🐼 Pandas | **deep** | DataFrames, selecting/filtering, cleaning, group-by/agg, merge/join, **Polars intro** (expression API, lazy vs eager) (+ challenges) |
 | 📈 Data Visualization | **deep** | matplotlib, customizing plots, plotting from pandas, seaborn (distribution & categorical), **"which chart when" guidance** — with graded plotting challenges |
 
 ### SQL track

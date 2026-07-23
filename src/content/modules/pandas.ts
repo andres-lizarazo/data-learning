@@ -4,7 +4,7 @@ import type { Module } from "../../types/lesson";
 export const pandas: Module = {
   id: "pandas",
   title: "Pandas — Data Wrangling",
-  blurb: "Load, select, clean, group, merge and aggregate tabular data.",
+  blurb: "Load, select, clean, group, merge and aggregate tabular data — plus a Polars intro.",
   level: "Intermediate",
   icon: "🐼",
   status: "deep",
@@ -477,6 +477,174 @@ def top_products(records, n):
             { front: "groupby → aggregate", back: "`df.groupby(\"k\")[\"v\"].mean()` splits by key, applies an aggregate per group, returns a Series indexed by the key." },
             { front: "merge (join)", back: "`a.merge(b, on=\"key\", how=\"left\")` — SQL-style join. `how` ∈ inner/left/right/outer." },
             { front: "Why avoid `.iterrows()` when you can", back: "It's row-by-row Python (slow). Prefer vectorized column math (`df[\"a\"] * df[\"b\"]`) — orders of magnitude faster on real data." },
+          ],
+        },
+      ],
+    },
+    {
+      id: "polars",
+      title: "Polars — a faster DataFrame",
+      summary: "The modern Rust/Arrow DataFrame: the expression API, lazy execution, and when to switch from pandas.",
+      minutes: 12,
+      blocks: [
+        {
+          kind: "prose",
+          markdown: `# Polars — a faster DataFrame
+
+**Polars** is a modern DataFrame library written in **Rust**, built on the **Apache Arrow**
+columnar memory format. It's the fast alternative to pandas and increasingly the default for
+new data work:
+
+- **Multithreaded** by default — it uses every CPU core; pandas is mostly single-threaded.
+- **Columnar + Arrow** — cache-friendly, SIMD-vectorized, zero-copy interop with the Arrow
+  ecosystem (DuckDB, Parquet, PyArrow).
+- **Lazy query optimization** — a \`LazyFrame\` builds a *plan* that Polars optimizes
+  (predicate/projection pushdown, etc.) before running it — like a SQL engine for your
+  DataFrame.
+- **Bigger-than-RAM** streaming for datasets that don't fit in memory.
+
+> **Heads-up:** Polars is a compiled Rust extension, so — like the PySpark track — it does
+> **not run in this in-browser sandbox**. The Polars snippets below are shown for reading;
+> the runnable cell demonstrates the *equivalent* transform in pandas, which does run here.
+> Install it locally with \`pip install polars\`.`,
+        },
+        {
+          kind: "prose",
+          markdown: `## The expression API
+
+Polars' superpower is **expressions**: \`pl.col("x")\` is a *description* of a computation,
+not an immediate value. You compose expressions inside \`select\`, \`filter\`, \`with_columns\`,
+and \`group_by\`, and Polars runs them in parallel.
+
+\`\`\`python
+import polars as pl
+
+df = pl.DataFrame({
+    "product": ["a", "b", "a", "b"],
+    "region":  ["N", "N", "S", "S"],
+    "sales":   [10, 20, 30, 40],
+})
+
+# Filter + group + aggregate, all as expressions:
+out = (
+    df.filter(pl.col("sales") > 15)
+      .group_by("product")
+      .agg(pl.col("sales").sum().alias("total"))
+      .sort("total", descending=True)
+)
+\`\`\`
+
+**Eager vs lazy.** \`pl.DataFrame\` runs eagerly (like pandas). \`pl.LazyFrame\`
+(\`pl.scan_csv(...)\` or \`df.lazy()\`) records the plan and only executes on \`.collect()\` —
+letting Polars optimize the whole query first:
+
+\`\`\`python
+result = (
+    pl.scan_csv("orders.csv")          # nothing read yet
+      .filter(pl.col("status") == "paid")
+      .group_by("user_id")
+      .agg(pl.col("total").sum())
+      .collect()                        # NOW it runs, optimized end-to-end
+)
+\`\`\``,
+        },
+        {
+          kind: "runnable",
+          title: "The same transform in pandas (runs here)",
+          packages: ["pandas"],
+          code: `import pandas as pd
+
+# Same data as the Polars example above.
+df = pd.DataFrame({
+    "product": ["a", "b", "a", "b"],
+    "region":  ["N", "N", "S", "S"],
+    "sales":   [10, 20, 30, 40],
+})
+
+# pandas equivalent of: filter -> group_by -> agg(sum) -> sort desc
+out = (
+    df[df["sales"] > 15]
+    .groupby("product")["sales"].sum()
+    .sort_values(ascending=False)
+    .rename("total")
+)
+print(out)
+# In Polars this is one expression pipeline, parallelized across cores.`,
+        },
+        {
+          kind: "quiz",
+          question: "What is the key difference between a Polars `LazyFrame` and an eager `DataFrame`?",
+          options: [
+            {
+              text: "A LazyFrame records a query plan and optimizes it, only running on `.collect()`; a DataFrame executes each operation immediately.",
+              correct: true,
+            },
+            { text: "A LazyFrame stores data on disk; a DataFrame keeps it in RAM." },
+            { text: "LazyFrames are single-threaded; DataFrames are parallel." },
+            { text: "There is no difference — they are aliases." },
+          ],
+          explanation:
+            "Lazy mode lets Polars see the whole query and apply optimizations (predicate/projection pushdown, reordering) before any work happens — the same idea a SQL query planner uses. Eager mode runs step by step like pandas.",
+        },
+        {
+          kind: "quiz",
+          question: "You have a 50 GB CSV to filter and aggregate on a laptop. Which is the strongest reason to reach for Polars over pandas?",
+          options: [
+            {
+              text: "Lazy, streaming execution processes bigger-than-RAM data and parallelizes across all cores.",
+              correct: true,
+            },
+            { text: "Polars has a nicer logo." },
+            { text: "pandas cannot read CSV files." },
+            { text: "Polars automatically uploads the data to a cluster." },
+          ],
+          explanation:
+            "Polars' lazy engine can stream data that doesn't fit in memory and uses every core, so heavy filter/group/aggregate jobs finish far faster than single-threaded pandas — without needing a cluster.",
+        },
+        {
+          kind: "challenge",
+          title: "Filter then aggregate (the expression idea)",
+          prompt: `Polars would express this as \`df.filter(pl.col("active")).select(pl.col("value").mean())\`.
+Implement the same logic in **plain Python**: given \`records\` (a list of dicts with keys
+\`active\` (bool) and \`value\` (number)), return the **mean of \`value\` over the rows where
+\`active\` is True**. Return \`0.0\` if no rows are active.`,
+          starterCode: `def mean_active(records):
+    pass`,
+          tests: [
+            {
+              name: "filters then means",
+              assertion:
+                "assert mean_active([{'active': True, 'value': 10}, {'active': False, 'value': 999}, {'active': True, 'value': 20}]) == 15.0",
+            },
+            {
+              name: "none active",
+              assertion: "assert mean_active([{'active': False, 'value': 5}]) == 0.0",
+            },
+            {
+              name: "all active",
+              assertion:
+                "assert mean_active([{'active': True, 'value': 2}, {'active': True, 'value': 4}]) == 3.0",
+              hidden: true,
+            },
+          ],
+          hints: [
+            "First filter: collect `r['value']` for rows where `r['active']` is True.",
+            "Then aggregate: `sum(vals) / len(vals)` — but guard the empty case to return `0.0`.",
+          ],
+          solution: `def mean_active(records):
+    vals = [r["value"] for r in records if r["active"]]
+    return sum(vals) / len(vals) if vals else 0.0`,
+          xp: 70,
+        },
+        {
+          kind: "flashcards",
+          title: "Polars — the essentials",
+          cards: [
+            { front: "What is Polars?", back: "A fast DataFrame library in **Rust** on the **Apache Arrow** columnar format — multithreaded by default, the modern alternative to pandas." },
+            { front: "Polars expressions", back: "`pl.col(\"x\")` describes a computation (not an immediate value). Compose them in `select`/`filter`/`with_columns`/`group_by`; Polars runs them in parallel." },
+            { front: "Eager vs lazy", back: "`pl.DataFrame` runs immediately (like pandas). `pl.LazyFrame` / `scan_csv` build a query plan optimized and executed only on `.collect()`." },
+            { front: "Why Polars is fast", back: "Columnar Arrow layout + SIMD + all CPU cores + lazy query optimization (predicate/projection pushdown) + bigger-than-RAM streaming." },
+            { front: "pandas vs Polars — when", back: "pandas: small data, huge ecosystem, notebooks. Polars: large data, performance-critical ETL, lazy pipelines. APIs differ but concepts transfer." },
           ],
         },
       ],

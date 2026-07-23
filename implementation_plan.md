@@ -528,6 +528,11 @@ authored as typed TS and verified end-to-end (`npm run build`, Python solutions 
 - [x] **Data Visualization** — added graded challenges (pandas `value_counts` bars, seaborn
       boxplot) and a **"🧭 which chart for which question"** guide + quizzes (module was
       challenge-light and lacked chart-selection guidance).
+- [x] **Pandas — Polars intro** — added a conceptual **Polars** lesson (Rust/Arrow, the
+      expression API, eager vs lazy `LazyFrame`, when to switch from pandas). Polars is a
+      compiled Rust extension **not in Pyodide 0.26.4**, so — like the PySpark track — it's
+      taught conceptually: Polars snippets shown, a runnable pandas equivalent that executes,
+      quizzes, a pure-Python challenge, and flashcards.
 
 ### SQL (PostgreSQL)
 - [x] **PL/pgSQL control flow** made interactive: `IF/LOOP/WHILE/FOR`, `FOR … IN SELECT`,
