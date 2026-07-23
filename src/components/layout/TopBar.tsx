@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { Database, GraduationCap, Map as MapIcon, Menu, Search, Settings, Sparkles, Target } from "lucide-react";
+import { BookText, Database, GraduationCap, Map as MapIcon, Menu, Search, Settings, Sparkles, Target } from "lucide-react";
+import ThemeToggle from "../ui/ThemeToggle";
 import { useProgressStore } from "../../store/progressStore";
 import { dueCards, useReviewStore } from "../../store/reviewStore";
 import { usePyodideStore } from "../../store/pyodideStore";
@@ -88,6 +89,15 @@ export default function TopBar({ onToggleSidebar }: { onToggleSidebar: () => voi
           <Database className="h-4 w-4 text-accent-cyan" />
           SQL
         </Link>
+        <Link
+          to="/reference"
+          className="btn-ghost hidden lg:inline-flex"
+          title="SQL & Python reference cheatsheet"
+        >
+          <BookText className="h-4 w-4 text-accent-cyan" />
+          Reference
+        </Link>
+        <ThemeToggle />
         <button
           className="btn-ghost px-2"
           onClick={() => window.dispatchEvent(new Event("pylearn:open-settings"))}

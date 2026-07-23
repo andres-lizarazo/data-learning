@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Check, RotateCw, Zap } from "lucide-react";
 import { useReviewStore, type DeckCard, type Grade } from "../../store/reviewStore";
 
@@ -29,6 +29,49 @@ export default function FlashcardStudy({
 
   const card = queue[0];
 
+  const answer = useCallback(
+    (g: Grade) => {
+      if (!card) return;
+      grade(card.id, g);
+      setFlipped(false);
+      setQueue((q) => {
+        // "again" → back of this session's queue; otherwise the card is done.
+        const rest = q.slice(1);
+        const next = g === "again" ? [...rest, card] : rest;
+        if (next.length === 0) onFinished?.();
+        return next;
+      });
+      if (g !== "again") setDone((n) => n + 1);
+    },
+    [card, grade, onFinished],
+  );
+
+  // Keyboard shortcuts: Space/Enter flips; once flipped, 1/2/3 grade Again/Good/Easy.
+  // Registered unconditionally (before any early return) to respect the rules of hooks.
+  useEffect(() => {
+    if (!card) return;
+    const onKey = (e: KeyboardEvent) => {
+      const el = document.activeElement;
+      if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) return;
+      if (!flipped) {
+        if (e.key === " " || e.key === "Enter") {
+          e.preventDefault();
+          setFlipped(true);
+        }
+        return;
+      }
+      if (e.key === "1") answer("again");
+      else if (e.key === "2") answer("good");
+      else if (e.key === "3") answer("easy");
+      else if (e.key === " " || e.key === "Enter") {
+        e.preventDefault();
+        setFlipped(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [flipped, card, answer]);
+
   if (!card) {
     return (
       <div className="grid place-items-center gap-2 py-10 text-center">
@@ -40,19 +83,6 @@ export default function FlashcardStudy({
       </div>
     );
   }
-
-  const answer = (g: Grade) => {
-    grade(card.id, g);
-    setFlipped(false);
-    setQueue((q) => {
-      // "again" → back of this session's queue; otherwise the card is done.
-      const rest = q.slice(1);
-      const next = g === "again" ? [...rest, card] : rest;
-      if (next.length === 0) onFinished?.();
-      return next;
-    });
-    if (g !== "again") setDone((n) => n + 1);
-  };
 
   return (
     <div className="space-y-3">
@@ -82,18 +112,18 @@ export default function FlashcardStudy({
             className="btn-ghost flex-1 justify-center border-rose-400/30 text-rose-300"
             onClick={() => answer("again")}
           >
-            <RotateCw className="h-4 w-4" /> Again
+            <RotateCw className="h-4 w-4" /> Again <kbd className="pill ml-1 px-1.5 text-[10px]">1</kbd>
           </button>
           <button className="btn-ghost flex-1 justify-center" onClick={() => answer("good")}>
-            <Check className="h-4 w-4 text-accent-cyan" /> Good
+            <Check className="h-4 w-4 text-accent-cyan" /> Good <kbd className="pill ml-1 px-1.5 text-[10px]">2</kbd>
           </button>
           <button className="btn-ghost flex-1 justify-center" onClick={() => answer("easy")}>
-            <Zap className="h-4 w-4 text-accent-lime" /> Easy
+            <Zap className="h-4 w-4 text-accent-lime" /> Easy <kbd className="pill ml-1 px-1.5 text-[10px]">3</kbd>
           </button>
         </div>
       ) : (
         <p className="text-center text-xs text-slate-500">
-          Recall the answer first, then tap the card.
+          Recall the answer first, then tap the card (or press Space).
         </p>
       )}
     </div>

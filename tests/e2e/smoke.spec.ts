@@ -1,5 +1,10 @@
 import { expect, test } from "@playwright/test";
 
+// Skip the first-run welcome modal so its overlay doesn't intercept clicks in these tests.
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("pylearn-onboarded", "1"));
+});
+
 test("home renders the hero", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /Learn Data/i })).toBeVisible();
@@ -96,4 +101,20 @@ test("user-driven visualizer records & animates frames", async ({ page }) => {
 
   // After running, the recorded frames drive the bar animation + step controls.
   await expect(card.getByText(/Frame 1\//)).toBeVisible({ timeout: 60_000 });
+});
+
+test("reference page surfaces the PostgreSQL guide", async ({ page }) => {
+  await page.goto("/reference");
+  await expect(
+    page.getByRole("heading", { name: /PostgreSQL — Complete Study Guide/ }),
+  ).toBeVisible();
+});
+
+test("theme toggle switches to the light theme", async ({ page }) => {
+  // Seed a known starting theme so the toggle's label is deterministic.
+  await page.addInitScript(() => localStorage.setItem("pylearn-theme", "dark"));
+  await page.goto("/");
+  await expect(page.locator("html")).not.toHaveClass(/light/);
+  await page.getByRole("button", { name: /Switch to light theme/i }).click();
+  await expect(page.locator("html")).toHaveClass(/light/);
 });

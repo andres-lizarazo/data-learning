@@ -13,6 +13,7 @@ const Profile = lazy(() => import("./pages/Profile"));
 const Practice = lazy(() => import("./pages/Practice"));
 const Roadmap = lazy(() => import("./pages/Roadmap"));
 const Review = lazy(() => import("./pages/Review"));
+const Reference = lazy(() => import("./pages/Reference"));
 
 export default function App() {
   return (
@@ -27,6 +28,7 @@ export default function App() {
         <Route path="practice" element={<Practice />} />
         <Route path="roadmap" element={<Roadmap />} />
         <Route path="review" element={<Review />} />
+        <Route path="reference" element={<Reference />} />
         <Route path="*" element={<Home />} />
       </Route>
     </Routes>

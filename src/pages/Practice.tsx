@@ -8,17 +8,34 @@ import { moduleGradient } from "../lib/moduleTheme";
 import Reveal from "../components/ui/Reveal";
 
 type StatusFilter = "all" | "solved" | "unsolved";
+type Difficulty = "Easy" | "Medium" | "Hard";
+type DiffFilter = "all" | Difficulty;
+
+// XP is our difficulty proxy: authored so that harder problems award more.
+function difficultyOf(xp: number): Difficulty {
+  if (xp <= 50) return "Easy";
+  if (xp <= 70) return "Medium";
+  return "Hard";
+}
+
+const DIFF_STYLE: Record<Difficulty, string> = {
+  Easy: "border-accent-lime/40 text-accent-lime",
+  Medium: "border-brand-yellow/40 text-brand-yellow",
+  Hard: "border-brand-red/40 text-brand-red",
+};
 
 export default function Practice() {
   const solved = useProgressStore((s) => s.solvedChallenges);
   const [moduleId, setModuleId] = useState<string>("all");
   const [status, setStatus] = useState<StatusFilter>("all");
+  const [difficulty, setDifficulty] = useState<DiffFilter>("all");
 
   const all = useMemo(allChallenges, []);
   const solvedCount = all.filter((c) => solved[c.id]).length;
 
   const filtered = all.filter((c) => {
     if (moduleId !== "all" && c.moduleId !== moduleId) return false;
+    if (difficulty !== "all" && difficultyOf(c.xp) !== difficulty) return false;
     const isSolved = !!solved[c.id];
     if (status === "solved" && !isSolved) return false;
     if (status === "unsolved" && isSolved) return false;
@@ -67,6 +84,19 @@ export default function Practice() {
             </button>
           ))}
         </div>
+        <div className="flex overflow-hidden rounded-lg border border-white/10">
+          {(["all", "Easy", "Medium", "Hard"] as DiffFilter[]).map((d) => (
+            <button
+              key={d}
+              onClick={() => setDifficulty(d)}
+              className={`px-3 py-1.5 text-xs transition-colors ${
+                difficulty === d ? "bg-white/10 text-white" : "text-slate-400 hover:bg-white/5"
+              }`}
+            >
+              {d === "all" ? "Any" : d}
+            </button>
+          ))}
+        </div>
         <span className="ml-auto text-xs text-slate-400">{filtered.length} shown</span>
       </div>
 
@@ -94,6 +124,9 @@ export default function Practice() {
                   <div className="font-medium text-white">{c.title}</div>
                   <div className="truncate text-xs text-slate-400">{c.lessonTitle}</div>
                 </div>
+                <span className={`pill hidden sm:inline-flex ${DIFF_STYLE[difficultyOf(c.xp)]}`}>
+                  {difficultyOf(c.xp)}
+                </span>
                 <span
                   className="pill text-white"
                   style={{ background: moduleGradient(c.moduleId, 145) }}

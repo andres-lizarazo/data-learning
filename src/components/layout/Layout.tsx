@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import Aurora from "../ui/Aurora";
 import CommandPalette from "../ui/CommandPalette";
+import Onboarding from "../ui/Onboarding";
 import LevelUpToast from "../ui/LevelUpToast";
 import SettingsDialog from "../ui/SettingsDialog";
 import ShortcutsHelp from "../ui/ShortcutsHelp";
@@ -49,6 +50,7 @@ export default function Layout() {
         Skip to content
       </a>
       <Aurora />
+      <Onboarding />
       <CommandPalette />
       <SettingsDialog />
       <ShortcutsHelp />
