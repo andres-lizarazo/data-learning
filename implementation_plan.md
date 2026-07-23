@@ -504,6 +504,9 @@ authored as typed TS and verified end-to-end (`npm run build`, Python solutions 
 - [x] **NumPy** — new **Linear Algebra & Random** lesson (`@` vs `*`, `np.linalg.solve`,
       `default_rng`).
 - [x] **Pandas** — added quizzes (groupby result shape, inner-join semantics); module had none.
+- [x] **Data Visualization** — added graded challenges (pandas `value_counts` bars, seaborn
+      boxplot) and a **"🧭 which chart for which question"** guide + quizzes (module was
+      challenge-light and lacked chart-selection guidance).
 
 ### SQL (PostgreSQL)
 - [x] **PL/pgSQL control flow** made interactive: `IF/LOOP/WHILE/FOR`, `FOR … IN SELECT`,

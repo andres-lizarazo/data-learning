@@ -81,7 +81,7 @@ in-app **/roadmap** page for the full numbered path):
 | 📦 Core Libraries | **deep** | collections/itertools, datetime/random/json, math/statistics, functools, **regular expressions (`re`)** (+ challenges) |
 | 🔢 NumPy | **deep** | arrays & vectorization, indexing/reshaping, aggregations/broadcasting, **linear algebra & random** (+ challenges) |
 | 🐼 Pandas | **deep** | DataFrames, selecting/filtering, cleaning, group-by/agg, merge/join (+ challenges) |
-| 📈 Data Visualization | **deep** | matplotlib, customizing plots, plotting from pandas, seaborn (distribution & categorical) |
+| 📈 Data Visualization | **deep** | matplotlib, customizing plots, plotting from pandas, seaborn (distribution & categorical), **"which chart when" guidance** — with graded plotting challenges |
 
 ### SQL track
 

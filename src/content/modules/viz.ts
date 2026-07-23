@@ -225,6 +225,41 @@ fig.tight_layout()`,
           explanation:
             "`value_counts()` tallies each category; `.plot(kind='bar')` charts those tallies.",
         },
+        {
+          kind: "challenge",
+          title: "Category frequency bar chart",
+          prompt: `Write \`category_bars(values)\` — given a list of category labels, draw a **bar chart of how often each category appears** using pandas (\`value_counts().plot(kind="bar")\`) and **return the Axes**.`,
+          packages: ["pandas", "matplotlib"],
+          starterCode: `import pandas as pd
+import matplotlib.pyplot as plt
+
+def category_bars(values):
+    pass`,
+          tests: [
+            {
+              name: "one bar per distinct category",
+              assertion: `ax = category_bars(["a", "a", "b", "c", "c", "c"])
+assert len(ax.patches) == 3`,
+            },
+            {
+              name: "two categories",
+              assertion: `ax = category_bars(["x", "y", "x"])
+assert len(ax.patches) == 2`,
+              hidden: true,
+            },
+          ],
+          hints: [
+            "Wrap the list in a Series: `pd.Series(values)`.",
+            "`.value_counts()` tallies each category; chain `.plot(kind=\"bar\")`.",
+            "That `.plot(...)` call returns the Axes — `return` it.",
+          ],
+          solution: `import pandas as pd
+import matplotlib.pyplot as plt
+
+def category_bars(values):
+    return pd.Series(values).value_counts().plot(kind="bar")`,
+          xp: 70,
+        },
       ],
     },
     {
@@ -264,6 +299,62 @@ fig, axes = plt.subplots(1, 2, figsize=(9, 3.2))
 sns.histplot(data=df, x="x", hue="group", ax=axes[0])
 sns.scatterplot(data=df, x="x", y="y", hue="group", ax=axes[1])
 fig.tight_layout()`,
+        },
+        {
+          kind: "quiz",
+          question:
+            "You want to show the distribution of a single numeric column, split by a category. Which seaborn function fits best?",
+          options: [
+            { text: "sns.histplot(data=df, x=\"value\", hue=\"group\")", correct: true },
+            { text: "sns.scatterplot(data=df, x=\"a\", y=\"b\")" },
+            { text: "sns.heatmap(df.corr())" },
+            { text: "sns.lineplot(data=df, x=\"t\", y=\"value\")" },
+          ],
+          explanation:
+            "`histplot` (or `kdeplot`) shows a distribution; `hue` splits it by category. Scatter/line relate two variables, and heatmap shows a matrix — none is a single-variable distribution.",
+        },
+        {
+          kind: "challenge",
+          title: "Boxplot per category",
+          prompt: `Write \`score_boxplot(df)\` — given a DataFrame with columns \`team\` and \`score\`, draw a seaborn **boxplot** of \`score\` per \`team\`, set the title to exactly \`"Score by team"\`, and **return the Axes**.`,
+          packages: ["seaborn", "pandas", "matplotlib"],
+          starterCode: `import seaborn as sns
+import matplotlib.pyplot as plt
+
+def score_boxplot(df):
+    pass`,
+          tests: [
+            {
+              name: "sets the title",
+              assertion: `import pandas as pd
+df = pd.DataFrame({"team": ["A", "A", "B", "B"], "score": [1, 2, 3, 4]})
+ax = score_boxplot(df)
+assert ax.get_title() == "Score by team"`,
+            },
+            {
+              name: "one box per team",
+              assertion: `import pandas as pd
+df = pd.DataFrame({"team": ["A", "B", "C"], "score": [1, 2, 3]})
+ax = score_boxplot(df)
+labels = sorted(t.get_text() for t in ax.get_xticklabels())
+assert labels == ["A", "B", "C"]`,
+              hidden: true,
+            },
+          ],
+          hints: [
+            "Make the axes: `fig, ax = plt.subplots()`.",
+            "`sns.boxplot(data=df, x=\"team\", y=\"score\", ax=ax)`.",
+            "`ax.set_title(\"Score by team\")`, then `return ax`.",
+          ],
+          solution: `import seaborn as sns
+import matplotlib.pyplot as plt
+
+def score_boxplot(df):
+    fig, ax = plt.subplots()
+    sns.boxplot(data=df, x="team", y="score", ax=ax)
+    ax.set_title("Score by team")
+    return ax`,
+          xp: 80,
         },
       ],
     },
@@ -308,6 +399,37 @@ axes[1].set_title("Avg minutes")
 sns.heatmap(df[["score", "minutes"]].corr(), annot=True, cmap="Blues", ax=axes[2])
 axes[2].set_title("Correlation")
 fig.tight_layout()`,
+        },
+        {
+          kind: "prose",
+          markdown: `## 🧭 Which chart for which question?
+
+Pick the mark from the **question**, not the data:
+
+| You want to show… | Reach for |
+|---|---|
+| **Trend over time** | line plot |
+| **Compare a value across categories** | bar plot |
+| **Distribution of one numeric variable** | histogram / KDE (\`histplot\`, \`kdeplot\`) |
+| **Distribution per category** | box / violin plot |
+| **Relationship between two numerics** | scatter plot |
+| **Composition / parts of a whole** | stacked bar (avoid pie for many slices) |
+| **A matrix of values** (e.g. correlations) | heatmap |
+
+Rules of thumb: start the bar/line axis at **zero**, don't encode more than ~2–3 variables in
+one chart, and prefer direct labels or a legend over a rainbow of colors.`,
+        },
+        {
+          kind: "quiz",
+          question: "You want to compare the distribution of scores across three teams. The best chart is…",
+          options: [
+            { text: "A box or violin plot (one per team).", correct: true },
+            { text: "A single histogram of all scores combined." },
+            { text: "A scatter plot of score vs team." },
+            { text: "A correlation heatmap." },
+          ],
+          explanation:
+            "Box/violin plots show the spread (median, quartiles, outliers) per category side by side. A combined histogram hides the per-team differences, and scatter/heatmap answer different questions.",
         },
       ],
     },
