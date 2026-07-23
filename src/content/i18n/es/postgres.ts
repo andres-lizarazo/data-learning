@@ -989,4 +989,144 @@ directamente desde tablas existentes — que es exactamente el siguiente ejercic
       },
     ],
   },
+  "recursive-hierarchies": {
+    title: "CTEs Recursivos — Cadenas de Mánagers y Árboles",
+    summary:
+      "Recorre jerarquías de profundidad desconocida — organigramas hacia abajo (descendientes) y cadenas de mando hacia arriba (ancestros), con profundidad, rutas y seguridad ante ciclos.",
+    blocks: [
+      {
+        markdown: `## Recursión para jerarquías
+
+Cuando una tabla se referencia a sí misma (\`employees.manager_id → employees.id\`, \`categories.parent_id\`),
+no puedes saber la profundidad de antemano — así que **recursas**. Un CTE recursivo tiene dos partes
+unidas por \`UNION ALL\`:
+
+1. **Ancla** — las filas iniciales (las raíces, o un nodo específico).
+2. **Miembro recursivo** — une la tabla de vuelta al CTE para traer el siguiente nivel, repitiendo hasta
+   que no aparezcan filas nuevas.
+
+Puedes recorrer **hacia abajo** (los descendientes de un mánager) o **hacia arriba** (la cadena de un
+empleado hasta el CEO) — solo cambia qué lado del join es el CTE.`,
+      },
+      { title: "Organigrama — recorrer HACIA ABAJO desde arriba (profundidad + ruta)" },
+      {
+        markdown: `## Recorrer HACIA ARRIBA — la cadena de mando de un empleado
+
+Cambia el join (\`e.id = chain.manager_id\`) y ancla en un empleado para subir hasta la raíz. Esta es la
+pregunta "¿quiénes son los mánagers de Frank, hasta arriba?".`,
+      },
+      { title: "Cadena de mando por encima de Frank (ancestros)" },
+      {
+        markdown: `## La misma idea en la base de ejemplo
+
+La tabla \`categories\` de ejemplo también es una jerarquía (\`parent_id\`). Recorre **hacia arriba** llevando
+la raíz, y cada categoría aprende a qué sección de nivel superior pertenece.
+
+> **Seguridad ante ciclos:** \`UNION ALL\` no parará si los datos tienen un bucle (A dirige a B dirige a A).
+> Protégete con un tope de profundidad (\`WHERE depth < 100\`), rastreando ids visitados en un array
+> (\`NOT id = ANY(path_ids)\`), o usando \`UNION\` (dedupe, pero más lento). Los datos reales de org/categoría
+> suelen ser un árbol limpio.
+
+> **vs MySQL:** los CTEs recursivos necesitan MySQL 8.0+; la sintaxis \`WITH RECURSIVE\` es la misma.`,
+      },
+      { title: "La raíz de nivel superior de cada categoría (subir por parent_id)" },
+      {
+        title: "Profundidad de categoría",
+        prompt:
+          "Usando un **CTE recursivo**, devuelve el `name` de cada categoría y su `depth` — las categorías de nivel superior son profundidad `0`, sus hijos profundidad `1`, y así. Ordena por `depth`, luego `name`.",
+        hints: [
+          "Ancla: `WHERE parent_id IS NULL` con `0 AS depth`.",
+          "Recursivo: `JOIN tree t ON t.id = c.parent_id`, seleccionando `t.depth + 1`.",
+        ],
+      },
+      {
+        title: "Todos bajo un mánager",
+        prompt:
+          "La base de ejemplo no tiene empleados, así que usa `categories` como árbol: empezando desde **Electronics**, devuelve el `name` de Electronics **y todas las categorías debajo** (sus descendientes, a cualquier profundidad). Ordena por `name`.\n\n*Patrón: recorrido recursivo HACIA ABAJO desde un nodo.*",
+        hints: [
+          "Ancla en la única fila `WHERE name = 'Electronics'`.",
+          "Miembro recursivo: `JOIN sub s ON c.parent_id = s.id` para traer cada nivel de hijos.",
+        ],
+      },
+    ],
+  },
+  "pivot-unpivot": {
+    title: "Pivot y Unpivot",
+    summary:
+      "Rota filas a columnas y de vuelta — el pivot portable con FILTER/CASE, la advertencia de crosstab, y el unpivot con VALUES + LATERAL.",
+    blocks: [
+      {
+        markdown: `## Pivot: filas → columnas
+
+"Pivotar" convierte valores de fila en columnas — p. ej. una columna por status. La forma **portable**
+(funciona en todas partes, sin extensiones) es la **agregación condicional**: \`SUM(...) FILTER (WHERE …)\`
+(o \`SUM(CASE WHEN … THEN … END)\`), una expresión por columna destino.
+
+> **crosstab():** Postgres también trae una función \`crosstab()\` en la **extensión** \`tablefunc\`
+> (\`CREATE EXTENSION tablefunc\`). Es más concisa pero necesita la extensión instalada (aquí no está, y a
+> menudo no está en setups gestionados), y la lista de columnas debe declararse por adelantado. Para
+> entrevistas y portabilidad, **usa \`FILTER\` primero.**`,
+      },
+      { title: "Pivot de ingresos por status, por trimestre (FILTER)" },
+      {
+        markdown: `## Unpivot: columnas → filas
+
+Lo inverso — una tabla ancha (una columna por trimestre) en filas altas \`(key, value)\` — es más limpio
+con \`CROSS JOIN LATERAL (VALUES …)\` (o \`unnest(ARRAY[…])\`). Cada fila de origen se empareja con una fila
+por cada columna que listes.`,
+      },
+      { title: "Unpivot de una tabla trimestral ancha" },
+      {
+        title: "Conteos de órdenes por status, en una fila",
+        prompt:
+          "Pivota las órdenes en una sola fila con tres columnas — `paid`, `pending`, `refunded` — cada una el **conteo** de órdenes con ese status.",
+        hints: ["Un `COUNT(*) FILTER (WHERE status = '…')` por columna; no hace falta GROUP BY."],
+      },
+    ],
+  },
+  "statistics-distributions": {
+    title: "Estadística, Percentiles e Histogramas",
+    summary:
+      "Mediana de dos formas (incl. sin PERCENTILE_CONT), percent_rank vs cume_dist, moda, e histogramas con width_bucket.",
+    blocks: [
+      {
+        markdown: `## Mediana — la forma limpia y la forma "sin percentil"
+
+La forma limpia es el agregado de conjunto ordenado \`PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY x)\`. Pero
+a los entrevistadores les encanta pedir la mediana **sin** él — para ver si entiendes la definición. El
+truco: numera las filas, cuéntalas, y promedia la **del medio o las dos del medio**:
+
+- Conteo impar → una fila central en \`(n+1)/2\`.
+- Conteo par → promedia las dos filas centrales.
+
+\`rn IN (FLOOR((c+1)/2.0), CEIL((c+1)/2.0))\` selecciona exactamente esas, y \`AVG\` termina el trabajo para
+ambos casos a la vez.`,
+      },
+      { title: "Precio mediano — ambos métodos coinciden" },
+      {
+        markdown: `## Rango relativo: percent_rank, cume_dist, moda
+
+- \`percent_rank()\` — dónde se sitúa una fila en la distribución, de 0 a 1 (su rango menos 1, sobre n−1).
+- \`cume_dist()\` — distribución acumulada: fracción de filas en o por debajo de esta.
+- \`mode() WITHIN GROUP (ORDER BY x)\` — el valor más frecuente.`,
+      },
+      { title: "¿Dónde se sitúa cada precio?" },
+      {
+        markdown: `## Histogramas con width_bucket
+
+\`width_bucket(value, low, high, n)\` asigna un valor a uno de \`n\` buckets de igual ancho — la forma
+estándar de construir un histograma en SQL.`,
+      },
+      { title: "Histograma de precios (3 buckets, 0–1500)" },
+      {
+        title: "Total mediano de órdenes — sin PERCENTILE_CONT",
+        prompt:
+          "Devuelve un solo valor `median` — la mediana de todos los `orders.total` — **sin** usar `PERCENTILE_CONT`/`PERCENTILE_DISC`. Usa el truco de ROW_NUMBER + COUNT.\n\n*(Hay 6 órdenes, así que la respuesta es el promedio del 3º y 4º total.)*",
+        hints: [
+          "Consulta interna: `ROW_NUMBER() OVER (ORDER BY total)` y `COUNT(*) OVER ()`.",
+          "Conserva las filas donde `rn IN (FLOOR((c+1)/2.0), CEIL((c+1)/2.0))`, luego `AVG`.",
+        ],
+      },
+    ],
+  },
 };
