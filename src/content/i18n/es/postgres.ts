@@ -306,4 +306,251 @@ Ambas consultas deben tener el mismo número de columnas con tipos compatibles.
       },
     ],
   },
+  "modifying-data": {
+    title: "INSERT, UPDATE, DELETE y UPSERT",
+    summary: "Escribe datos — inserts multi-fila, RETURNING, updates con join, y upserts ON CONFLICT.",
+    blocks: [
+      {
+        markdown: `## Cambiar datos
+
+\`INSERT … RETURNING\` te devuelve columnas generadas (como un nuevo \`id\`). \`UPDATE … FROM\` y
+\`DELETE … USING\` te dejan unir otra tabla. **Upsert** = \`INSERT … ON CONFLICT (col) DO UPDATE\`,
+donde \`EXCLUDED\` es la fila que intentaste insertar.
+
+> Cada runnable de abajo **reinicia primero la base de datos de ejemplo** (fíjate en el badge), así
+> tus experimentos nunca se filtran a otras lecciones.
+
+> **vs MySQL:** \`RETURNING\` no existe en MySQL (usa \`LAST_INSERT_ID()\`); el upsert es
+> \`ON DUPLICATE KEY UPDATE\`; \`UPDATE … FROM\` se escribe \`UPDATE a JOIN b … SET\`.`,
+      },
+      {
+        markdown: `## 🧭 Escribir datos — elige la herramienta correcta
+
+- **\`DELETE … WHERE\`** — elimina filas específicas; transaccional, dispara triggers, soporta \`RETURNING\`.
+- **\`TRUNCATE\`** — borra **todas** las filas rápido (sin trabajo por fila; \`RESTART IDENTITY\` reinicia secuencias). No puede filtrar, lock más pesado. Úsalo para vaciar una tabla.
+- **\`INSERT … ON CONFLICT (key) DO UPDATE\`** — el **upsert** de referencia ante un conflicto de unique/PK; soporta \`RETURNING\`.
+- **\`MERGE\`** — cuando necesitas **ramificación** (insertar *y* actualizar *y* borrar) contra una fuente unida. Más potente, pero sin \`RETURNING\`.
+- **\`UPDATE … FROM\` / \`DELETE … USING\`** — cuando el cambio depende de **otra tabla** (join dentro de la escritura).
+
+**Regla general:** upsert simple sobre una clave → \`ON CONFLICT\`; multi-rama / dirigido por join → \`MERGE\`; vaciar una tabla entera → \`TRUNCATE\`; todo lo demás → \`DELETE/UPDATE … WHERE\`.`,
+      },
+      { title: "Insertar y recuperar el nuevo id" },
+      { title: "Upsert con ON CONFLICT" },
+      {
+        title: "Descuenta todo un 10%",
+        prompt:
+          "Da a cada producto un **10% de descuento** y devuelve `name` y el nuevo `price` (redondeado a 2 decimales). Usa `UPDATE … RETURNING`.\n\n*(Nota: `RETURNING` no admite `ORDER BY`, así que solo devuelve las filas — el orden no importa aquí.)*",
+        hints: [
+          "`SET price = ROUND(price * 0.9, 2)`.",
+          "`RETURNING name, price` te devuelve las filas actualizadas.",
+        ],
+      },
+    ],
+  },
+  transactions: {
+    title: "Transacciones",
+    summary: "Unidades de trabajo de todo-o-nada — BEGIN/COMMIT/ROLLBACK, savepoints, niveles de aislamiento.",
+    blocks: [
+      {
+        markdown: `## ACID en la práctica
+
+Una transacción agrupa sentencias para que todas hagan commit o todas hagan rollback. \`BEGIN\` inicia
+una, \`COMMIT\` guarda, \`ROLLBACK\` deshace. \`SAVEPOINT\` permite un rollback parcial.
+
+| Nivel de aislamiento | Dirty read | No repetible | Phantom |
+|---|---|---|---|
+| READ COMMITTED (default) | No | Sí | Sí |
+| REPEATABLE READ | No | No | No* |
+| SERIALIZABLE | No | No | No |
+
+*El REPEATABLE READ de Postgres también bloquea phantoms.`,
+      },
+      { title: "Haz rollback y comprueba que nada cambió" },
+      {
+        question:
+          "Necesitas que cada lectura dentro de una transacción vea un snapshot consistente, aunque otras sesiones hagan commit mientras tanto. ¿Qué nivel de aislamiento encaja más simple?",
+        options: ["READ COMMITTED", "REPEATABLE READ", "READ UNCOMMITTED", "Ningún aislamiento puede hacerlo"],
+        explanation:
+          "REPEATABLE READ da a la transacción un snapshot estable durante toda su duración (y en Postgres también previene lecturas fantasma). SERIALIZABLE es aún más estricto pero más pesado de lo necesario aquí.",
+      },
+    ],
+  },
+  "ddl-constraints": {
+    title: "DDL y Restricciones",
+    summary: "Crea y altera tablas; impón integridad con claves, CHECK, UNIQUE y foreign keys.",
+    blocks: [
+      {
+        markdown: `## Definir la estructura
+
+\`CREATE TABLE\` define columnas y **restricciones**: \`PRIMARY KEY\`, \`UNIQUE\`, \`NOT NULL\`, \`CHECK\`,
+\`DEFAULT\`, y \`FOREIGN KEY … REFERENCES … ON DELETE CASCADE\`. \`SERIAL\` (o \`GENERATED ALWAYS AS
+IDENTITY\`) auto-numera una columna. \`ALTER TABLE\` añade/quita columnas y restricciones después.
+
+> **vs MySQL:** \`SERIAL\` → \`INT AUTO_INCREMENT\`; \`DROP TABLE … CASCADE\` no está disponible (borra los hijos primero).`,
+      },
+      { title: "Crea una tabla con restricciones y úsala" },
+      { title: "Una restricción CHECK rechazando datos malos" },
+      {
+        question:
+          "Una `FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE` — ¿qué pasa con las órdenes de un usuario cuando se borra ese usuario?",
+        options: [
+          "El borrado se bloquea mientras existan órdenes",
+          "Las órdenes también se borran",
+          "El user_id de las órdenes se vuelve NULL",
+          "Nada — las órdenes conservan el id viejo",
+        ],
+        explanation:
+          "ON DELETE CASCADE propaga el borrado a las filas dependientes. `SET NULL` anularía la FK; `RESTRICT`/`NO ACTION` bloquearían el borrado.",
+      },
+    ],
+  },
+  "indexes-explain": {
+    title: "Índices y EXPLAIN",
+    summary: "Acelera lecturas con el índice correcto, y lee los planes de consulta con EXPLAIN.",
+    blocks: [
+      {
+        markdown: `## Hacer las consultas rápidas
+
+Los índices cambian escrituras más lentas por lecturas más rápidas. **B-tree** (default) sirve para
+igualdad, rangos, \`ORDER BY\` y \`LIKE 'prefix%'\`. **GIN** indexa arrays, JSONB y full-text. Los índices
+**parciales** cubren un subconjunto (\`WHERE status='pending'\`). Constrúyelos con \`CREATE INDEX CONCURRENTLY\` en producción.
+
+\`EXPLAIN\` muestra el plan; \`EXPLAIN ANALYZE\` lo ejecuta y reporta tiempos reales. Un \`Seq Scan\` en una
+tabla grande suele significar un índice ausente.
+
+> **vs MySQL:** No hay GIN/GiST/BRIN ni índices parciales en MySQL; tiene FULLTEXT/SPATIAL en su lugar.`,
+      },
+      {
+        markdown: `## 🧭 Qué índice — y cuándo NO
+
+- **B-tree (default)** — igualdad, rangos (\`<, >, BETWEEN\`), \`ORDER BY\` y \`LIKE 'prefix%'\`. ~90% de los índices.
+- **GIN** — "muchos valores por fila": arrays (\`@>\`, \`&&\`), JSONB (\`@>\`, \`?\`), full-text (\`tsvector\`).
+- **BRIN** — tablas enormes con **orden natural** (timestamps/ids solo-append); diminuto, barato, genial para rangos de series temporales.
+- **Índice parcial** (\`… WHERE status = 'pending'\`) — indexa solo el subconjunto caliente; más pequeño y rápido.
+- **Índice de expresión** (\`LOWER(email)\`) — cuando consultas una función de una columna.
+
+**Cuándo NO indexar:** tablas de mucha escritura (cada escritura mantiene cada índice), tablas diminutas (un seq scan es más rápido), y columnas de muy baja cardinalidad (un booleano rara vez ayuda).
+
+**Regla general:** empieza con un B-tree en las columnas por las que filtras/ordenas; cambia a GIN para arrays/JSONB/FTS; luego confirma que se usa con \`EXPLAIN\` (busca *Index Scan*, no *Seq Scan*).`,
+      },
+      { title: "Crea un índice, luego lee el plan" },
+      { title: "EXPLAIN ANALYZE — tiempos reales sobre una tabla más grande" },
+      { title: "Índice GIN para pertenencia en array" },
+      {
+        question: "¿Qué tipo de índice usarías para acelerar `WHERE tags @> ARRAY['apple']` en una columna `text[]`?",
+        options: ["B-tree", "GIN", "BRIN", "Ningún índice puede ayudar con la contención de arrays"],
+        explanation:
+          "GIN (Generalized Inverted Index) está hecho para columnas multi-valor — arrays, JSONB y vectores de full-text — y acelera operadores de contención/solapamiento como `@>` y `&&`.",
+      },
+    ],
+  },
+  arrays: {
+    title: "Arrays",
+    summary: "El tipo array de primera clase de Postgres — guarda, busca y expande columnas multi-valor.",
+    blocks: [
+      {
+        markdown: `## Los arrays son de primera clase
+
+Postgres puede guardar y consultar arrays directamente. La indexación es **base-1**.
+
+- \`'x' = ANY(arr)\` — contiene un valor.
+- \`arr @> ARRAY['a','b']\` — contiene todos. \`arr && ARRAY['a','b']\` — solapa (algo en común).
+- \`unnest(arr)\` — expande a una fila por elemento. \`array_agg(x)\` — colapsa filas en un array.
+
+> **vs MySQL:** No hay tipo array nativo — se emula con JSON o una tabla de unión.`,
+      },
+      {
+        markdown: `## 🧭 Columna array vs. tabla de unión vs. JSONB
+
+- **Columna array** (\`text[]\`) — una **lista pequeña y acotada de escalares** que pertenece a la fila y que sobre todo lees entera o pruebas pertenencia (tags, flags). Indexa con GIN para \`@>\`/\`&&\`.
+- **Tabla de unión** (el default normalizado) — cuando los ítems son **entidades** con sus propios atributos, necesitan foreign keys/restricciones, o agregas sobre ellos ("top tags en general", "productos por tag"). La opción correcta para relaciones reales.
+- **JSONB** — estructura heterogénea o anidada cuya forma varía por fila.
+
+**Regla general:** unas pocas etiquetas simples leídas con la fila → array; cualquier cosa que unirías, contarías o restringirías → una tabla de unión propia. Los arrays cambian flexibilidad de consulta por localidad.`,
+      },
+      { title: "Busca por tags (solapamiento) y expande (unnest)" },
+      { title: "Cada tag distinto del catálogo" },
+      {
+        title: "Productos Apple",
+        prompt:
+          "Devuelve el `name` de cada producto cuyo array `tags` contenga `'apple'`, ordenado por `name`.",
+        hints: ["`WHERE 'apple' = ANY(tags)` — o `tags @> ARRAY['apple']`."],
+      },
+    ],
+  },
+  jsonb: {
+    title: "JSONB",
+    summary: "Guarda y consulta datos semi-estructurados — operadores, contención y pruebas de clave.",
+    blocks: [
+      {
+        markdown: `## Consultar JSON
+
+\`JSONB\` guarda JSON en forma binaria e indexable (prefiérelo sobre \`JSON\`). Accede con:
+
+- \`->\` devuelve JSONB, \`->>\` devuelve **texto** (usa \`->>\` para comparar/castear).
+- \`#>> '{a,b}'\` sigue una ruta. \`@>\` prueba contención de un sub-documento.
+- \`? 'key'\` prueba existencia de clave; \`?|\` / \`?&\` prueban alguna/todas de varias claves.
+
+> **vs MySQL:** el \`JSON\` de MySQL se parece más al \`JSON\` de PG (sin GIN, sin \`@>\`/\`?\`); usa \`JSON_EXTRACT\`/\`JSON_CONTAINS\`.`,
+      },
+      {
+        markdown: `## 🧭 JSONB vs. JSON vs. columnas normales
+
+- **Columnas normales** — para campos por los que **filtras, unes, ordenas o restringes**. Siempre prefiere columnas reales para atributos conocidos y estructurados: tipadas, indexables, validadas.
+- **JSONB** — datos **semi-estructurados / variables** (claves distintas por fila, payloads de terceros, atributos dispersos). Binario, indexable con GIN, soporta \`@>\`, \`?\`, \`->>\`.
+- **JSON (texto)** — solo cuando debas **preservar el formato/orden de claves exacto** y no consultarás dentro. Sin GIN, acceso más lento. Raro.
+
+**Regla general:** estructurado y consultado → columnas; flexible y consultado → JSONB; blob crudo que solo guardas → JSON. No modeles todo tu esquema como una columna JSONB — pierdes restricciones y la ayuda del planner.`,
+      },
+      { title: "Extraer y castear campos anidados" },
+      { title: "Expandir un array JSON de tallas en filas" },
+      {
+        title: "Garantía de un año",
+        prompt:
+          'Devuelve el `name` de cada producto cuyo `metadata` diga que `warranty` es `1`. Ordena por `name`. (Pista: contención con `@>`.)',
+        hints: ['`WHERE metadata @> \'{"warranty": 1}\'` — nota que los números JSON no van entre comillas.'],
+      },
+    ],
+  },
+  views: {
+    title: "Vistas y Vistas Materializadas",
+    summary: "Guarda consultas como tablas virtuales; cachea las costosas con vistas materializadas.",
+    blocks: [
+      {
+        markdown: `## Vistas vs. vistas materializadas
+
+Una **vista** es una consulta guardada — no almacena datos, siempre fresca, recomputada en cada
+lectura. Una **vista materializada** almacena el resultado físicamente (lecturas rápidas) y debe
+hacerse \`REFRESH\` para actualizarse.
+
+Usa una vista para datos que cambian con frecuencia; una vista materializada para agregaciones
+costosas que pueden estar ligeramente desactualizadas.
+
+> **vs MySQL:** Las vistas materializadas no existen en MySQL — emúlalas con una tabla refrescada en un horario.`,
+      },
+      {
+        markdown: `## 🧭 Vista vs. Vista Materializada vs. CTE
+
+- **Vista** — una consulta con nombre, **siempre fresca**, recomputada en cada lectura. Úsala para encapsular/estandarizar lógica sobre datos **que cambian con frecuencia**. Sin almacenamiento, sin desfase.
+- **Vista Materializada** — almacena el **resultado precomputado** para lecturas rápidas; debe hacerse \`REFRESH\`. Úsala para **agregaciones costosas** donde datos algo desactualizados están bien (dashboards, reportes).
+- **CTE** — acotado a una **sola consulta**, no reutilizable en otro lado. Úsalo para legibilidad dentro de una sentencia, no como objeto persistente.
+- **Tabla** — cuando necesitas escribir en ella, indexarla mucho, o compartir un resultado grande ampliamente.
+
+**Regla general:** lógica reutilizable que debe estar en vivo → vista; costosa y tolerante al desfase → vista materializada (refresca en un horario); legibilidad de una consulta → CTE.`,
+      },
+      { title: "Crea una vista y consúltala" },
+      { title: "Una vista materializada de ingresos" },
+      {
+        question: "Tu dashboard corre una agregación costosa que puede estar unos minutos desactualizada. ¿Qué encaja mejor?",
+        options: [
+          "Una vista normal",
+          "Una vista materializada, refrescada en un horario",
+          "Un CTE",
+          "Una tabla temporal por request",
+        ],
+        explanation:
+          "Una vista materializada almacena el resultado precomputado para lecturas rápidas; un REFRESH programado la mantiene aceptablemente fresca. Una vista normal re-ejecutaría la consulta costosa en cada lectura.",
+      },
+    ],
+  },
 };
