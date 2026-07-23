@@ -23,7 +23,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install the scientific stack so package-backed challenges are verified (not skipped)
-        run: pip install numpy pandas matplotlib scikit-learn scipy
+        run: pip install numpy pandas matplotlib scikit-learn scipy sqlalchemy
       - run: npm ci
       - name: Typecheck
         run: npm run typecheck
