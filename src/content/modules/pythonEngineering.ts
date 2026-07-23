@@ -643,28 +643,31 @@ def read_total(path):
           tests: [
             {
               name: "round trip",
-              assertion: `import tempfile, os
-p = os.path.join(tempfile.gettempdir(), "pylearn_report_a.csv")
+              assertion: `import tempfile
+from pathlib import Path
+p = Path(tempfile.gettempdir()) / "pylearn_report_a.csv"
 assert write_report(p, [("ana", 10.5), ("bob", 2.5)]) == 2
 assert read_total(p) == 13.0
-os.remove(p)`,
+p.unlink()`,
             },
             {
               name: "empty file",
-              assertion: `import tempfile, os
-p = os.path.join(tempfile.gettempdir(), "pylearn_report_b.csv")
+              assertion: `import tempfile
+from pathlib import Path
+p = Path(tempfile.gettempdir()) / "pylearn_report_b.csv"
 write_report(p, [])
 assert read_total(p) == 0.0
-os.remove(p)`,
+p.unlink()`,
             },
             {
               name: "overwrites cleanly",
-              assertion: `import tempfile, os
-p = os.path.join(tempfile.gettempdir(), "pylearn_report_c.csv")
+              assertion: `import tempfile
+from pathlib import Path
+p = Path(tempfile.gettempdir()) / "pylearn_report_c.csv"
 write_report(p, [("x", 100.0)])
 write_report(p, [("y", 1.0)])
 assert read_total(p) == 1.0
-os.remove(p)`,
+p.unlink()`,
               hidden: true,
             },
           ],
@@ -969,6 +972,18 @@ types.
           ],
           explanation:
             "The 'check at the boundaries' principle: one validated edge means everything inside can trust its inputs (and skip re-checking). It's the runtime mirror of typing your function boundaries — and it closes the loop with the Data Quality module.",
+        },
+        {
+          kind: "flashcards",
+          title: "Production Python — habits",
+          cards: [
+            { front: "`raise NewError(...) from err`", back: "Chains exceptions: the traceback shows both your domain error and the original cause. Never swallow the root cause." },
+            { front: "Why `except Exception: pass` is dangerous", back: "It launders failure into silent success — the pipeline 'succeeds' on missing/partial data, no retry, no alert. Catch narrowly, fail loudly." },
+            { front: "generator vs list", back: "A generator (`yield`, or `(x for x in ...)`) produces items lazily, one at a time — constant memory over a huge/infinite stream. A list materializes them all." },
+            { front: "Context manager (`with`)", back: "Guarantees setup/teardown even on exceptions (`with open(...) as f:` closes the file). Write your own with `@contextmanager` + `yield`." },
+            { front: "`x: int | None` type hint", back: "Documents that the value may be absent; a type checker then forces callers to handle the None case. Annotations are free at runtime." },
+            { front: "pytest basics", back: "Plain `assert` statements in `test_*` functions; pytest rewrites them to show the values on failure. Fixtures inject setup (e.g. `tmp_path`)." },
+          ],
         },
       ],
     },

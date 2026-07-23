@@ -438,6 +438,18 @@ def top_products(records, n):
     )`,
           xp: 80,
         },
+        {
+          kind: "flashcards",
+          title: "pandas — everyday operations",
+          cards: [
+            { front: "Series vs DataFrame", back: "A **Series** is one labeled column (1-D); a **DataFrame** is a table of aligned Series sharing one index (2-D)." },
+            { front: "Boolean mask filtering", back: "`df[df[\"score\"] >= 90]` keeps rows where the condition is True. Combine with `&` / `|` (parenthesize each clause)." },
+            { front: "`.loc` vs `.iloc`", back: "`.loc` selects by **label** (`df.loc[row_label, \"col\"]`); `.iloc` selects by **integer position** (`df.iloc[0, 2]`)." },
+            { front: "groupby → aggregate", back: "`df.groupby(\"k\")[\"v\"].mean()` splits by key, applies an aggregate per group, returns a Series indexed by the key." },
+            { front: "merge (join)", back: "`a.merge(b, on=\"key\", how=\"left\")` — SQL-style join. `how` ∈ inner/left/right/outer." },
+            { front: "Why avoid `.iterrows()` when you can", back: "It's row-by-row Python (slow). Prefer vectorized column math (`df[\"a\"] * df[\"b\"]`) — orders of magnitude faster on real data." },
+          ],
+        },
       ],
     },
   ],

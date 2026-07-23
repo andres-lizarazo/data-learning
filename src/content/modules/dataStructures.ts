@@ -323,6 +323,18 @@ q.popleft()          # 1  (FIFO)
     return not stack`,
           xp: 70,
         },
+        {
+          kind: "flashcards",
+          title: "Data structures — pick the right one",
+          cards: [
+            { front: "list vs tuple", back: "Both ordered sequences; a **list** is mutable (`.append`, item assignment), a **tuple** is immutable — usable as a dict key or set member." },
+            { front: "When to reach for a dict", back: "Key→value lookups in average O(1). Counting, grouping, caching, 'find by id'." },
+            { front: "What a set gives you", back: "Unique elements + O(1) membership + set algebra (`|` union, `&` intersect, `-` difference). No order, no duplicates." },
+            { front: "`dict.get(k, default)`", back: "Returns the value for `k`, or `default` if the key is missing — no `KeyError`. Great for counters: `d[k] = d.get(k, 0) + 1`." },
+            { front: "Stack (LIFO) vs Queue (FIFO)", back: "Stack: push/pop the same end (a list's `.append`/`.pop`). Queue: add one end, remove the other (`collections.deque`)." },
+            { front: "Aliasing vs copying a list", back: "`b = a` makes both names point at the SAME list; `c = a[:]` (or `list(a)`) makes an independent copy." },
+          ],
+        },
       ],
     },
   ],
