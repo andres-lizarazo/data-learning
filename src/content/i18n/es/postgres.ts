@@ -1314,4 +1314,201 @@ lista de columnas explícita, así que no siempre está disponible (no lo está 
       },
     ],
   },
+  "bulk-loading": {
+    title: "Carga Masiva y Generación de Datos",
+    summary: "COPY, INSERT multi-fila, INSERT…SELECT, y generate_series para volumen.",
+    blocks: [
+      {
+        markdown: `# Meter datos DENTRO, rápido
+
+Cargar filas de un \`INSERT\` a la vez es el camino más lento posible — cada sentencia
+paga parseo, planificación y un round trip. Los caminos rápidos, de más lento a más rápido:
+
+1. **INSERT multi-fila** — una sentencia, muchas tuplas:
+   \`INSERT INTO t VALUES (...), (...), (...);\` (cientos de filas por sentencia).
+2. **INSERT … SELECT** — basado en conjuntos: transforma y carga en una sentencia, los datos
+   nunca salen del servidor.
+3. **COPY** — el carril rápido de carga masiva de Postgres, transmitiendo CSV/texto/binario
+   directo a una tabla con mínimo overhead por fila:
+
+   \`\`\`sql
+   COPY orders FROM '/path/orders.csv' WITH (FORMAT csv, HEADER true);
+   COPY orders FROM STDIN WITH (FORMAT csv);       -- stream desde el cliente
+   \\copy orders FROM 'local.csv' WITH (FORMAT csv) -- psql: archivo del lado cliente
+   \`\`\`
+
+   \`COPY\` es 10–100× más rápido que inserts fila por fila y es sobre lo que se construyen las
+   herramientas (y los comandos \`LOAD\`/\`COPY INTO\` de warehouse).
+
+> **En este playground:** \`COPY ... FROM STDIN\` necesita un cliente transmitiendo datos, que el
+> sandbox del navegador no provee — así que aquí practicamos los patrones basados en conjuntos,
+> que son los que escribirás dentro de pipelines de todas formas.
+
+Para **datos de prueba**, \`generate_series\` + expresiones le ganan a cualquier archivo de fixture.`,
+      },
+      { title: "INSERT multi-fila vs INSERT…SELECT" },
+      { title: "generate_series: 50k filas falsas bajo demanda" },
+      {
+        title: "Genera un dataset de prueba",
+        prompt:
+          "Usando `generate_series(1, 100)`, devuelve 100 filas sintéticas con columnas `id` (1–100), `bucket` (`id % 5`), e `is_even` (booleano, true cuando `id` es par), ordenadas por `id`.",
+        hints: ["`g % 5` y `g % 2 = 0` calculan las columnas derivadas directamente."],
+      },
+      {
+        question: "Un job nocturno inserta 5 millones de filas de un INSERT a la vez y tarda horas. El arreglo correcto es…",
+        options: [
+          "COPY (o el comando de carga masiva de la plataforma) — los caminos masivos saltan el overhead por sentencia",
+          "Añadir más índices a la tabla destino primero",
+          "Envolver cada INSERT en su propia transacción",
+          "Cambiar la tabla a JSONB",
+        ],
+        explanation:
+          "Las interfaces masivas (COPY, load jobs de BigQuery, COPY INTO de Snowflake, escrituras de Spark) transmiten datos con mínimo costo por fila. Punto extra: quita/reconstruye índices alrededor de cargas gigantes — mantenerlos fila por fila es un multiplicador oculto.",
+      },
+    ],
+  },
+  "table-partitioning": {
+    title: "Particionado de Tablas",
+    summary: "Particiones por rango, lista y hash; defaults, attach/detach, y ganancias de mantenimiento.",
+    blocks: [
+      {
+        markdown: `# Particionado declarativo
+
+Una tabla lógica, muchos hijos físicos — Postgres enruta las filas automáticamente:
+
+\`\`\`sql
+CREATE TABLE events (...) PARTITION BY RANGE (created);
+CREATE TABLE events_2026 PARTITION OF events
+  FOR VALUES FROM ('2026-01-01') TO ('2027-01-01');
+\`\`\`
+
+Tres estrategias:
+
+- **RANGE** — intervalos (fechas, ids). El caballo de batalla para hechos de series temporales.
+- **LIST** — valores explícitos por hijo (\`FOR VALUES IN ('EU', 'UK')\`) — por región/tenant.
+- **HASH** — reparto uniforme cuando no hay clave natural
+  (\`FOR VALUES WITH (MODULUS 4, REMAINDER 0)\`).
+
+Por qué particionar (más allá del pruning de consultas — ver el módulo de Warehouse para demos de EXPLAIN):
+
+- **Mantenimiento**: \`DROP TABLE events_2023\` borra un año al instante —
+  vs un \`DELETE\` que reescribe e infla la tabla.
+- **Carga**: adjunta una tabla ya cargada y pre-validada como una nueva partición
+  (\`ATTACH PARTITION\`) — cargas con downtime casi cero.
+- Una **partición DEFAULT** atrapa filas que no encajan en ningún hijo (red de seguridad, pero
+  ojo — filas en DEFAULT bloquean añadir hijos solapados después).`,
+      },
+      { title: "Particionado LIST por región" },
+      { title: "El superpoder de mantenimiento: soltar una partición" },
+      {
+        title: "Enruta las filas",
+        prompt:
+          "Una tabla es `PARTITION BY LIST (region)` con hijos para `('US','CA')`, `('DE','FR')`, y un DEFAULT. Sin crear nada, clasifica estas filas en staging: para cada fila en `(VALUES ('US'), ('DE'), ('BR'), ('CA'), ('JP')) AS t(region)`, devuelve `region` y `partition` — `'amer'` para US/CA, `'emea'` para DE/FR, `'default'` en otro caso. Ordena por `region`.",
+        hints: ["Una expresión CASE con listas IN refleja exactamente cómo decide el enrutamiento LIST."],
+      },
+      {
+        question:
+          "Debes borrar todos los datos de 2023 de una tabla de 2 mil millones de filas cargada cada noche desde 2020. Con particiones por rango por año, la operación es…",
+        options: [
+          "DROP TABLE (o DETACH) sobre la partición de 2023 — instantáneo, sin reescritura de tabla, sin bloat",
+          "DELETE FROM t WHERE year = 2023 — la misma velocidad de cualquier forma",
+          "TRUNCATE de toda la tabla y recargar 2024+",
+          "Imposible sin downtime",
+        ],
+        explanation:
+          "El DDL a nivel de partición es la razón entera por la que las políticas de retención aman el particionado: soltar un hijo es una operación de metadatos. El DELETE sin particionar loguearía/reescribiría cientos de GB y dejaría bloat.",
+      },
+    ],
+  },
+  "roles-permissions": {
+    title: "Roles y Permisos (Conceptos)",
+    summary: "GRANT/REVOKE, jerarquías de roles, y seguridad a nivel de fila — el modelo de acceso.",
+    blocks: [
+      {
+        markdown: `# El modelo de acceso de Postgres
+
+> **Aviso:** esta base de datos en el navegador corre como un único superusuario, así que las
+> sentencias de abajo se muestran para leer, no para ejecutar — el *modelo* es lo que se transfiere
+> a cada warehouse que toques.
+
+**Los roles** son a la vez usuarios y grupos (un rol puede contener roles):
+
+\`\`\`sql
+CREATE ROLE analyst_ro NOLOGIN;                  -- un "grupo"
+CREATE ROLE dana LOGIN PASSWORD '...';           -- una persona
+GRANT analyst_ro TO dana;                        -- membresía
+\`\`\`
+
+**Los privilegios** se adjuntan a objetos, otorgados a roles:
+
+\`\`\`sql
+GRANT USAGE ON SCHEMA marts TO analyst_ro;             -- puede *entrar* al schema
+GRANT SELECT ON ALL TABLES IN SCHEMA marts TO analyst_ro;
+ALTER DEFAULT PRIVILEGES IN SCHEMA marts
+  GRANT SELECT ON TABLES TO analyst_ro;                -- ¡las tablas futuras también!
+REVOKE ALL ON staging.raw_orders FROM analyst_ro;
+\`\`\`
+
+Dos trampas clásicas:
+
+- \`GRANT ... ON ALL TABLES\` cubre solo las tablas **existentes** —
+  \`ALTER DEFAULT PRIVILEGES\` es lo que cubre las futuras.
+- \`USAGE\` en el schema Y \`SELECT\` en la tabla se requieren AMBOS.
+
+**La Seguridad a Nivel de Fila (RLS)** filtra *qué filas* ve un rol:
+
+\`\`\`sql
+ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+CREATE POLICY per_region ON orders
+  USING (region = current_setting('app.region'));
+\`\`\`
+
+El mismo modelo — schemas en capas × roles de lectura/escritura × políticas de fila — es exactamente
+cómo se diseña el acceso a un warehouse: los ingenieros escriben staging/core, los analistas leen
+marts, y RLS maneja los muros de datos multi-tenant o regionales.`,
+      },
+      {
+        question:
+          "Los analistas recibieron SELECT en todas las tablas de `marts` el mes pasado. La nueva tabla mart de hoy les da 'permission denied'. ¿Por qué?",
+        options: [
+          "GRANT ON ALL TABLES solo cubrió las tablas existentes al momento del grant — ALTER DEFAULT PRIVILEGES se necesita para las tablas futuras",
+          "Los grants SELECT expiran tras 30 días",
+          "Las tablas nuevas siempre requieren acceso de superusuario",
+          "Los analistas perdieron USAGE en el schema",
+        ],
+        explanation:
+          "La sorpresa #1 de permisos en Postgres. El grant es un snapshot; los default privileges son la regla permanente que aplica a los objetos creados después (por rol creador, por schema).",
+      },
+      {
+        question: "¿Qué diseño de acceso encaja con el warehouse en capas de este track?",
+        options: [
+          "Los pipelines tienen escritura en staging/core; los analistas tienen solo-lectura en marts (+ core si hace falta); ningún humano escribe en staging",
+          "Todos reciben database owner para evitar fricción",
+          "Los analistas escriben en staging para arreglar datos rápido",
+          "Un solo login compartido para todo el equipo de datos",
+        ],
+        explanation:
+          "El acceso refleja el contrato de capas: solo pipelines automatizados y revisados mutan datos; los humanos consumen de las capas de servicio. Ediciones a mano en staging romperían la replicabilidad y el linaje.",
+      },
+      {
+        title: "SQL — recuerda lo esencial",
+        cards: [
+          { front: "Orden lógico de un SELECT", back: "FROM/JOIN → WHERE → GROUP BY → HAVING → SELECT → ORDER BY → LIMIT. (Escribes SELECT primero, pero corre casi al final.)" },
+          { front: "WHERE vs HAVING", back: "WHERE filtra **filas** antes de agrupar; HAVING filtra **grupos** después de agregar (p. ej. `HAVING COUNT(*) > 5`)." },
+          { front: "INNER vs LEFT JOIN", back: "INNER conserva solo las filas coincidentes. LEFT conserva cada fila izquierda, rellenando con NULL las columnas derechas sin match." },
+          { front: "Window function vs GROUP BY", back: "GROUP BY colapsa filas en una por grupo; una window function (`OVER (...)`) añade un cálculo por fila conservando cada fila." },
+          { front: "COUNT(*) vs COUNT(col)", back: "`COUNT(*)` cuenta todas las filas; `COUNT(col)` cuenta las filas donde `col` es NOT NULL." },
+          { front: "Comparación con NULL", back: "`= NULL` nunca es cierto. Usa `IS NULL` / `IS NOT NULL`, o `IS DISTINCT FROM` para desigualdad NULL-safe." },
+          { front: "CTE (`WITH`)", back: "Una subconsulta con nombre que hace legibles las consultas multi-paso y habilita recursión. `WITH t AS (...) SELECT ... FROM t`." },
+          { front: "Upsert en Postgres", back: "`INSERT ... ON CONFLICT (key) DO UPDATE SET ...` (o `MERGE`) — idempotencia write-once: correr dos veces equivale a una." },
+          { front: "DISTINCT vs DISTINCT ON", back: "`DISTINCT` dedupe filas completas. `DISTINCT ON (col) ... ORDER BY col, x` conserva la primera fila por `col` — el clásico 'último por grupo'." },
+          { front: "COALESCE vs NULLIF", back: "`COALESCE(a,b,...)` devuelve el primer no-NULL. `NULLIF(a,b)` devuelve NULL cuando `a=b` — p. ej. `x / NULLIF(y,0)` evita dividir entre cero." },
+          { front: "string_agg / array_agg", back: "Agrega filas en un valor: `string_agg(name, ', ' ORDER BY name)` construye una lista delimitada; `array_agg(...)` construye un array." },
+          { front: "Cláusula FILTER", back: "Agregación condicional sin CASE: `COUNT(*) FILTER (WHERE status='paid')` cuenta solo las filas que coinciden dentro del mismo GROUP BY." },
+          { front: "Paginación OFFSET vs keyset", back: "`LIMIT n OFFSET m` se hace lento en páginas profundas (escanea+descarta). Keyset — `WHERE id > :last ORDER BY id LIMIT n` — se mantiene rápido." },
+          { front: "EXPLAIN vs EXPLAIN ANALYZE", back: "`EXPLAIN` muestra el plan *estimado* sin ejecutarlo; `EXPLAIN ANALYZE` ejecuta la consulta y reporta tiempo real y conteos de filas." },
+        ],
+      },
+    ],
+  },
 };
