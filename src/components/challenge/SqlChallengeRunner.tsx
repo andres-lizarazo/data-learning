@@ -156,6 +156,8 @@ export default function SqlChallengeRunner({ block, id }: Props) {
 
         {verdict && (
           <div
+            role="status"
+            aria-live="polite"
             className={`flex items-start gap-2 rounded-lg border px-3 py-2 text-sm ${
               verdict.pass
                 ? "border-accent-lime/30 bg-accent-lime/10 text-accent-lime"

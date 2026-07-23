@@ -22,7 +22,10 @@ export default function SqlResultTable({
   running?: boolean;
 }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-white/10 bg-[#070710]/80">
+    <div
+      className="overflow-hidden rounded-xl border border-white/10"
+      style={{ background: "var(--grid-bg)" }}
+    >
       <div className="flex items-center justify-between border-b border-white/10 px-3 py-1.5">
         <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
           <Table2 className="h-3.5 w-3.5 text-accent-cyan" /> Result
@@ -56,7 +59,7 @@ export default function SqlResultTable({
 
         {result && result.ok && result.hasResultSet && (
           <table className="w-full border-collapse text-left font-mono text-[13px]">
-            <thead className="sticky top-0 bg-[#0d0d1c]">
+            <thead className="sticky top-0" style={{ background: "var(--grid-header-bg)" }}>
               <tr>
                 {result.columns.map((c, i) => (
                   <th

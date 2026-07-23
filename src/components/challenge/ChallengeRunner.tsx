@@ -182,7 +182,7 @@ export default function ChallengeRunner({ block, id }: Props) {
         )}
 
         {results && (
-          <div className="space-y-1.5">
+          <div className="space-y-1.5" role="status" aria-live="polite">
             <div className="text-sm font-medium text-slate-200">
               {passed} / {total} tests passed{" "}
               {allPass && <span className="text-accent-lime">— nice! 🎉</span>}

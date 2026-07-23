@@ -25,6 +25,8 @@
   --pre-fg: #cdd6ea;
   --scrollbar: #2d2d57;
   --topbar-bg: rgba(7, 7, 16, 0.6);
+  --grid-bg: rgba(7, 7, 16, 0.8);
+  --grid-header-bg: #0d0d1c;
 }
 
 html.light {
@@ -47,6 +49,8 @@ html.light {
   --pre-fg: #cdd6ea;
   --scrollbar: #c3c9d9;
   --topbar-bg: rgba(244, 246, 251, 0.75);
+  --grid-bg: #ffffff;
+  --grid-header-bg: #eef1f8;
 }
 
 html,
@@ -386,7 +390,10 @@ html.light .bg-white\/5,
 html.light .bg-white\/10,
 html.light .bg-white\/\[0\.04\],
 html.light .bg-white\/\[0\.03\],
+html.light .bg-white\/\[0\.02\],
+html.light .even\:bg-white\/\[0\.02\]:nth-child(even),
 html.light .hover\:bg-white\/5:hover,
+html.light .hover\:bg-white\/\[0\.04\]:hover,
 html.light .hover\:bg-white\/10:hover {
   background-color: var(--surface);
 }
