@@ -668,4 +668,162 @@ puntúa los resultados, y un índice **GIN** sobre el tsvector lo hace rápido.
       },
     ],
   },
+  "interview-patterns": {
+    title: "Patrones de Entrevista",
+    summary: "Las formas de pregunta recurrentes — N-ésimo más alto, huérfanos, dedupe, totales corrientes.",
+    blocks: [
+      {
+        markdown: `## Patrones que aparecen una y otra vez
+
+Memoriza la *forma*, adapta al problema:
+
+1. **N-ésimo más alto** — \`ORDER BY x DESC LIMIT 1 OFFSET n-1\`, o \`DENSE_RANK()\` filtrado a \`= n\`.
+2. **Huérfanos / sin coincidencia** — \`LEFT JOIN … WHERE right.id IS NULL\` (o \`NOT EXISTS\`).
+3. **Borrar duplicados** — conserva \`MIN(id)\` por clave, borra el resto.
+4. **Total corriente que se reinicia por grupo** — \`SUM(x) OVER (PARTITION BY g ORDER BY t ROWS UNBOUNDED PRECEDING)\`.
+5. **Pivot** — \`SUM(CASE WHEN … THEN … END)\` agrupado.`,
+      },
+      {
+        markdown: `## 🧭 "Encontrar filas sin coincidencia" — tres formas
+
+- **\`LEFT JOIN … WHERE right.id IS NULL\`** — normalmente el anti-join **más rápido** (el planner usa un hash/merge anti-join). Buen default.
+- **\`NOT EXISTS\` (correlacionado)** — igualmente correcto y **NULL-safe**; se lee claro como "no existe tal fila". A menudo se planifica idéntico a la forma LEFT JOIN.
+- **\`NOT IN (subconsulta)\`** — **evítalo** cuando la columna de la subconsulta puede ser NULL: un solo NULL hace el predicado UNKNOWN y obtienes **cero filas**. Solo seguro si la columna es \`NOT NULL\` (o añades \`WHERE col IS NOT NULL\`).
+
+**Regla general:** usa \`NOT EXISTS\` o \`LEFT JOIN … IS NULL\` por defecto; nunca \`NOT IN\` contra una subconsulta que admita NULL.`,
+      },
+      { title: "Segundo precio distinto más alto — tres formas" },
+      {
+        title: "Segundo precio más alto",
+        prompt:
+          "Devuelve un solo valor: el `price` de producto **segundo más alto distinto**. (El más alto es 1299.00.)",
+        hints: ["`ORDER BY price DESC` y luego `LIMIT 1 OFFSET 1`.", "`DISTINCT` protege contra empates."],
+      },
+      {
+        title: "Clientes con cero órdenes",
+        prompt:
+          "Devuelve el `name` de cada usuario que **no tiene ninguna orden**, ordenado por `name`. Usa un `LEFT JOIN … IS NULL` o `NOT EXISTS`.",
+        hints: ["Tras el LEFT JOIN, conserva las filas donde `o.id IS NULL`."],
+      },
+    ],
+  },
+  "advanced-queries": {
+    title: "Taller de Consultas Avanzadas",
+    summary:
+      "Construye grandes consultas multi-paso con confianza — CTEs encadenados que combinan UNNEST, window functions, FILTER, ROLLUP y gaps-and-islands. Preparación para live-coding.",
+    blocks: [
+      {
+        markdown: `## Leer y construir una consulta grande
+
+En una prueba de live-coding te darán un muro de SQL — o te pedirán escribir uno. El truco es que una
+**consulta multi-CTE es solo un pipeline**: cada bloque \`WITH\` es una transformación, y lo lees
+**de arriba abajo** como un script. El \`SELECT\` final al fondo ensambla las piezas.
+
+Una forma fiable de *construir* una bajo presión:
+
+1. **Da forma a las filas** — \`FROM\`/\`JOIN\`/\`UNNEST\` para tener una fila por "cosa" (por evento, por línea de orden).
+2. **Numera / rankea dentro de grupos** — \`ROW_NUMBER()\`/\`RANK()\` \`OVER (PARTITION BY … ORDER BY …)\`.
+3. **Agrega** — \`GROUP BY\` con \`COUNT(DISTINCT …)\`, \`SUM(…) FILTER (WHERE …)\`, etc.
+4. **Ensambla** — une los CTEs de vuelta y filtra (p. ej. \`WHERE rn = 1\`).
+
+Todo lo de abajo corre contra la base de ejemplo (o una diminuta autocontenida) — **edita y re-ejecuta**.`,
+      },
+      {
+        markdown: `## 1. Sesionización — "primera página + páginas únicas por sesión"
+
+Este es el patrón de una pregunta clásica: los eventos se guardan como un **array por sesión**;
+explótalos, encuentra la **primera** página de cada sesión, y cuenta sus páginas **distintas**.
+
+**¿Es compatible con PostgreSQL?** Sí — con un requisito: \`events\` debe ser un *array de un tipo
+compuesto (fila)* (aquí \`event_t(page, ts)\`). Entonces \`UNNEST(events) AS e(page, ts)\` expande cada
+elemento en columnas. (En algunos setups escribirías \`(e).page\`; la forma de alias de columna
+\`AS e(page, ts)\` es la portable. Si tus eventos fueran \`jsonb\`, cambiarías \`UNNEST\` por
+\`jsonb_to_recordset(events) AS e(page text, ts timestamptz)\`.)`,
+      },
+      { title: "Sesionización (UNNEST + ROW_NUMBER + COUNT DISTINCT + JOIN USING)" },
+      {
+        markdown: `**Paso a paso** — exactamente los movimientos que un entrevistador quiere oírte narrar:
+
+- **CTE \`events\`** — \`FROM activity_logs, UNNEST(events) AS e(page, ts)\` es un
+  \`CROSS JOIN LATERAL\` implícito: por cada fila de log, emite una fila por elemento del array. Ahora
+  tenemos \`(user_id, session_id, page, ts)\` plano.
+- **CTE \`ranked\`** — \`ROW_NUMBER() OVER (PARTITION BY user_id, session_id ORDER BY ts)\` numera
+  los eventos **dentro de cada sesión** por tiempo. El evento más temprano recibe \`rn = 1\`.
+- **CTE \`unique_pages\`** — un \`GROUP BY\` normal con \`COUNT(DISTINCT page)\` para el conteo distinto
+  por sesión (las window functions no pueden contar-\`DISTINCT\`, así que esto queda como agregado aparte).
+- **\`SELECT\` final** — une los dos CTEs por la clave de sesión (\`USING (user_id, session_id)\`) y
+  conserva solo \`rn = 1\` para colapsar a una fila por sesión: su primera página + su conteo de páginas únicas.`,
+      },
+      {
+        markdown: `## 2. Ítem top por grupo (el patrón de entrevista #1)
+
+"Por categoría, ¿cuál es el producto más vendido?" → agrega, **rankea dentro del grupo**, conserva el rango 1.`,
+      },
+      { title: "Producto más vendido por categoría" },
+      {
+        markdown: `## 3. Marcos de window — totales corrientes y participación del total
+
+Dos windows en una consulta: un **total corriente** (un marco ordenado) y una **participación del
+todo** (\`OVER ()\` — una window vacía = todo el result set, sin colapsar).`,
+      },
+      { title: "Ingreso pagado corriente + participación de cada orden en el total" },
+      {
+        markdown: `## 4. Pivot + subtotales con FILTER y ROLLUP
+
+\`FILTER (WHERE …)\` pivota los status en columnas; \`GROUP BY ROLLUP(col)\` añade una fila de gran total
+(donde \`col\` es NULL) en la misma pasada.`,
+      },
+      { title: "Ingreso por categoría, pagado vs. bruto, con una fila TOTAL" },
+      {
+        markdown: `## 5. Gaps & islands — rachas consecutivas
+
+El truco famoso: resta un \`ROW_NUMBER()\` a la fecha. Los días consecutivos comparten la **misma**
+diferencia, así que esa diferencia se vuelve una clave de grupo para cada "isla" (racha).`,
+      },
+      { title: "Rachas de login por usuario" },
+      {
+        markdown: `## Ahora tú — ejercicios calificados
+
+Estos corren contra la base e-commerce de ejemplo (se reinicia antes de cada revisión). Usa los
+patrones de arriba. El orden importa donde el enunciado lo diga.`,
+      },
+      {
+        title: "Producto top por categoría",
+        prompt:
+          "Por cada categoría, devuelve `category` (el nombre de categoría), el `product` que vendió **más unidades** (suma de `order_items.qty`), y `units`. Una fila por categoría, ordenada por `category`. Desempata por nombre de producto.\n\n*Combina: JOIN → GROUP BY → ROW_NUMBER sobre PARTITION → filtrar rn = 1.*",
+        hints: [
+          "Primer CTE: `SUM(oi.qty)` agrupado por producto (y su categoría).",
+          "Segundo CTE: `ROW_NUMBER() OVER (PARTITION BY category_id ORDER BY units DESC, product)`.",
+          "Final: `WHERE rn = 1`.",
+        ],
+      },
+      {
+        title: "Participación de categoría en el ingreso pagado",
+        prompt:
+          "Solo entre órdenes **pagadas**, devuelve cada `category` (nombre), su `paid_rev` (suma de `qty * unit_price`), y `pct` — el porcentaje de esa categoría sobre el ingreso pagado total, redondeado a 1 decimal. Mayor ingreso primero.\n\n*Combina: multi-join con un filtro → GROUP BY → una window `SUM() OVER ()` para el gran total.*",
+        hints: [
+          "Filtra a órdenes pagadas dentro del join: `JOIN orders o ON o.id = oi.order_id AND o.status = 'paid'`.",
+          "`SUM(paid_rev) OVER ()` (window vacía) es el total entre todas las categorías.",
+        ],
+      },
+      {
+        title: "Rankea clientes por valor de por vida",
+        prompt:
+          "Devuelve el `name` de cada usuario y `rnk` — su `DENSE_RANK()` por valor **pagado** de por vida (suma de totales de órdenes pagadas; los usuarios sin ninguna cuentan como 0), mayor valor = rango 1. Incluye usuarios sin órdenes. Ordena por `rnk`, luego `name`.\n\n*Combina: LEFT JOIN → SUM condicional con FILTER → DENSE_RANK.*",
+        hints: [
+          "`COALESCE(SUM(o.total) FILTER (WHERE o.status='paid'), 0)` maneja usuarios sin órdenes pagadas.",
+          "`DENSE_RANK()` (sin huecos) para que los empates compartan rango y el siguiente sea consecutivo.",
+        ],
+      },
+      {
+        title: "La primera orden de cada usuario",
+        prompt:
+          "Devuelve una fila por usuario que tenga órdenes: `user_id`, `first_order_id` (su orden más temprana por `created_at`), y el `total` de esa orden. Ordena por `user_id`.\n\n*Combina: ROW_NUMBER sobre PARTITION → filtrar a la primera fila.*",
+        hints: [
+          "Consulta interna: `ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at) AS rn`.",
+          "Externa: conserva `WHERE rn = 1`.",
+        ],
+      },
+    ],
+  },
 };
