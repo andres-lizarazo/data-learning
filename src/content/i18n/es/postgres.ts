@@ -826,4 +826,167 @@ patrones de arriba. El orden importa donde el enunciado lo diga.`,
       },
     ],
   },
+  "analytics-patterns": {
+    title: "Patrones de Analytics (Pack de Entrevista)",
+    summary:
+      "Los patrones que las entrevistas de analytics/DE reutilizan — periodo-sobre-periodo (LAG), medias móviles, sesionización por hueco, dedupe-mantén-el-último, segmentación NTILE, y retención de cohortes. Todo Postgres, todo ejecutable.",
+    blocks: [
+      {
+        markdown: `## Las formas a las que se reduce ~90% de los tests de SQL
+
+Los entrevistadores reutilizan un pequeño conjunto de patrones. Ya viste varios antes en este track:
+
+| Patrón | Dónde |
+|---|---|
+| Filtrar y agregar | lección *GROUP BY* |
+| Joins condicionales (LEFT JOIN + IS NULL) | *JOINs* / *Patrones de Entrevista* |
+| Top-N por grupo | *Window Functions* / *Taller Avanzado* |
+| Jerarquía / cadena de mánagers (CTE recursivo / self-join) | *CTEs* / *JOINs* |
+
+Esta lección ejercita los de **sabor analítico** que separan "escribe SQL" de "escribe SQL
+*analítico*": **cambio periodo-sobre-periodo, ventanas móviles, sesionización por hueco de
+inactividad, deduplicación conservando la última fila, segmentación NTILE, y retención de cohortes.**
+Edita y re-ejecuta cada uno.`,
+      },
+      {
+        markdown: `## 1. Periodo-sobre-periodo — % de crecimiento mes a mes
+
+El de referencia para cualquier "compara este periodo con el anterior". \`LAG(x) OVER (ORDER BY period)\`
+trae la fila anterior; protege la división con \`NULLIF(prev, 0)\` para que un periodo previo cero o
+ausente no la reviente.`,
+      },
+      { title: "Crecimiento de ingreso mes a mes" },
+      {
+        markdown: `## 2. Ventana móvil — media móvil de 7 días
+
+Un marco de \`ROWS BETWEEN 6 PRECEDING AND CURRENT ROW\` son exactamente 7 filas (hoy + las 6 anteriores).
+Cambia \`AVG\` por \`SUM\`/\`COUNT\` para totales móviles. Esta es la pregunta canónica de "DAU móvil de 7 días".`,
+      },
+      { title: "Media móvil de 7 días de usuarios activos diarios" },
+      {
+        markdown: `## 3. Sesionización por hueco de inactividad (la "regla de los 30 minutos")
+
+La otra pregunta de sesionización (el *Taller Avanzado* hizo la versión de array-de-eventos): filas de
+hits crudas, y una **nueva sesión empieza tras 30+ minutos de inactividad**. El truco es una window de
+dos pasos:
+
+1. Marca una fila como inicio de sesión cuando el hueco desde el hit anterior supera los 30 min (o es el
+   primer hit del usuario) — \`ts - LAG(ts) OVER (…) > interval '30 minutes'\`.
+2. Un **\`SUM\` corriente de esos flags** asigna un número de sesión creciente por usuario — cada flag lo
+   sube en uno. Este "suma acumulada de un booleano" es un patrón que vale la pena memorizar.`,
+      },
+      { title: "Asignar ids de sesión a partir de un hueco de inactividad de 30 minutos" },
+      {
+        markdown: `## 4. Deduplicar — conserva la fila **más reciente** por clave
+
+"Una fila por usuario — su orden más reciente." Numera las filas dentro de cada clave por un orden
+descendente, conserva \`rn = 1\`. (Añade un desempate como \`id DESC\` para que sea determinista cuando los
+timestamps colisionan.) La misma idea que top-N, aplicada al dedup.`,
+      },
+      { title: "Orden más reciente por usuario" },
+      {
+        markdown: `## 5. Segmentación — buckets NTILE
+
+\`NTILE(n)\` divide las filas ordenadas en \`n\` buckets aproximadamente iguales — cuartiles, deciles,
+"top 10%". El básico de la segmentación de clientes, cohortes A/B, y scoring de fraude.`,
+      },
+      { title: "Clasificar productos en cuartiles de precio" },
+      {
+        markdown: `## 6. Retención de cohortes
+
+El clásico de producto-DS: agrupa usuarios por el periodo de su **primera** actividad (su *cohorte*),
+luego mide cuántos siguen activos N periodos después. Pasos: encuentra el primer mes de cada usuario,
+calcula el **offset de mes** de cada actividad desde esa cohorte, luego pivota los conteos de usuarios
+distintos por offset con \`COUNT(DISTINCT …) FILTER (WHERE month_no = k)\`.`,
+      },
+      { title: "Tabla de cohortes — retención mes-0 y mes-1" },
+      {
+        markdown: `## Ejercicios calificados
+
+Estos corren contra la base e-commerce de ejemplo (se reinicia antes de cada revisión). El orden importa donde se indica.`,
+      },
+      {
+        title: "Conserva la última orden de cada usuario",
+        prompt:
+          "Devuelve una fila por usuario que tenga órdenes: `user_id`, `order_id` (su orden **más reciente** por `created_at`), y el `total` de esa orden. Ordena por `user_id`.\n\n*Patrón: dedupe-mantén-el-último — ROW_NUMBER ordenado DESC, conserva rn = 1.*",
+        hints: [
+          "Ordena **descendente** dentro de la window para que la más nueva reciba `rn = 1`.",
+          "Añade `id DESC` como desempate para determinismo.",
+        ],
+      },
+      {
+        title: "Cambio vs. la orden pagada anterior del usuario",
+        prompt:
+          "Por cada orden **pagada**, devuelve `user_id`, `total`, y `vs_prev` — el total menos el total de la *anterior* orden pagada de ese usuario (NULL para la primera). Ordena por `user_id`, luego `created_at`.\n\n*Patrón: periodo-sobre-periodo con LAG particionado por usuario.*",
+        hints: ["`LAG(total) OVER (PARTITION BY user_id ORDER BY created_at)` es el total anterior."],
+      },
+      {
+        title: "Divide los productos en dos niveles de precio",
+        prompt:
+          "Usando `NTILE(2)` sobre `price` **descendente**, devuelve el `name` de cada producto y su `tier` (1 = mitad más cara, 2 = mitad más barata). Ordena por `price` descendente, luego `name`.\n\n*Patrón: segmentación NTILE.*",
+        hints: ["`NTILE(2) OVER (ORDER BY price DESC)` divide las 5 filas en un 3/2 arriba/abajo."],
+      },
+    ],
+  },
+  "funnel-conversion": {
+    title: "Conversión de Embudo (Funnel)",
+    summary:
+      "Mide el drop-off a través de una secuencia de pasos — embudos sueltos vs. estrictos (ordenados), tasas de conversión, y construir un embudo desde tablas existentes.",
+    blocks: [
+      {
+        markdown: `## Qué mide un embudo
+
+Un **embudo (funnel)** rastrea cuántos usuarios pasan por una secuencia ordenada de pasos —
+\`view → cart → checkout → purchase\` — y dónde abandonan. Dos variantes salen en entrevistas:
+
+- **Embudo suelto** — cuenta usuarios distintos que llegan a *cada* paso, de forma independiente. Simple,
+  pero puede **sobrecontar** los pasos tardíos (alguien podría \`purchase\` sin un \`cart\` registrado).
+- **Embudo estricto / ordenado** — un usuario solo cuenta en el paso *k* si completó todos los pasos
+  previos **en orden** (por tiempo). Más fiel a la conversión "real".`,
+      },
+      { title: "Embudo suelto — usuarios por paso + tasas de conversión" },
+      {
+        markdown: `Detecta el bug: \`purchase\` muestra **3** usuarios y un \`pct_of_prev\` de **150%** — imposible para un
+embudo real. El usuario 5 compró sin fila de \`cart\`/\`checkout\`, así que el conteo independiente por paso
+sobrecuenta. El embudo **estricto** lo arregla.
+
+## Embudo estricto — impón el orden con timestamps
+
+Pivota el **primer** timestamp de cada usuario por paso (\`MIN(ts) FILTER (WHERE step = …)\`), luego un
+usuario cuenta en un paso solo si sus timestamps son **monótonos** (cada paso en/después del anterior).`,
+      },
+      { title: "Embudo estricto ordenado" },
+      {
+        markdown: `Ahora \`purchased = 2\` (solo los usuarios 1 y 4 llegaron hasta el final en orden) — la compra fuera de
+orden del usuario 5 se excluye correctamente. \`NULL >= …\` es desconocido, así que los pasos ausentes
+fallan el filtro automáticamente.
+
+## No siempre necesitas una tabla de eventos
+
+Un embudo son solo **conteos con condiciones sucesivamente más estrictas**. Puedes construir uno
+directamente desde tablas existentes — que es exactamente el siguiente ejercicio.`,
+      },
+      {
+        title: "Embudo registro → orden → pagado",
+        prompt:
+          "Construye un embudo de 3 etapas desde la base de ejemplo y devuelve `step` y `users` (el conteo), en orden de embudo:\n\n1. `registered` — todos los usuarios.\n2. `ordered` — usuarios distintos que hicieron **cualquier** orden.\n3. `paid` — usuarios distintos con al menos una orden **pagada**.\n\nOrdena las filas registered → ordered → paid.",
+        hints: [
+          "Cada etapa es una subconsulta escalar: `(SELECT COUNT(DISTINCT user_id) FROM orders …)`.",
+          "Lleva una columna `ord` para que las filas salgan registered → ordered → paid.",
+        ],
+      },
+      {
+        question:
+          "Contar `COUNT(DISTINCT user_id)` por paso de forma independiente puede reportar MÁS conversiones en un paso tardío de lo real. ¿Por qué?",
+        options: [
+          "Cuenta usuarios que llegaron a un paso sin completar los pasos anteriores en orden",
+          "COUNT(DISTINCT) no está soportado en Postgres",
+          "Las window functions no se pueden usar en tablas de eventos",
+          "Siempre subcuenta, nunca sobrecuenta",
+        ],
+        explanation:
+          "Un conteo distinto por paso trata los pasos de forma independiente, así que eventos fuera de orden o con pasos saltados (p. ej. una compra sin cart) igual cuentan. Un embudo estricto impone el orden con timestamps por usuario.",
+      },
+    ],
+  },
 };
