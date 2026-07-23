@@ -10,6 +10,7 @@ import { useProgressStore } from "../../store/progressStore";
 import { celebrate } from "../../lib/confetti";
 import { useCodeDraft } from "../../lib/useCodeDraft";
 import { compareResultSets } from "../../lib/sqlCompare";
+import { useT } from "../../i18n";
 import type { SqlChallengeBlock } from "../../types/lesson";
 
 interface Props {
@@ -20,6 +21,7 @@ interface Props {
 
 export default function SqlChallengeRunner({ block, id }: Props) {
   const { ready, boot, status } = useSqlStore();
+  const t = useT();
   const solveChallenge = useProgressStore((s) => s.solveChallenge);
   const alreadySolved = useProgressStore((s) => s.isChallengeSolved(id));
 
@@ -50,11 +52,11 @@ export default function SqlChallengeRunner({ block, id }: Props) {
       setResult(display);
 
       if (!userRows.ok) {
-        setVerdict({ pass: false, reason: userRows.error ?? "Your query raised an error." });
+        setVerdict({ pass: false, reason: userRows.error ?? t("sql.queryError") });
         return;
       }
       if (!expected.ok) {
-        setVerdict({ pass: false, reason: "Reference solution failed to run (please report)." });
+        setVerdict({ pass: false, reason: t("sql.refSolutionFailed") });
         return;
       }
 
@@ -70,8 +72,8 @@ export default function SqlChallengeRunner({ block, id }: Props) {
         pass: false,
         reason:
           err instanceof Error
-            ? `The SQL engine failed to run: ${err.message}`
-            : "The SQL engine did not respond. Try reloading the page.",
+            ? `${t("sql.engineFailed")} ${err.message}`
+            : t("sql.engineNoResponse"),
       });
     } finally {
       setRunning(false);
@@ -88,7 +90,7 @@ export default function SqlChallengeRunner({ block, id }: Props) {
         </span>
         {solved && (
           <span className="pill border-accent-lime/30 bg-accent-lime/10 text-accent-lime">
-            <Check className="h-3 w-3" /> Solved
+            <Check className="h-3 w-3" /> {t("challenge.solved")}
           </span>
         )}
       </div>
@@ -111,7 +113,7 @@ export default function SqlChallengeRunner({ block, id }: Props) {
         <div className="flex flex-wrap items-center gap-2">
           <button className="btn-primary" onClick={submit} disabled={running || !ready}>
             <Play className="h-4 w-4" />
-            {running ? "Checking…" : ready ? "Submit" : "Loading Postgres…"}
+            {running ? t("sql.checking") : ready ? t("challenge.submit") : t("sql.loadingPostgres")}
           </button>
           <button
             className="btn-ghost"
@@ -121,18 +123,20 @@ export default function SqlChallengeRunner({ block, id }: Props) {
               setVerdict(null);
             }}
           >
-            <RotateCcw className="h-4 w-4" /> Reset
+            <RotateCcw className="h-4 w-4" /> {t("editor.reset")}
           </button>
           {revealedHints < hints.length && (
             <button className="btn-ghost" onClick={() => setRevealedHints((n) => n + 1)}>
               <Lightbulb className="h-4 w-4 text-amber-300" />
-              {revealedHints === 0 ? "Hint" : `Hint ${revealedHints + 1}/${hints.length}`}
+              {revealedHints === 0
+                ? t("challenge.hint")
+                : `${t("challenge.hint")} ${revealedHints + 1}/${hints.length}`}
             </button>
           )}
           {block.solution && (
             <button className="btn-ghost" onClick={() => setShowSolution((s) => !s)}>
               {showSolution ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              {showSolution ? "Hide solution" : "Show solution"}
+              {showSolution ? t("challenge.hideSolution") : t("challenge.showSolution")}
             </button>
           )}
           {running && status !== "ready" && (
@@ -169,7 +173,7 @@ export default function SqlChallengeRunner({ block, id }: Props) {
             ) : (
               <X className="mt-0.5 h-4 w-4 shrink-0" />
             )}
-            <span>{verdict.pass ? "Correct — nice! 🎉" : verdict.reason}</span>
+            <span>{verdict.pass ? t("sql.correct") : verdict.reason}</span>
           </div>
         )}
 
@@ -178,7 +182,7 @@ export default function SqlChallengeRunner({ block, id }: Props) {
         {showSolution && (
           <div>
             <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
-              Reference solution
+              {t("challenge.referenceSolution")}
             </div>
             <CodeEditor value={block.solution} language="sql" height={160} readOnly />
           </div>

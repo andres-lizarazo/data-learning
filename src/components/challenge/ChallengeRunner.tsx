@@ -10,6 +10,7 @@ import { celebrate } from "../../lib/confetti";
 import { useCodeDraft } from "../../lib/useCodeDraft";
 import { RESULT_MARKER, buildHarness } from "../../lib/harness";
 import { explainError } from "../../lib/explainError";
+import { useT } from "../../i18n";
 import type { ChallengeBlock } from "../../types/lesson";
 
 interface Props {
@@ -27,6 +28,7 @@ interface TestResult {
 
 export default function ChallengeRunner({ block, id }: Props) {
   const { ready, boot, status } = usePyodideStore();
+  const t = useT();
   const solveChallenge = useProgressStore((s) => s.solveChallenge);
   const alreadySolved = useProgressStore((s) => s.isChallengeSolved(id));
 
@@ -55,7 +57,7 @@ export default function ChallengeRunner({ block, id }: Props) {
 
       // A compile/runtime error before tests ran.
       if (!res.ok || !res.stdout.includes(RESULT_MARKER)) {
-        setStderr(res.stderr || "Your code raised an error before tests could run.");
+        setStderr(res.stderr || t("challenge.errBeforeTests"));
         setResults(
           block.tests.map((t) => ({ name: t.name, ok: false, hidden: t.hidden })),
         );
@@ -83,8 +85,8 @@ export default function ChallengeRunner({ block, id }: Props) {
       // Engine-level failure (worker crashed / never booted), not a test failure.
       setStderr(
         err instanceof Error
-          ? `The Python engine failed to run your code: ${err.message}`
-          : "The Python engine did not respond. Try reloading the page.",
+          ? `${t("challenge.engineFailed")} ${err.message}`
+          : t("challenge.engineNoResponse"),
       );
       setResults(block.tests.map((t) => ({ name: t.name, ok: false, hidden: t.hidden })));
     } finally {
@@ -104,7 +106,7 @@ export default function ChallengeRunner({ block, id }: Props) {
         </span>
         {(alreadySolved || allPass) && (
           <span className="pill border-accent-lime/30 bg-accent-lime/10 text-accent-lime">
-            <Check className="h-3 w-3" /> Solved
+            <Check className="h-3 w-3" /> {t("challenge.solved")}
           </span>
         )}
       </div>
@@ -126,7 +128,11 @@ export default function ChallengeRunner({ block, id }: Props) {
         <div className="flex flex-wrap items-center gap-2">
           <button className="btn-primary" onClick={submit} disabled={running || !ready}>
             <Play className="h-4 w-4" />
-            {running ? "Running tests…" : ready ? "Submit" : "Loading Python…"}
+            {running
+              ? t("editor.runningTests")
+              : ready
+                ? t("challenge.submit")
+                : t("editor.loadingPython")}
           </button>
           <button
             className="btn-ghost"
@@ -136,7 +142,7 @@ export default function ChallengeRunner({ block, id }: Props) {
               setStderr("");
             }}
           >
-            <RotateCcw className="h-4 w-4" /> Reset
+            <RotateCcw className="h-4 w-4" /> {t("editor.reset")}
           </button>
           {revealedHints < hints.length && (
             <button
@@ -144,13 +150,15 @@ export default function ChallengeRunner({ block, id }: Props) {
               onClick={() => setRevealedHints((n) => n + 1)}
             >
               <Lightbulb className="h-4 w-4 text-amber-300" />
-              {revealedHints === 0 ? "Hint" : `Hint ${revealedHints + 1}/${hints.length}`}
+              {revealedHints === 0
+                ? t("challenge.hint")
+                : `${t("challenge.hint")} ${revealedHints + 1}/${hints.length}`}
             </button>
           )}
           {block.solution && (
             <button className="btn-ghost" onClick={() => setShowSolution((s) => !s)}>
               {showSolution ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              {showSolution ? "Hide solution" : "Show solution"}
+              {showSolution ? t("challenge.hideSolution") : t("challenge.showSolution")}
             </button>
           )}
           {running && status !== "ready" && (
@@ -184,8 +192,8 @@ export default function ChallengeRunner({ block, id }: Props) {
         {results && (
           <div className="space-y-1.5" role="status" aria-live="polite">
             <div className="text-sm font-medium text-slate-200">
-              {passed} / {total} tests passed{" "}
-              {allPass && <span className="text-accent-lime">— nice! 🎉</span>}
+              {passed} / {total} {t("challenge.testsPassed")}{" "}
+              {allPass && <span className="text-accent-lime">{t("challenge.nice")}</span>}
             </div>
             <ul className="space-y-1">
               {results.map((r, i) => (
@@ -205,7 +213,9 @@ export default function ChallengeRunner({ block, id }: Props) {
                   <div className="min-w-0">
                     <div className="text-slate-200">
                       {r.name}{" "}
-                      {r.hidden && <span className="text-xs text-slate-500">(hidden)</span>}
+                      {r.hidden && (
+                        <span className="text-xs text-slate-500">({t("challenge.hidden")})</span>
+                      )}
                     </div>
                     {!r.ok && r.error && (
                       <div className="truncate font-mono text-xs text-brand-red">
@@ -228,7 +238,7 @@ export default function ChallengeRunner({ block, id }: Props) {
         {showSolution && block.solution && (
           <div>
             <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
-              Reference solution
+              {t("challenge.referenceSolution")}
             </div>
             <CodeEditor value={block.solution} height={200} readOnly />
           </div>

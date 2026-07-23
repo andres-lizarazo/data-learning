@@ -61,6 +61,56 @@ export type MessageKey =
   | "home.learningPath"
   | "home.open"
   | "home.lessons"
+  // code editor / runnable
+  | "editor.run"
+  | "editor.running"
+  | "editor.runningTests"
+  | "editor.loadingPython"
+  | "editor.visualize"
+  | "editor.visualizeTitle"
+  | "editor.reset"
+  | "editor.backToRun"
+  | "editor.stepThrough"
+  | "editor.stepThroughTitle"
+  | "editor.engineFailedRun"
+  | "editor.engineNoResponse"
+  // console
+  | "console.title"
+  | "console.running"
+  | "console.placeholder"
+  // quiz
+  | "quiz.correct"
+  | "quiz.notQuite"
+  | "quiz.tryAgain"
+  // challenge
+  | "challenge.submit"
+  | "challenge.hint"
+  | "challenge.showSolution"
+  | "challenge.hideSolution"
+  | "challenge.solved"
+  | "challenge.testsPassed"
+  | "challenge.nice"
+  | "challenge.hidden"
+  | "challenge.referenceSolution"
+  | "challenge.errBeforeTests"
+  | "challenge.engineFailed"
+  | "challenge.engineNoResponse"
+  // sql
+  | "sql.loadingPostgres"
+  | "sql.tryIt"
+  | "sql.expectedError"
+  | "sql.resetsDB"
+  | "sql.checking"
+  | "sql.correct"
+  | "sql.queryError"
+  | "sql.refSolutionFailed"
+  | "sql.engineFailed"
+  | "sql.engineNoResponse"
+  // notes
+  | "notes.title"
+  | "notes.saved"
+  | "notes.placeholder"
+  | "notes.aria"
   // lesson page
   | "lesson.notFound"
   | "lesson.save"
@@ -145,6 +195,52 @@ const en: Dict = {
   "home.learningPath": "Learning path",
   "home.open": "Open",
   "home.lessons": "lessons",
+  "editor.run": "Run",
+  "editor.running": "Running…",
+  "editor.runningTests": "Running tests…",
+  "editor.loadingPython": "Loading Python…",
+  "editor.visualize": "Visualize",
+  "editor.visualizeTitle":
+    "Step through this code line by line with the execution visualizer",
+  "editor.reset": "Reset",
+  "editor.backToRun": "Back to run",
+  "editor.stepThrough": "step through",
+  "editor.stepThroughTitle": "Step through",
+  "editor.engineFailedRun": "The Python engine failed to run this:",
+  "editor.engineNoResponse": "The Python engine did not respond. Try reloading the page.",
+  "console.title": "Console",
+  "console.running": "running…",
+  "console.placeholder": "Output appears here. Press Run ▸",
+  "quiz.correct": "Correct! 🎉",
+  "quiz.notQuite": "Not quite.",
+  "quiz.tryAgain": "try again",
+  "challenge.submit": "Submit",
+  "challenge.hint": "Hint",
+  "challenge.showSolution": "Show solution",
+  "challenge.hideSolution": "Hide solution",
+  "challenge.solved": "Solved",
+  "challenge.testsPassed": "tests passed",
+  "challenge.nice": "— nice! 🎉",
+  "challenge.hidden": "hidden",
+  "challenge.referenceSolution": "Reference solution",
+  "challenge.errBeforeTests": "Your code raised an error before tests could run.",
+  "challenge.engineFailed": "The Python engine failed to run your code:",
+  "challenge.engineNoResponse": "The Python engine did not respond. Try reloading the page.",
+  "sql.loadingPostgres": "Loading Postgres…",
+  "sql.tryIt": "Try it",
+  "sql.expectedError": "expected to error",
+  "sql.resetsDB": "resets DB",
+  "sql.checking": "Checking…",
+  "sql.correct": "Correct — nice! 🎉",
+  "sql.queryError": "Your query raised an error.",
+  "sql.refSolutionFailed": "Reference solution failed to run (please report).",
+  "sql.engineFailed": "The SQL engine failed to run:",
+  "sql.engineNoResponse": "The SQL engine did not respond. Try reloading the page.",
+  "notes.title": "My notes",
+  "notes.saved": "saved",
+  "notes.placeholder":
+    "Jot down what you want to remember from this lesson… (saved automatically)",
+  "notes.aria": "Lesson notes",
   "lesson.notFound": "Lesson not found.",
   "lesson.save": "Save",
   "lesson.saved": "Saved",
@@ -231,6 +327,52 @@ const es: Partial<Dict> = {
   "home.learningPath": "Ruta de aprendizaje",
   "home.open": "Abrir",
   "home.lessons": "lecciones",
+  "editor.run": "Ejecutar",
+  "editor.running": "Ejecutando…",
+  "editor.runningTests": "Ejecutando tests…",
+  "editor.loadingPython": "Cargando Python…",
+  "editor.visualize": "Visualizar",
+  "editor.visualizeTitle":
+    "Recorre este código línea a línea con el visualizador de ejecución",
+  "editor.reset": "Reiniciar",
+  "editor.backToRun": "Volver a ejecutar",
+  "editor.stepThrough": "paso a paso",
+  "editor.stepThroughTitle": "Paso a paso",
+  "editor.engineFailedRun": "El motor de Python no pudo ejecutar esto:",
+  "editor.engineNoResponse": "El motor de Python no respondió. Intenta recargar la página.",
+  "console.title": "Consola",
+  "console.running": "ejecutando…",
+  "console.placeholder": "La salida aparece aquí. Pulsa Ejecutar ▸",
+  "quiz.correct": "¡Correcto! 🎉",
+  "quiz.notQuite": "No exactamente.",
+  "quiz.tryAgain": "reintentar",
+  "challenge.submit": "Enviar",
+  "challenge.hint": "Pista",
+  "challenge.showSolution": "Ver solución",
+  "challenge.hideSolution": "Ocultar solución",
+  "challenge.solved": "Resuelto",
+  "challenge.testsPassed": "tests pasados",
+  "challenge.nice": "— ¡bien! 🎉",
+  "challenge.hidden": "oculto",
+  "challenge.referenceSolution": "Solución de referencia",
+  "challenge.errBeforeTests": "Tu código lanzó un error antes de poder correr los tests.",
+  "challenge.engineFailed": "El motor de Python no pudo ejecutar tu código:",
+  "challenge.engineNoResponse": "El motor de Python no respondió. Intenta recargar la página.",
+  "sql.loadingPostgres": "Cargando Postgres…",
+  "sql.tryIt": "Pruébalo",
+  "sql.expectedError": "se espera error",
+  "sql.resetsDB": "reinicia la BD",
+  "sql.checking": "Comprobando…",
+  "sql.correct": "Correcto — ¡bien! 🎉",
+  "sql.queryError": "Tu consulta lanzó un error.",
+  "sql.refSolutionFailed": "La solución de referencia falló al correr (por favor repórtalo).",
+  "sql.engineFailed": "El motor de SQL no pudo ejecutar:",
+  "sql.engineNoResponse": "El motor de SQL no respondió. Intenta recargar la página.",
+  "notes.title": "Mis notas",
+  "notes.saved": "guardado",
+  "notes.placeholder":
+    "Anota lo que quieras recordar de esta lección… (se guarda automáticamente)",
+  "notes.aria": "Notas de la lección",
   "lesson.notFound": "Lección no encontrada.",
   "lesson.save": "Guardar",
   "lesson.saved": "Guardada",

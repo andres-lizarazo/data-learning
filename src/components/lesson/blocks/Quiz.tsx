@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Check, HelpCircle, X } from "lucide-react";
+import { useT } from "../../../i18n";
 import type { QuizBlock } from "../../../types/lesson";
 
 export default function Quiz({ block }: { block: QuizBlock }) {
+  const t = useT();
   const [picked, setPicked] = useState<number | null>(null);
   const answered = picked !== null;
   const correct = answered && !!block.options[picked!].correct;
@@ -50,7 +52,7 @@ export default function Quiz({ block }: { block: QuizBlock }) {
           className="mt-3 text-sm"
         >
           <span className={correct ? "text-accent-lime" : "text-brand-red"}>
-            {correct ? "Correct! 🎉" : "Not quite."}
+            {correct ? t("quiz.correct") : t("quiz.notQuite")}
           </span>
           {block.explanation && (
             <span className="ml-2 text-slate-400">{block.explanation}</span>
@@ -60,7 +62,7 @@ export default function Quiz({ block }: { block: QuizBlock }) {
               className="ml-3 text-xs text-accent-cyan underline"
               onClick={() => setPicked(null)}
             >
-              try again
+              {t("quiz.tryAgain")}
             </button>
           )}
         </motion.div>

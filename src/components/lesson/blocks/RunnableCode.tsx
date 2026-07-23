@@ -7,6 +7,7 @@ import ExecutionVisualizer from "../../visualizer/ExecutionVisualizer";
 import { pyodideClient, type RunResult } from "../../../pyodide/pyodideClient";
 import { usePyodideStore } from "../../../store/pyodideStore";
 import { useCodeDraft } from "../../../lib/useCodeDraft";
+import { useT } from "../../../i18n";
 import type { RunnableBlock } from "../../../types/lesson";
 
 export default function RunnableCode({
@@ -17,6 +18,7 @@ export default function RunnableCode({
   draftKey?: string;
 }) {
   const { ready, boot, status } = usePyodideStore();
+  const t = useT();
   const [code, setCode, resetCode] = useCodeDraft(draftKey, block.code);
   const [result, setResult] = useState<RunResult | null>(null);
   const [running, setRunning] = useState(false);
@@ -43,8 +45,8 @@ export default function RunnableCode({
     } catch (err) {
       setError(
         err instanceof Error
-          ? `The Python engine failed to run this: ${err.message}`
-          : "The Python engine did not respond. Try reloading the page.",
+          ? `${t("editor.engineFailedRun")} ${err.message}`
+          : t("editor.engineNoResponse"),
       );
     } finally {
       setRunning(false);
@@ -57,13 +59,17 @@ export default function RunnableCode({
       <div className="space-y-2">
         <ExecutionVisualizer
           initialCode={code}
-          title={block.title ? `${block.title} — step through` : "Step through"}
+          title={
+            block.title
+              ? `${block.title} — ${t("editor.stepThrough")}`
+              : t("editor.stepThroughTitle")
+          }
         />
         <button
           className="btn-ghost text-xs"
           onClick={() => setVisualizing(false)}
         >
-          <Play className="h-3.5 w-3.5" /> Back to run
+          <Play className="h-3.5 w-3.5" /> {t("editor.backToRun")}
         </button>
       </div>
     );
@@ -89,15 +95,15 @@ export default function RunnableCode({
         <div className="flex flex-wrap items-center gap-2">
           <button className="btn-primary" onClick={run} disabled={running || !ready}>
             <Play className="h-4 w-4" />
-            {running ? "Running…" : ready ? "Run" : "Loading Python…"}
+            {running ? t("editor.running") : ready ? t("editor.run") : t("editor.loadingPython")}
           </button>
           {canVisualize && (
             <button
               className="btn-ghost"
               onClick={() => setVisualizing(true)}
-              title="Step through this code line by line with the execution visualizer"
+              title={t("editor.visualizeTitle")}
             >
-              <Eye className="h-4 w-4 text-accent-violet" /> Visualize
+              <Eye className="h-4 w-4 text-accent-violet" /> {t("editor.visualize")}
             </button>
           )}
           <button
@@ -108,7 +114,7 @@ export default function RunnableCode({
               setError("");
             }}
           >
-            <RotateCcw className="h-4 w-4" /> Reset
+            <RotateCcw className="h-4 w-4" /> {t("editor.reset")}
           </button>
           {(!ready || (running && status !== "ready")) && (
             <span className="text-xs text-slate-400">{status}</span>

@@ -5,6 +5,7 @@ import SqlResultTable from "../../sql/SqlResultTable";
 import { sqlClient, type SqlExecResult } from "../../../sql/sqlClient";
 import { useSqlStore } from "../../../store/sqlStore";
 import { useCodeDraft } from "../../../lib/useCodeDraft";
+import { useT } from "../../../i18n";
 import type { SqlRunnableBlock } from "../../../types/lesson";
 
 // Editable SQL run against the seeded Postgres (PGlite) engine — the SQL twin of
@@ -17,6 +18,7 @@ export default function SqlRunnable({
   draftKey?: string;
 }) {
   const { ready, boot, status } = useSqlStore();
+  const t = useT();
   const [sql, setSql, resetSql] = useCodeDraft(draftKey, block.sql);
   const [result, setResult] = useState<SqlExecResult | null>(null);
   const [running, setRunning] = useState(false);
@@ -37,16 +39,16 @@ export default function SqlRunnable({
   return (
     <div className="glass overflow-hidden">
       <div className="flex items-center gap-2 border-b border-white/10 px-4 py-2 text-sm font-semibold text-slate-200">
-        <Database className="h-3.5 w-3.5 text-accent-cyan" /> {block.title ?? "Try it"}
+        <Database className="h-3.5 w-3.5 text-accent-cyan" /> {block.title ?? t("sql.tryIt")}
         <span className="ml-auto flex items-center gap-1.5">
           {block.expectError && (
             <span className="pill border-amber-300/30 bg-amber-400/10 text-[10px] text-amber-200">
-              expected to error
+              {t("sql.expectedError")}
             </span>
           )}
           {block.resetBefore && (
             <span className="pill border-white/10 bg-white/5 text-[10px] text-slate-400">
-              resets DB
+              {t("sql.resetsDB")}
             </span>
           )}
         </span>
@@ -64,7 +66,7 @@ export default function SqlRunnable({
         <div className="flex items-center gap-2">
           <button className="btn-primary" onClick={run} disabled={running || !ready}>
             <Play className="h-4 w-4" />
-            {running ? "Running…" : ready ? "Run" : "Loading Postgres…"}
+            {running ? t("editor.running") : ready ? t("editor.run") : t("sql.loadingPostgres")}
           </button>
           <button
             className="btn-ghost"
@@ -73,7 +75,7 @@ export default function SqlRunnable({
               setResult(null);
             }}
           >
-            <RotateCcw className="h-4 w-4" /> Reset
+            <RotateCcw className="h-4 w-4" /> {t("editor.reset")}
           </button>
           {(!ready || (running && status !== "ready")) && (
             <span className="text-xs text-slate-400">{status}</span>
