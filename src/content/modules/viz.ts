@@ -228,7 +228,7 @@ fig.tight_layout()`,
         {
           kind: "challenge",
           title: "Category frequency bar chart",
-          prompt: `Write \`category_bars(values)\` — given a list of category labels, draw a **bar chart of how often each category appears** using pandas (\`value_counts().plot(kind="bar")\`) and **return the Axes**.`,
+          prompt: `Write \`category_bars(values)\` — given a list of category labels, draw a **bar chart of how often each category appears** using pandas (\`value_counts().plot(kind="bar", ax=ax)\`) on a fresh Axes, and **return that Axes**.`,
           packages: ["pandas", "matplotlib"],
           starterCode: `import pandas as pd
 import matplotlib.pyplot as plt
@@ -249,15 +249,17 @@ assert len(ax.patches) == 2`,
             },
           ],
           hints: [
-            "Wrap the list in a Series: `pd.Series(values)`.",
-            "`.value_counts()` tallies each category; chain `.plot(kind=\"bar\")`.",
-            "That `.plot(...)` call returns the Axes — `return` it.",
+            "Make a fresh Axes first: `fig, ax = plt.subplots()` (so bars don't pile onto a shared figure).",
+            "`pd.Series(values).value_counts()` tallies each category; chain `.plot(kind=\"bar\", ax=ax)`.",
+            "`return ax`.",
           ],
           solution: `import pandas as pd
 import matplotlib.pyplot as plt
 
 def category_bars(values):
-    return pd.Series(values).value_counts().plot(kind="bar")`,
+    fig, ax = plt.subplots()
+    pd.Series(values).value_counts().plot(kind="bar", ax=ax)
+    return ax`,
           xp: 70,
         },
       ],

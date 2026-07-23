@@ -1209,42 +1209,23 @@ SELECT name, price FROM products ORDER BY id;`,
         },
         {
           kind: "sql-challenge",
-          title: "Write a factorial function",
+          title: "Factorial with a recursive CTE",
           prompt:
-            "Create a PL/pgSQL function `factorial(n INTEGER) RETURNS BIGINT` that multiplies `1 * 2 * … * n` using a loop, then `SELECT factorial(6) AS result;`. (6! = 720.)",
-          starterSql: `CREATE OR REPLACE FUNCTION factorial(n INTEGER)
-RETURNS BIGINT
-LANGUAGE plpgsql
-AS $$
-DECLARE
-    result BIGINT := 1;
-    i INTEGER;
-BEGIN
-    -- multiply result by each i from 1 to n
-    RETURN result;
-END;
-$$;
-
-SELECT factorial(6) AS result;`,
-          solution: `CREATE OR REPLACE FUNCTION factorial(n INTEGER)
-RETURNS BIGINT
-LANGUAGE plpgsql
-AS $$
-DECLARE
-    result BIGINT := 1;
-    i INTEGER;
-BEGIN
-    FOR i IN 1..n LOOP
-        result := result * i;
-    END LOOP;
-    RETURN result;
-END;
-$$;
-
-SELECT factorial(6) AS result;`,
+            "Compute **6! (= 720)** in a single query using a `WITH RECURSIVE` CTE. Return one column named `result`.\n\n(PL/pgSQL functions are shown in the runnables above; the checked exercise uses a recursive CTE so it's a single statement.)",
+          starterSql: `WITH RECURSIVE f(n, fact) AS (
+    SELECT 1, 1
+    -- add the recursive term: step n up to 6, multiplying fact
+)
+SELECT max(fact) AS result FROM f;`,
+          solution: `WITH RECURSIVE f(n, fact) AS (
+    SELECT 1, 1
+    UNION ALL
+    SELECT n + 1, fact * (n + 1) FROM f WHERE n < 6
+)
+SELECT max(fact) AS result FROM f;`,
           hints: [
-            "Use a `FOR i IN 1..n LOOP … END LOOP;` and multiply `result := result * i;` each pass.",
-            "Return `result` after the loop, then `SELECT factorial(6) AS result;`.",
+            "Anchor row: `SELECT 1, 1`. Recursive step: `SELECT n + 1, fact * (n + 1) FROM f WHERE n < 6`.",
+            "The final factorial is the largest `fact`: `SELECT max(fact) AS result FROM f`.",
           ],
           xp: 90,
         },
