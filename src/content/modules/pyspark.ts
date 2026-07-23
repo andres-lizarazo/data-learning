@@ -447,6 +447,72 @@ your dimensional modeling pays off again.`,
           explanation:
             "groupBy shuffles by 'a'; the global sort then shuffles again by range of the count. The other options are narrow-only or broadcast (shuffle-free). Counting shuffles in a plan = predicting its cost.",
         },
+        {
+          kind: "challenge",
+          title: "Translate the broadcast join",
+          packages: ["pandas"],
+          prompt: `Translate this PySpark star-schema join into a pandas function \`enrich(facts, dims)\`:
+
+\`\`\`python
+(facts.join(F.broadcast(dims), "product_id", "inner")
+      .groupBy("category")
+      .agg(F.sum("amount").alias("revenue"))
+      .orderBy("category"))
+\`\`\`
+
+\`facts\` has columns \`product_id\`, \`amount\`; \`dims\` has \`product_id\`, \`category\`.
+Return a DataFrame with columns \`category\` and \`revenue\` (summed over the joined
+rows), sorted by \`category\`, with a fresh 0..n index.`,
+          starterCode: `import pandas as pd
+
+def enrich(facts, dims):
+    pass`,
+          tests: [
+            {
+              name: "joins then aggregates",
+              assertion: `import pandas as pd
+facts = pd.DataFrame({"product_id": [1, 2, 1, 3], "amount": [10, 20, 5, 40]})
+dims = pd.DataFrame({"product_id": [1, 2, 3], "category": ["a", "b", "a"]})
+out = enrich(facts, dims)
+assert list(out.columns) == ["category", "revenue"]
+assert out.to_dict("records") == [
+    {"category": "a", "revenue": 55},
+    {"category": "b", "revenue": 20},
+]`,
+            },
+            {
+              name: "unmatched fact rows drop (inner join)",
+              assertion: `import pandas as pd
+facts = pd.DataFrame({"product_id": [1, 99], "amount": [10, 500]})
+dims = pd.DataFrame({"product_id": [1], "category": ["a"]})
+out = enrich(facts, dims)
+assert out.to_dict("records") == [{"category": "a", "revenue": 10}]`,
+            },
+            {
+              name: "index is reset",
+              assertion: `import pandas as pd
+facts = pd.DataFrame({"product_id": [2, 1], "amount": [7, 3]})
+dims = pd.DataFrame({"product_id": [1, 2], "category": ["z", "a"]})
+out = enrich(facts, dims)
+assert list(out.index) == [0, 1] and out.iloc[0]["category"] == "a"`,
+              hidden: true,
+            },
+          ],
+          hints: [
+            "A broadcast join is still just an inner join by key: `facts.merge(dims, on=\"product_id\", how=\"inner\")`.",
+            "Then group the joined frame by `category` and sum `amount`, renaming the result to `revenue`.",
+            "`.groupby(\"category\")[\"amount\"].sum().reset_index(name=\"revenue\").sort_values(\"category\")` — finish with `.reset_index(drop=True)`.",
+          ],
+          solution: `import pandas as pd
+
+def enrich(facts, dims):
+    joined = facts.merge(dims, on="product_id", how="inner")
+    out = (
+        joined.groupby("category")["amount"].sum().reset_index(name="revenue")
+    )
+    return out.sort_values("category").reset_index(drop=True)`,
+          xp: 90,
+        },
       ],
     },
     {
