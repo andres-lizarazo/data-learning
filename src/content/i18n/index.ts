@@ -4,6 +4,7 @@ import { localizeLesson, type LessonI18n } from "./overlay";
 import { basicsEs } from "./es/basics";
 import { dataStructuresEs } from "./es/dataStructures";
 import { pythonOopEs } from "./es/pythonOop";
+import { pythonEngineeringEs } from "./es/pythonEngineering";
 
 // Registry of Spanish lesson overlays, keyed by lesson id. Add a module's overlay here as it
 // gets translated; lessons without an entry fall back to their English content automatically.
@@ -11,6 +12,7 @@ const esOverlays: Record<string, LessonI18n> = {
   ...basicsEs,
   ...dataStructuresEs,
   ...pythonOopEs,
+  ...pythonEngineeringEs,
 };
 
 const overlays: Record<Locale, Record<string, LessonI18n>> = {
