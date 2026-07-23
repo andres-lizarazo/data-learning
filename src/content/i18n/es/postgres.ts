@@ -1129,4 +1129,189 @@ estándar de construir un histograma en SQL.`,
       },
     ],
   },
+  "writable-ctes-merge": {
+    title: "CTEs que Modifican Datos y MERGE",
+    summary:
+      "Herramientas potentes de Postgres: CTEs escribibles (INSERT/UPDATE/DELETE … RETURNING dentro de WITH) para escrituras atómicas multi-paso, y MERGE para upserts condicionales.",
+    blocks: [
+      {
+        markdown: `## CTEs escribibles — varias mutaciones en una sentencia
+
+Un CTE puede ser un \`INSERT\`/\`UPDATE\`/\`DELETE … RETURNING\`. Encadénalos para hacer varias escrituras
+**atómicamente** en una sentencia — p. ej. mover filas entre tablas, o insertar un padre y sus hijos
+juntos. Todas las sub-sentencias ven el **mismo snapshot**, así que un CTE escribible lee la tabla como
+estaba *antes* de que corriera la sentencia.
+
+> Cada runnable de abajo **reinicia primero la base de ejemplo** (badge), así tus escrituras no se filtran.`,
+      },
+      { title: "Inserta una categoría y un producto que la referencia — una sentencia" },
+      { title: "Mueve filas entre tablas atómicamente (DELETE … luego INSERT)" },
+      {
+        markdown: `## MERGE — upsert condicional (Postgres 15+)
+
+\`MERGE\` compara un target contra una fuente y corre distintas acciones por caso: \`WHEN MATCHED\`
+actualizar/borrar, \`WHEN NOT MATCHED\` insertar. Es el hermano estándar-SQL de \`INSERT … ON CONFLICT\` y
+maneja actualizar *e* insertar *y* borrar en una sola pasada.`,
+      },
+      { title: "Upsert de una lista de precios con MERGE" },
+      {
+        markdown: `> **MERGE vs ON CONFLICT:** \`ON CONFLICT\` es más simple y genial para "insertar-o-actualizar sobre una
+> clave única". \`MERGE\` es más general (múltiples ramas de match, borrados, una fuente basada en join)
+> pero no puede usar \`RETURNING\` y tiene semánticas de concurrencia distintas. Para un upsert simple,
+> \`ON CONFLICT\` suele ser la elección; usa \`MERGE\` cuando necesites lógica de ramificación.`,
+      },
+      {
+        title: "Descuenta los productos Apple y devuélvelos — una sentencia",
+        prompt:
+          "En una **sola sentencia** usando un CTE escribible, da a cada producto etiquetado `'apple'` un 10% de descuento (redondea el nuevo precio a 2 decimales) y devuelve su `name` y nuevo `price`, ordenado por `name`.",
+        hints: [
+          "`UPDATE … SET price = ROUND(price * 0.9, 2) WHERE 'apple' = ANY(tags) RETURNING name, price`.",
+          "Envuélvelo en `WITH upd AS (…)` y `SELECT … FROM upd ORDER BY name`.",
+        ],
+      },
+    ],
+  },
+  "pagination-performance": {
+    title: "Paginación y Rendimiento",
+    summary:
+      "Paginación keyset (seek) vs OFFSET lento, EXISTS vs IN, anti-joins, y leer el plan para confirmar que se usa un índice.",
+    blocks: [
+      {
+        markdown: `## OFFSET es una trampa para páginas profundas
+
+\`ORDER BY … LIMIT 20 OFFSET 100000\` igual **escanea y descarta** 100,000 filas — se vuelve más lento
+cuanto más profundo paginas. La **paginación keyset / "seek"** en cambio recuerda la clave de orden de
+la última fila y pide "las siguientes filas después de ella", a las que un índice puede saltar directo:
+
+\`\`\`sql
+-- Página 1
+SELECT * FROM orders ORDER BY created_at, id LIMIT 20;
+-- Siguiente página: pasa el (created_at, id) de la última fila como cursor
+SELECT * FROM orders
+WHERE (created_at, id) > ('2025-05-20', 2)   -- comparación de valor de fila
+ORDER BY created_at, id
+LIMIT 20;
+\`\`\`
+
+La **comparación de valor de fila** \`(a, b) > (x, y)\` es la forma limpia de hacer seek sobre una clave de
+orden compuesta.`,
+      },
+      { title: "Paginación keyset — las siguientes órdenes después de un cursor" },
+      {
+        markdown: `## EXISTS vs IN, y anti-joins
+
+- **\`EXISTS\` (semi-join)** para en la primera coincidencia y maneja NULLs de forma segura — prefiérelo para
+  "tiene al menos una fila relacionada".
+- **\`NOT EXISTS\` (anti-join)** es el "no tiene ninguna" seguro — a diferencia de \`NOT IN\`, que no devuelve
+  nada si la subconsulta produce un NULL.
+- Un \`LEFT JOIN … WHERE right.id IS NULL\` es la otra forma de anti-join y a menudo es la más rápida.`,
+      },
+      { title: "Semi-join EXISTS + EXPLAIN del plan" },
+      {
+        markdown: `> **Tip:** para que la paginación keyset sea rápida, indexa la clave de orden exacta
+> (\`CREATE INDEX ON orders (created_at, id)\`). Entonces el plan muestra un **Index Scan** en vez de un
+> \`Seq Scan\` + \`Sort\`, y cada página es O(log n) de localizar. Repasa la lección *Índices y EXPLAIN* para
+> leer planes.`,
+      },
+      {
+        title: "Keyset: la página después del precio 999",
+        prompt:
+          "Usando filtrado estilo keyset (sin `OFFSET`), devuelve los productos con **precio por encima de 999** como `name`, `price`, ordenados por `price` ascendente — es decir, la siguiente página después del precio cursor `999`.",
+        hints: ["`WHERE price > 999` es el seek; luego `ORDER BY price`."],
+      },
+    ],
+  },
+  "etl-patterns": {
+    title: "Patrones de Ingeniería de Datos y ETL",
+    summary:
+      "Los patrones de DE/ETL/BI que los entrevistadores reutilizan — carga incremental (watermark), SCD Tipo 2, dimensión de calendario/fecha, pivot dinámico — en PostgreSQL real (no T-SQL).",
+    blocks: [
+      {
+        markdown: `## La mayoría de las listas de "Patrones SQL Avanzados" son SQL Server — aquí en Postgres
+
+Las chuletas de entrevista populares suelen estar escritas en **T-SQL (SQL Server)**. Las *ideas* se
+transfieren directo, pero la **sintaxis no**. Traducción rápida:
+
+| T-SQL (SQL Server) | PostgreSQL |
+|---|---|
+| \`DATEADD(DAY, n, d)\` | \`d + n * interval '1 day'\` |
+| \`DATEDIFF(MINUTE, a, b)\` | \`EXTRACT(epoch FROM b - a) / 60\` |
+| CTE recursivo + \`OPTION(MAXRECURSION n)\` | CTE recursivo (sin tope) — o simplemente \`generate_series\` |
+| \`PIVOT (… FOR col IN (…))\` | \`SUM(…) FILTER (WHERE col = …)\` (o \`crosstab\`) |
+| \`STRING_AGG(x, ',')\` | \`string_agg(x, ',')\` ✓ (igual) / \`array_agg\` |
+| \`OFFSET 10 ROWS FETCH NEXT 10 ROWS ONLY\` | \`LIMIT 10 OFFSET 10\` (o keyset) |
+| \`OPENJSON(@json)\` | \`jsonb_array_elements\` / \`jsonb_to_recordset\` |
+| \`ISNULL(a,b)\` / \`GETDATE()\` | \`COALESCE(a,b)\` / \`now()\` |
+
+**Mapa de cobertura** — la mayoría de esos "20 patrones" ya los practicaste aquí:
+
+| Patrón | Lección |
+|---|---|
+| Gap & island, Top-N por grupo, Total corriente | *Window Functions*, *Taller Avanzado* |
+| Media móvil, Sesionización, Dedupe/Último registro | *Patrones de Analytics* |
+| Jerarquía recursiva | *CTEs Recursivos* |
+| Generador de secuencias, Calendario (date spine) | *Funciones de String/Fecha* (+ abajo) |
+| Agregación de strings, Encontrar duplicados, N-ésimo más alto | *Funciones de String*, *GROUP BY*, *Patrones de Entrevista* |
+| Lead/Lag, Paginación, Anti-join, MERGE, parseo JSON | *Window Functions*, *Paginación*, *Patrones de Entrevista*, *MERGE*, *JSONB* |
+
+Esta lección llena los vacíos restantes de **sabor ETL**: carga incremental, SCD Tipo 2, una dimensión
+de fecha real, y pivot dinámico.`,
+      },
+      {
+        markdown: `## 1. Carga incremental (high-water-mark)
+
+La columna vertebral de todo pipeline incremental: trae solo filas **más nuevas que la última carga
+exitosa**. Guarda un watermark (el timestamp máximo cargado) y filtra la fuente contra él.`,
+      },
+      { title: "Trae solo las filas pasado el watermark" },
+      {
+        markdown: `## 2. SCD Tipo 2 — conserva el historial completo
+
+Una **Dimensión de Cambio Lento Tipo 2** nunca sobrescribe: cuando un atributo cambia, **cierras** la
+fila actual (pones \`valid_to\` / \`is_current = false\`) e **insertas una nueva versión**. Un CTE escribible
+hace ambas atómicamente — el clásico "último registro vía \`rn = 1\`" solo encuentra la fila actual; el
+SCD2 guarda toda la línea de tiempo.`,
+      },
+      { title: "Aplica un cambio como una nueva versión (cerrar + insertar)" },
+      {
+        markdown: `## 3. Dimensión de calendario / fecha
+
+Una dimensión de fecha (\`dim_date\`) potencia el BI — te deja unir hechos dispersos sobre un calendario
+completo y segmentar por mes/trimestre/día de la semana. En Postgres no necesitas un CTE recursivo (la
+forma T-SQL): solo \`generate_series\` más \`EXTRACT\`/\`to_char\` para los atributos.`,
+      },
+      { title: "Construye una dimensión de fecha con generate_series" },
+      {
+        markdown: `## 4. Pivot dinámico
+
+Postgres **no tiene operador \`PIVOT\`**. Para un conjunto **fijo** de columnas usas \`FILTER\` (ver la
+lección *Pivot y Unpivot*). Para un conjunto **dinámico** (no conoces las categorías de antemano), la
+respuesta de entrevista es: **genera el SQL del pivot como una cadena**, luego córrelo con \`EXECUTE\`
+dentro de una función PL/pgSQL. Aquí está el paso de generación — nota cómo \`format(%L, …)\` entrecomilla
+literales de forma segura y \`%I\` entrecomilla identificadores:`,
+      },
+      { title: "Genera una consulta pivot dinámicamente" },
+      {
+        markdown: `En una función lo envolverías como \`EXECUTE (esa cadena)\` (o \`RETURN QUERY EXECUTE …\`). La otra opción
+es \`crosstab()\` de la extensión \`tablefunc\` — más concisa, pero necesita la extensión instalada y una
+lista de columnas explícita, así que no siempre está disponible (no lo está en este motor del navegador).`,
+      },
+      { markdown: `## Ejercicios calificados` },
+      {
+        title: "Carga incremental desde un watermark",
+        prompt:
+          "El watermark de la última carga es `2025-06-01`. Devuelve `id` y `created_at` de las `orders` creadas **después** del watermark (`created_at > '2025-06-01'`), ordenadas por `id`.",
+        hints: ["`WHERE created_at > '2025-06-01'` — en un pipeline real el literal es `(SELECT MAX(last_loaded) FROM load_audit)`."],
+      },
+      {
+        title: "Construye una dimensión de fecha de 5 días",
+        prompt:
+          "Usando `generate_series`, devuelve una dimensión de fecha para el **1–5 de marzo de 2026**: columnas `date` (una fecha) y `dow` (el día ISO de la semana, 1 = lunes … 7 = domingo), ordenadas por `date`.",
+        hints: [
+          "`generate_series('2026-03-01','2026-03-05','1 day'::interval)`.",
+          "`EXTRACT(isodow FROM d)::int` da 1–7 (Lun–Dom).",
+        ],
+      },
+    ],
+  },
 };
