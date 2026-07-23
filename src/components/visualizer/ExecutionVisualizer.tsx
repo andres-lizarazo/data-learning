@@ -8,6 +8,7 @@ import {
 } from "../../pyodide/pyodideClient";
 import { usePyodideStore } from "../../store/pyodideStore";
 import { useCodeDraft } from "../../lib/useCodeDraft";
+import { useT } from "../../i18n";
 import ObjectDiagram from "./ObjectDiagram";
 
 interface Props {
@@ -31,6 +32,7 @@ const KIND_COLORS: Record<string, string> = {
 
 export default function ExecutionVisualizer({ initialCode, title, draftKey }: Props) {
   const { ready, boot, status } = usePyodideStore();
+  const t = useT();
   const [code, setCode] = useCodeDraft(draftKey, initialCode);
   const [trace, setTrace] = useState<TraceResult | null>(null);
   const [idx, setIdx] = useState(0);
@@ -63,13 +65,13 @@ export default function ExecutionVisualizer({ initialCode, title, draftKey }: Pr
       // on the trace result instead. Surface it rather than failing silently.
       setEngineError(
         err instanceof Error
-          ? `The Python engine failed: ${err.message}`
-          : "The Python engine did not respond. Try reloading the page.",
+          ? `${t("viz.engineFailed")} ${err.message}`
+          : t("viz.engineNoResponse"),
       );
     } finally {
       setLoading(false);
     }
-  }, [code]);
+  }, [code, t]);
 
   // Auto-advance while playing.
   useEffect(() => {
@@ -139,13 +141,13 @@ export default function ExecutionVisualizer({ initialCode, title, draftKey }: Pr
               disabled={loading || (!ready && status !== "ready")}
             >
               {loading ? (
-                "Tracing…"
+                t("viz.tracing")
               ) : ready ? (
                 <>
-                  <Play className="h-4 w-4" /> Visualize
+                  <Play className="h-4 w-4" /> {t("editor.visualize")}
                 </>
               ) : (
-                "Loading Python…"
+                t("editor.loadingPython")
               )}
             </button>
             {!ready && <span className="text-xs text-slate-400">{status}</span>}
@@ -155,7 +157,7 @@ export default function ExecutionVisualizer({ initialCode, title, draftKey }: Pr
                   className="btn-ghost px-2.5"
                   onClick={() => setIdx((i) => Math.max(0, i - 1))}
                   disabled={idx === 0}
-                  aria-label="Previous step"
+                  aria-label={t("viz.prevStep")}
                 >
                   <SkipBack className="h-4 w-4" />
                 </button>
@@ -165,15 +167,15 @@ export default function ExecutionVisualizer({ initialCode, title, draftKey }: Pr
                 >
                   {atEnd ? (
                     <>
-                      <RotateCcw className="h-4 w-4" /> Restart
+                      <RotateCcw className="h-4 w-4" /> {t("viz.restart")}
                     </>
                   ) : playing ? (
                     <>
-                      <Pause className="h-4 w-4" /> Pause
+                      <Pause className="h-4 w-4" /> {t("viz.pause")}
                     </>
                   ) : (
                     <>
-                      <Play className="h-4 w-4" /> Play
+                      <Play className="h-4 w-4" /> {t("viz.play")}
                     </>
                   )}
                 </button>
@@ -181,13 +183,13 @@ export default function ExecutionVisualizer({ initialCode, title, draftKey }: Pr
                   className="btn-ghost px-2.5"
                   onClick={() => setIdx((i) => Math.min(steps.length - 1, i + 1))}
                   disabled={atEnd}
-                  aria-label="Next step"
+                  aria-label={t("viz.nextStep")}
                 >
                   <SkipForward className="h-4 w-4" />
                 </button>
                 <select
                   className="select"
-                  aria-label="Playback speed"
+                  aria-label={t("viz.speed")}
                   value={speed}
                   onChange={(e) => setSpeed(Number(e.target.value))}
                 >
@@ -210,7 +212,7 @@ export default function ExecutionVisualizer({ initialCode, title, draftKey }: Pr
             <div className="space-y-1">
               <input
                 type="range"
-                aria-label="Scrub execution steps"
+                aria-label={t("viz.scrub")}
                 min={0}
                 max={steps.length - 1}
                 value={idx}
@@ -225,10 +227,10 @@ export default function ExecutionVisualizer({ initialCode, title, draftKey }: Pr
                 aria-live="polite"
               >
                 <span>
-                  Step {idx + 1} / {steps.length}
+                  {t("viz.step")} {idx + 1} / {steps.length}
                 </span>
                 <span>
-                  line {current?.line} · <code>{current?.func}</code>
+                  {t("viz.line")} {current?.line} · <code>{current?.func}</code>
                 </span>
               </div>
             </div>
@@ -240,12 +242,12 @@ export default function ExecutionVisualizer({ initialCode, title, draftKey }: Pr
           {current && current.stack && current.stack.length > 1 && (
             <div className="panel">
               <div className="border-b border-white/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                Call stack
+                {t("viz.callStack")}
               </div>
               <div className="flex flex-col-reverse gap-1 p-2" aria-live="polite">
                 {current.stack.map((fn, i) => {
                   const isTop = i === current.stack.length - 1;
-                  const label = fn === "<module>" ? "main" : `${fn}()`;
+                  const label = fn === "<module>" ? t("viz.main") : `${fn}()`;
                   return (
                     <div
                       key={i}
@@ -265,15 +267,16 @@ export default function ExecutionVisualizer({ initialCode, title, draftKey }: Pr
           <div className="panel">
             <div className="flex items-center gap-2 border-b border-white/10 px-3 py-1.5">
               <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                Variables {current && current.depth > 0 && `· depth ${current.depth}`}
+                {t("viz.variables")}{" "}
+                {current && current.depth > 0 && `· ${t("viz.depth")} ${current.depth}`}
               </span>
               <div className="ml-auto flex items-center gap-2">
                 {view === "table" && (
                   <input
                     value={watch}
                     onChange={(e) => setWatch(e.target.value)}
-                    placeholder="watch (e.g. i, total)"
-                    aria-label="Watch variables (comma-separated)"
+                    placeholder={t("viz.watchPlaceholder")}
+                    aria-label={t("viz.watchAria")}
                     className="w-32 rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-xs text-slate-200 outline-none placeholder:text-slate-600"
                   />
                 )}
@@ -286,7 +289,7 @@ export default function ExecutionVisualizer({ initialCode, title, draftKey }: Pr
                         view === v ? "bg-white/10 text-white" : "text-slate-400 hover:bg-white/5"
                       }`}
                     >
-                      {v}
+                      {v === "table" ? t("viz.tableView") : t("viz.objectsView")}
                     </button>
                   ))}
                 </div>
@@ -295,7 +298,7 @@ export default function ExecutionVisualizer({ initialCode, title, draftKey }: Pr
             <div className="max-h-56 overflow-auto p-2">
               {!current && (
                 <p className="px-1 py-2 text-sm text-slate-500">
-                  Press <b>Visualize</b> then step through to watch variables change.
+                  {t("viz.pressA")} <b>{t("editor.visualize")}</b> {t("viz.pressB")}
                 </p>
               )}
               {current && view === "objects" && (
@@ -303,9 +306,7 @@ export default function ExecutionVisualizer({ initialCode, title, draftKey }: Pr
               )}
               {current && view === "table" && visibleLocals.length === 0 && (
                 <p className="px-1 py-2 text-sm text-slate-500">
-                  {watched.length > 0
-                    ? "No watched variables in scope here."
-                    : "No local variables yet at this line."}
+                  {watched.length > 0 ? t("viz.noWatched") : t("viz.noLocals")}
                 </p>
               )}
               {current && view === "table" && visibleLocals.length > 0 && (
@@ -337,15 +338,15 @@ export default function ExecutionVisualizer({ initialCode, title, draftKey }: Pr
 
           <div className="panel">
             <div className="border-b border-white/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
-              Output so far
+              {t("viz.outputSoFar")}
             </div>
             <pre
               className="max-h-32 overflow-auto px-3 py-2 font-mono text-[13px] text-slate-100"
               aria-live="polite"
-              aria-label="Program output so far"
+              aria-label={t("viz.outputSoFar")}
             >
               {current?.stdout || (
-                <span className="text-slate-500">— nothing printed yet —</span>
+                <span className="text-slate-500">{t("viz.nothingPrinted")}</span>
               )}
             </pre>
           </div>
@@ -356,9 +357,7 @@ export default function ExecutionVisualizer({ initialCode, title, draftKey }: Pr
             </pre>
           )}
           {trace?.truncated && (
-            <p className="text-xs text-brand-yellow">
-              ⚠ Execution was long — only the first steps are shown.
-            </p>
+            <p className="text-xs text-brand-yellow">{t("viz.truncated")}</p>
           )}
         </div>
       </div>

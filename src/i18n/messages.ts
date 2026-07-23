@@ -95,6 +95,79 @@ export type MessageKey =
   | "challenge.errBeforeTests"
   | "challenge.engineFailed"
   | "challenge.engineNoResponse"
+  // keyboard shortcuts help
+  | "sc.title"
+  | "sc.close"
+  | "sc.search"
+  | "sc.run"
+  | "sc.prevLesson"
+  | "sc.nextLesson"
+  | "sc.showHelp"
+  | "sc.closeDialogs"
+  // command palette
+  | "cmd.aria"
+  | "cmd.searchAria"
+  | "cmd.placeholder"
+  | "cmd.noMatches"
+  | "cmd.module"
+  | "cmd.pHome"
+  | "cmd.pRoadmap"
+  | "cmd.pReview"
+  | "cmd.pPractice"
+  | "cmd.pReference"
+  | "cmd.pPlayground"
+  | "cmd.pSqlPlayground"
+  | "cmd.pProfile"
+  // execution visualizer
+  | "viz.tracing"
+  | "viz.prevStep"
+  | "viz.nextStep"
+  | "viz.restart"
+  | "viz.pause"
+  | "viz.play"
+  | "viz.speed"
+  | "viz.scrub"
+  | "viz.step"
+  | "viz.line"
+  | "viz.callStack"
+  | "viz.main"
+  | "viz.variables"
+  | "viz.depth"
+  | "viz.watchPlaceholder"
+  | "viz.watchAria"
+  | "viz.tableView"
+  | "viz.objectsView"
+  | "viz.pressA"
+  | "viz.pressB"
+  | "viz.noWatched"
+  | "viz.noLocals"
+  | "viz.outputSoFar"
+  | "viz.nothingPrinted"
+  | "viz.engineFailed"
+  | "viz.engineNoResponse"
+  | "viz.truncated"
+  // flashcards
+  | "fc.deck"
+  | "fc.cards"
+  | "fc.complete"
+  | "fc.completeHint"
+  | "fc.done"
+  | "fc.showQuestion"
+  | "fc.revealAnswer"
+  | "fc.answer"
+  | "fc.questionTap"
+  | "fc.again"
+  | "fc.good"
+  | "fc.easy"
+  | "fc.recallHint"
+  // sql result grid
+  | "grid.result"
+  | "grid.pressRun"
+  | "grid.successPrefix"
+  | "grid.rowWord"
+  | "grid.rowsWord"
+  | "grid.affectedLabel"
+  | "grid.zeroRows"
   // sql
   | "sql.loadingPostgres"
   | "sql.tryIt"
@@ -226,6 +299,74 @@ const en: Dict = {
   "challenge.errBeforeTests": "Your code raised an error before tests could run.",
   "challenge.engineFailed": "The Python engine failed to run your code:",
   "challenge.engineNoResponse": "The Python engine did not respond. Try reloading the page.",
+  "sc.title": "Keyboard shortcuts",
+  "sc.close": "Close shortcuts help",
+  "sc.search": "Search lessons, modules & pages",
+  "sc.run": "Run / submit the focused code editor",
+  "sc.prevLesson": "Previous lesson",
+  "sc.nextLesson": "Next lesson",
+  "sc.showHelp": "Show this help",
+  "sc.closeDialogs": "Close dialogs",
+  "cmd.aria": "Command palette",
+  "cmd.searchAria": "Search",
+  "cmd.placeholder": "Search lessons, content, pages…",
+  "cmd.noMatches": "No matches",
+  "cmd.module": "Module",
+  "cmd.pHome": "Home",
+  "cmd.pRoadmap": "Learning path — Roadmap",
+  "cmd.pReview": "Review — Flashcard queue",
+  "cmd.pPractice": "Practice — Challenge bank",
+  "cmd.pReference": "Reference — SQL & Python cheatsheet",
+  "cmd.pPlayground": "Playground",
+  "cmd.pSqlPlayground": "SQL Playground",
+  "cmd.pProfile": "Profile & achievements",
+  "viz.tracing": "Tracing…",
+  "viz.prevStep": "Previous step",
+  "viz.nextStep": "Next step",
+  "viz.restart": "Restart",
+  "viz.pause": "Pause",
+  "viz.play": "Play",
+  "viz.speed": "Playback speed",
+  "viz.scrub": "Scrub execution steps",
+  "viz.step": "Step",
+  "viz.line": "line",
+  "viz.callStack": "Call stack",
+  "viz.main": "main",
+  "viz.variables": "Variables",
+  "viz.depth": "depth",
+  "viz.watchPlaceholder": "watch (e.g. i, total)",
+  "viz.watchAria": "Watch variables (comma-separated)",
+  "viz.tableView": "table",
+  "viz.objectsView": "objects",
+  "viz.pressA": "Press",
+  "viz.pressB": "then step through to watch variables change.",
+  "viz.noWatched": "No watched variables in scope here.",
+  "viz.noLocals": "No local variables yet at this line.",
+  "viz.outputSoFar": "Output so far",
+  "viz.nothingPrinted": "— nothing printed yet —",
+  "viz.engineFailed": "The Python engine failed:",
+  "viz.engineNoResponse": "The Python engine did not respond. Try reloading the page.",
+  "viz.truncated": "⚠ Execution was long — only the first steps are shown.",
+  "fc.deck": "Flashcards",
+  "fc.cards": "cards",
+  "fc.complete": "Deck complete!",
+  "fc.completeHint": "Graded cards return in the review queue when they're due.",
+  "fc.done": "done",
+  "fc.showQuestion": "Show question",
+  "fc.revealAnswer": "Reveal answer",
+  "fc.answer": "Answer",
+  "fc.questionTap": "Question — tap to reveal",
+  "fc.again": "Again",
+  "fc.good": "Good",
+  "fc.easy": "Easy",
+  "fc.recallHint": "Recall the answer first, then tap the card (or press Space).",
+  "grid.result": "Result",
+  "grid.pressRun": "Press Run ▸ to execute the query.",
+  "grid.successPrefix": "Success —",
+  "grid.rowWord": "row",
+  "grid.rowsWord": "rows",
+  "grid.affectedLabel": "affected",
+  "grid.zeroRows": "(0 rows)",
   "sql.loadingPostgres": "Loading Postgres…",
   "sql.tryIt": "Try it",
   "sql.expectedError": "expected to error",
@@ -358,6 +499,74 @@ const es: Partial<Dict> = {
   "challenge.errBeforeTests": "Tu código lanzó un error antes de poder correr los tests.",
   "challenge.engineFailed": "El motor de Python no pudo ejecutar tu código:",
   "challenge.engineNoResponse": "El motor de Python no respondió. Intenta recargar la página.",
+  "sc.title": "Atajos de teclado",
+  "sc.close": "Cerrar ayuda de atajos",
+  "sc.search": "Buscar lecciones, módulos y páginas",
+  "sc.run": "Ejecutar / enviar el editor de código enfocado",
+  "sc.prevLesson": "Lección anterior",
+  "sc.nextLesson": "Lección siguiente",
+  "sc.showHelp": "Mostrar esta ayuda",
+  "sc.closeDialogs": "Cerrar diálogos",
+  "cmd.aria": "Paleta de comandos",
+  "cmd.searchAria": "Buscar",
+  "cmd.placeholder": "Buscar lecciones, contenido, páginas…",
+  "cmd.noMatches": "Sin resultados",
+  "cmd.module": "Módulo",
+  "cmd.pHome": "Inicio",
+  "cmd.pRoadmap": "Ruta de aprendizaje — Roadmap",
+  "cmd.pReview": "Repaso — Cola de flashcards",
+  "cmd.pPractice": "Práctica — Banco de retos",
+  "cmd.pReference": "Referencia — Chuleta de SQL y Python",
+  "cmd.pPlayground": "Playground",
+  "cmd.pSqlPlayground": "Playground de SQL",
+  "cmd.pProfile": "Perfil y logros",
+  "viz.tracing": "Trazando…",
+  "viz.prevStep": "Paso anterior",
+  "viz.nextStep": "Paso siguiente",
+  "viz.restart": "Reiniciar",
+  "viz.pause": "Pausar",
+  "viz.play": "Reproducir",
+  "viz.speed": "Velocidad de reproducción",
+  "viz.scrub": "Desplazar por los pasos de ejecución",
+  "viz.step": "Paso",
+  "viz.line": "línea",
+  "viz.callStack": "Pila de llamadas",
+  "viz.main": "main",
+  "viz.variables": "Variables",
+  "viz.depth": "profundidad",
+  "viz.watchPlaceholder": "vigilar (ej. i, total)",
+  "viz.watchAria": "Vigilar variables (separadas por comas)",
+  "viz.tableView": "tabla",
+  "viz.objectsView": "objetos",
+  "viz.pressA": "Pulsa",
+  "viz.pressB": "y avanza paso a paso para ver cambiar las variables.",
+  "viz.noWatched": "No hay variables vigiladas en este ámbito.",
+  "viz.noLocals": "Aún no hay variables locales en esta línea.",
+  "viz.outputSoFar": "Salida hasta ahora",
+  "viz.nothingPrinted": "— nada impreso aún —",
+  "viz.engineFailed": "El motor de Python falló:",
+  "viz.engineNoResponse": "El motor de Python no respondió. Intenta recargar la página.",
+  "viz.truncated": "⚠ La ejecución fue larga — solo se muestran los primeros pasos.",
+  "fc.deck": "Flashcards",
+  "fc.cards": "tarjetas",
+  "fc.complete": "¡Mazo completado!",
+  "fc.completeHint": "Las tarjetas calificadas vuelven a la cola de repaso cuando toca.",
+  "fc.done": "hechas",
+  "fc.showQuestion": "Mostrar pregunta",
+  "fc.revealAnswer": "Revelar respuesta",
+  "fc.answer": "Respuesta",
+  "fc.questionTap": "Pregunta — toca para revelar",
+  "fc.again": "Otra vez",
+  "fc.good": "Bien",
+  "fc.easy": "Fácil",
+  "fc.recallHint": "Recuerda la respuesta primero, luego toca la tarjeta (o pulsa Espacio).",
+  "grid.result": "Resultado",
+  "grid.pressRun": "Pulsa Ejecutar ▸ para correr la consulta.",
+  "grid.successPrefix": "Correcto —",
+  "grid.rowWord": "fila",
+  "grid.rowsWord": "filas",
+  "grid.affectedLabel": "afectadas",
+  "grid.zeroRows": "(0 filas)",
   "sql.loadingPostgres": "Cargando Postgres…",
   "sql.tryIt": "Pruébalo",
   "sql.expectedError": "se espera error",

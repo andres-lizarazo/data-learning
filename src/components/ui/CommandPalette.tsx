@@ -4,6 +4,9 @@ import { AnimatePresence, motion } from "framer-motion";
 import { BookOpen, CornerDownLeft, Gamepad2, Search, Trophy, FileText } from "lucide-react";
 import { curriculum } from "../../content/curriculum";
 import { useFocusTrap } from "../../lib/useFocusTrap";
+import { useT, translate, moduleTitle } from "../../i18n";
+import { localizedLessonTitle } from "../../content/i18n";
+import { useLocaleStore, type Locale } from "../../store/localeStore";
 import type { Block } from "../../types/lesson";
 
 interface Item {
@@ -48,26 +51,34 @@ function blockText(block: Block): string {
   }
 }
 
-function buildIndex(): Item[] {
+function buildIndex(locale: Locale): Item[] {
   const pages: Item[] = [
-    { id: "p-home", label: "Home", to: "/", kind: "page" },
-    { id: "p-roadmap", label: "Learning path — Roadmap", to: "/roadmap", kind: "page" },
-    { id: "p-review", label: "Review — Flashcard queue", to: "/review", kind: "page" },
-    { id: "p-practice", label: "Practice — Challenge bank", to: "/practice", kind: "page" },
-    { id: "p-reference", label: "Reference — SQL & Python cheatsheet", to: "/reference", kind: "page" },
-    { id: "p-playground", label: "Playground", to: "/playground", kind: "page" },
-    { id: "p-sql-playground", label: "SQL Playground", to: "/sql-playground", kind: "page" },
-    { id: "p-profile", label: "Profile & achievements", to: "/profile", kind: "page" },
+    { id: "p-home", label: translate("cmd.pHome", locale), to: "/", kind: "page" },
+    { id: "p-roadmap", label: translate("cmd.pRoadmap", locale), to: "/roadmap", kind: "page" },
+    { id: "p-review", label: translate("cmd.pReview", locale), to: "/review", kind: "page" },
+    { id: "p-practice", label: translate("cmd.pPractice", locale), to: "/practice", kind: "page" },
+    { id: "p-reference", label: translate("cmd.pReference", locale), to: "/reference", kind: "page" },
+    { id: "p-playground", label: translate("cmd.pPlayground", locale), to: "/playground", kind: "page" },
+    { id: "p-sql-playground", label: translate("cmd.pSqlPlayground", locale), to: "/sql-playground", kind: "page" },
+    { id: "p-profile", label: translate("cmd.pProfile", locale), to: "/profile", kind: "page" },
   ];
   const items: Item[] = [...pages];
+  const moduleLabel = translate("cmd.module", locale);
   for (const m of curriculum) {
-    items.push({ id: `m-${m.id}`, label: m.title, sub: "Module", to: `/learn/${m.id}`, kind: "module" });
+    items.push({
+      id: `m-${m.id}`,
+      label: moduleTitle(m, locale),
+      sub: moduleLabel,
+      to: `/learn/${m.id}`,
+      kind: "module",
+    });
     for (const l of m.lessons) {
+      // Search body stays English (lesson content) so search works across languages.
       const body = [l.title, l.summary, ...l.blocks.map(blockText)].join("  ");
       items.push({
         id: `l-${m.id}-${l.id}`,
-        label: l.title,
-        sub: m.title,
+        label: localizedLessonTitle(l.id, l.title, locale),
+        sub: moduleTitle(m, locale),
         to: `/learn/${m.id}/${l.id}`,
         kind: "lesson",
         haystack: body.toLowerCase(),
@@ -104,7 +115,9 @@ export default function CommandPalette() {
   const [active, setActive] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
-  const index = useMemo(buildIndex, []);
+  const locale = useLocaleStore((s) => s.locale);
+  const t = useT();
+  const index = useMemo(() => buildIndex(locale), [locale]);
   useFocusTrap(dialogRef, open);
 
   // Global ⌘K / Ctrl+K toggle.
@@ -180,7 +193,7 @@ export default function CommandPalette() {
             exit={{ opacity: 0, y: -12, scale: 0.98 }}
             role="dialog"
             aria-modal="true"
-            aria-label="Command palette"
+            aria-label={t("cmd.aria")}
           >
             <div className="flex items-center gap-2 border-b border-white/10 px-4">
               <Search className="h-4 w-4 text-slate-400" />
@@ -200,15 +213,15 @@ export default function CommandPalette() {
                     go();
                   }
                 }}
-                placeholder="Search lessons, content, pages…"
+                placeholder={t("cmd.placeholder")}
                 className="w-full bg-transparent py-3.5 text-sm text-white outline-none placeholder:text-slate-500"
-                aria-label="Search"
+                aria-label={t("cmd.searchAria")}
               />
               <kbd className="pill border-white/10 bg-white/5 text-[10px] text-slate-400">ESC</kbd>
             </div>
             <ul className="max-h-80 overflow-y-auto p-2">
               {results.length === 0 && (
-                <li className="px-3 py-6 text-center text-sm text-slate-500">No matches</li>
+                <li className="px-3 py-6 text-center text-sm text-slate-500">{t("cmd.noMatches")}</li>
               )}
               {results.map((item, i) => (
                 <li key={item.id}>

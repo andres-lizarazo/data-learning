@@ -1,5 +1,6 @@
 import { Table2, AlertTriangle, Check } from "lucide-react";
 import type { SqlExecResult } from "../../sql/sqlClient";
+import { useT } from "../../i18n";
 
 // Renders a SQL execution result like a database console: a result grid for SELECTs,
 // an "OK / N rows affected" line for writes, or a red error box on failure.
@@ -21,6 +22,7 @@ export default function SqlResultTable({
   result: SqlExecResult | null;
   running?: boolean;
 }) {
+  const t = useT();
   return (
     <div
       className="overflow-hidden rounded-xl border border-white/10"
@@ -28,19 +30,21 @@ export default function SqlResultTable({
     >
       <div className="flex items-center justify-between border-b border-white/10 px-3 py-1.5">
         <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
-          <Table2 className="h-3.5 w-3.5 text-accent-cyan" /> Result
+          <Table2 className="h-3.5 w-3.5 text-accent-cyan" /> {t("grid.result")}
         </span>
-        {running && <span className="pill text-accent-cyan">running…</span>}
+        {running && <span className="pill text-accent-cyan">{t("console.running")}</span>}
         {result?.ok && !running && (
           <span className="text-xs text-slate-500">
-            {result.hasResultSet ? `${result.rows.length} rows` : `${result.affectedRows} affected`}
+            {result.hasResultSet
+              ? `${result.rows.length} ${t("grid.rowsWord")}`
+              : `${result.affectedRows} ${t("grid.affectedLabel")}`}
           </span>
         )}
       </div>
 
       <div className="max-h-80 overflow-auto" aria-live="polite">
         {!result && !running && (
-          <div className="px-3 py-3 text-sm text-slate-400">Press Run ▸ to execute the query.</div>
+          <div className="px-3 py-3 text-sm text-slate-400">{t("grid.pressRun")}</div>
         )}
 
         {result && !result.ok && (
@@ -53,7 +57,9 @@ export default function SqlResultTable({
         {result && result.ok && !result.hasResultSet && (
           <div className="flex items-center gap-2 px-3 py-3 text-sm text-accent-lime">
             <Check className="h-4 w-4" />
-            Success — {result.affectedRows} row{result.affectedRows === 1 ? "" : "s"} affected.
+            {t("grid.successPrefix")} {result.affectedRows}{" "}
+            {result.affectedRows === 1 ? t("grid.rowWord") : t("grid.rowsWord")}{" "}
+            {t("grid.affectedLabel")}.
           </div>
         )}
 
@@ -78,7 +84,7 @@ export default function SqlResultTable({
                     colSpan={result.columns.length}
                     className="px-3 py-3 text-sm text-slate-500"
                   >
-                    (0 rows)
+                    {t("grid.zeroRows")}
                   </td>
                 </tr>
               )}

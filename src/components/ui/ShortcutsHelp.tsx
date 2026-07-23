@@ -2,22 +2,24 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Keyboard, X } from "lucide-react";
 import { useFocusTrap } from "../../lib/useFocusTrap";
+import { useT, type MessageKey } from "../../i18n";
 
 // Global "?" opens a cheat-sheet of the app's keyboard shortcuts.
 
-const SHORTCUTS: { keys: string[]; what: string }[] = [
-  { keys: ["⌘", "K"], what: "Search lessons, modules & pages" },
-  { keys: ["⌘", "Enter"], what: "Run / submit the focused code editor" },
-  { keys: ["["], what: "Previous lesson" },
-  { keys: ["]"], what: "Next lesson" },
-  { keys: ["?"], what: "Show this help" },
-  { keys: ["Esc"], what: "Close dialogs" },
+const SHORTCUTS: { keys: string[]; what: MessageKey }[] = [
+  { keys: ["⌘", "K"], what: "sc.search" },
+  { keys: ["⌘", "Enter"], what: "sc.run" },
+  { keys: ["["], what: "sc.prevLesson" },
+  { keys: ["]"], what: "sc.nextLesson" },
+  { keys: ["?"], what: "sc.showHelp" },
+  { keys: ["Esc"], what: "sc.closeDialogs" },
 ];
 
 export default function ShortcutsHelp() {
   const [open, setOpen] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   useFocusTrap(dialogRef, open);
+  const t = useT();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -52,15 +54,15 @@ export default function ShortcutsHelp() {
             exit={{ opacity: 0, y: -12, scale: 0.98 }}
             role="dialog"
             aria-modal="true"
-            aria-label="Keyboard shortcuts"
+            aria-label={t("sc.title")}
           >
             <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3">
               <Keyboard className="h-4 w-4 text-accent-cyan" />
-              <span className="text-sm font-semibold text-white">Keyboard shortcuts</span>
+              <span className="text-sm font-semibold text-white">{t("sc.title")}</span>
               <button
                 className="btn-ghost ml-auto px-2"
                 onClick={() => setOpen(false)}
-                aria-label="Close shortcuts help"
+                aria-label={t("sc.close")}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -81,7 +83,7 @@ export default function ShortcutsHelp() {
                       </kbd>
                     ))}
                   </span>
-                  <span className="ml-auto text-right text-slate-400">{s.what}</span>
+                  <span className="ml-auto text-right text-slate-400">{t(s.what)}</span>
                 </li>
               ))}
             </ul>
