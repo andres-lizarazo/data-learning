@@ -1052,5 +1052,355 @@ print("min coins:", dp[amount])`,
         },
       ],
     },
+    {
+      id: "dp-knapsack",
+      title: "DP — 0/1 Knapsack",
+      summary: "Maximize value under a weight budget, taking each item at most once.",
+      minutes: 15,
+      blocks: [
+        {
+          kind: "prose",
+          markdown: `# 0/1 Knapsack
+
+You have items, each with a **weight** and a **value**, and a knapsack that holds at most
+\`W\` weight. Maximize total value, taking **each item at most once** (that's the "0/1").
+
+Roll a 1-D table where \`dp[w]\` = best value achievable with capacity \`w\`:
+
+- Start \`dp = [0, 0, …, 0]\` (size \`W+1\`).
+- For each item, walk capacity **from \`W\` down to the item's weight**:
+  \`dp[w] = max(dp[w], dp[w - weight] + value)\`.
+
+> **Why iterate capacity in reverse?** Going high→low ensures \`dp[w - weight]\` still refers to
+> the row *before* this item — so each item is used at most once. Left→right would let one item
+> be picked repeatedly (that's the *unbounded* knapsack).`,
+        },
+        {
+          kind: "visualized",
+          title: "Filling the knapsack table",
+          code: `weights = [1, 3, 4]
+values  = [15, 20, 30]
+W = 4
+dp = [0] * (W + 1)
+for i in range(len(weights)):
+    for w in range(W, weights[i] - 1, -1):
+        dp[w] = max(dp[w], dp[w - weights[i]] + values[i])
+print(dp)
+print("best value:", dp[W])`,
+        },
+        {
+          kind: "quiz",
+          question:
+            "In the 1-D 0/1 knapsack, why do we iterate the capacity from high to low?",
+          options: [
+            {
+              text: "So each item is counted at most once — reverse order keeps dp[w-weight] at the previous item's state.",
+              correct: true,
+            },
+            { text: "It's faster than low-to-high." },
+            { text: "To avoid integer overflow." },
+            { text: "Order doesn't matter; either works." },
+          ],
+          explanation:
+            "Left→right would read a dp value already updated for the current item, letting it be taken multiple times (unbounded knapsack). Right→left preserves the previous state, enforcing the 0/1 rule.",
+        },
+        {
+          kind: "challenge",
+          title: "0/1 Knapsack",
+          prompt:
+            "Return the **maximum total value** you can carry given `weights`, `values` (same length), and capacity `W`, taking each item at most once.",
+          starterCode: `def knapsack(weights, values, W):
+    pass`,
+          tests: [
+            { name: "take 0+1", assertion: "assert knapsack([1,3,4],[15,20,30],4) == 35" },
+            { name: "take last two", assertion: "assert knapsack([1,2,3],[6,10,12],5) == 22" },
+            { name: "empty", assertion: "assert knapsack([], [], 5) == 0", hidden: true },
+          ],
+          hints: [
+            "Make `dp = [0]*(W+1)`.",
+            "For each item i, loop `w` from `W` down to `weights[i]` and relax `dp[w] = max(dp[w], dp[w-weights[i]] + values[i])`.",
+            "Answer is `dp[W]`.",
+          ],
+          solution: `def knapsack(weights, values, W):
+    dp = [0] * (W + 1)
+    for i in range(len(weights)):
+        for w in range(W, weights[i] - 1, -1):
+            dp[w] = max(dp[w], dp[w - weights[i]] + values[i])
+    return dp[W]`,
+          xp: 100,
+        },
+      ],
+    },
+    {
+      id: "dp-lis",
+      title: "DP — Longest Increasing Subsequence",
+      summary: "Length of the longest strictly-increasing subsequence with an O(n²) table.",
+      minutes: 13,
+      blocks: [
+        {
+          kind: "prose",
+          markdown: `# Longest Increasing Subsequence (LIS)
+
+Given an array, find the length of the longest **strictly increasing** subsequence
+(elements keep their order but needn't be contiguous).
+
+Let \`dp[i]\` = the length of the longest increasing subsequence **ending at index \`i\`**.
+Every element alone is a subsequence of length 1, so start all \`dp[i] = 1\`, then:
+
+\`\`\`
+dp[i] = 1 + max(dp[j] for every j < i where a[j] < a[i])
+\`\`\`
+
+The answer is \`max(dp)\`. This is **O(n²)** (a patience-sorting variant reaches O(n log n)).`,
+        },
+        {
+          kind: "visualized",
+          title: "Building the dp array",
+          code: `a = [10, 9, 2, 5, 3, 7, 101, 18]
+dp = [1] * len(a)
+for i in range(len(a)):
+    for j in range(i):
+        if a[j] < a[i]:
+            dp[i] = max(dp[i], dp[j] + 1)
+print(dp)
+print("LIS length:", max(dp))`,
+        },
+        {
+          kind: "quiz",
+          question: "In this DP, what does `dp[i]` represent?",
+          options: [
+            {
+              text: "The length of the longest increasing subsequence that ends at index i.",
+              correct: true,
+            },
+            { text: "The value of the largest element seen so far." },
+            { text: "The number of elements smaller than a[i]." },
+            { text: "The longest subsequence starting at index 0." },
+          ],
+          explanation:
+            "Anchoring the subsequence at its last element (index i) gives the clean recurrence dp[i] = 1 + max(dp[j]) over earlier smaller elements. The global answer is max(dp).",
+        },
+        {
+          kind: "challenge",
+          title: "Length of LIS",
+          prompt:
+            "Return the length of the longest strictly increasing subsequence of `nums`. An empty list has length `0`.",
+          starterCode: `def length_of_lis(nums):
+    pass`,
+          tests: [
+            { name: "classic", assertion: "assert length_of_lis([10,9,2,5,3,7,101,18]) == 4" },
+            { name: "zigzag", assertion: "assert length_of_lis([0,1,0,3,2,3]) == 4" },
+            { name: "all equal", assertion: "assert length_of_lis([7,7,7,7]) == 1" },
+            { name: "empty", assertion: "assert length_of_lis([]) == 0", hidden: true },
+          ],
+          hints: [
+            "Guard the empty list first: `if not nums: return 0`.",
+            "Init `dp = [1]*len(nums)`; for each i, look back at every j<i with `nums[j] < nums[i]`.",
+            "Return `max(dp)`.",
+          ],
+          solution: `def length_of_lis(nums):
+    if not nums:
+        return 0
+    dp = [1] * len(nums)
+    for i in range(len(nums)):
+        for j in range(i):
+            if nums[j] < nums[i]:
+                dp[i] = max(dp[i], dp[j] + 1)
+    return max(dp)`,
+          xp: 95,
+        },
+      ],
+    },
+    {
+      id: "dp-edit-distance",
+      title: "DP — Edit Distance",
+      summary: "Minimum insert/delete/replace edits between two strings with a 2-D table.",
+      minutes: 15,
+      blocks: [
+        {
+          kind: "prose",
+          markdown: `# Edit Distance (Levenshtein)
+
+The minimum number of single-character **insertions, deletions, or replacements** to turn
+string \`a\` into string \`b\`.
+
+Use a 2-D table where \`dp[i][j]\` = edits to convert the first \`i\` chars of \`a\` into the
+first \`j\` chars of \`b\`:
+
+- Base cases: \`dp[i][0] = i\` (delete all), \`dp[0][j] = j\` (insert all).
+- If the current chars match (\`a[i-1] == b[j-1]\`): \`dp[i][j] = dp[i-1][j-1]\` (free).
+- Otherwise pay 1 for the cheapest of the three moves:
+  \`dp[i][j] = 1 + min(dp[i-1][j]\` (delete), \`dp[i][j-1]\` (insert), \`dp[i-1][j-1]\` (replace)\`)\`.
+
+The answer is \`dp[len(a)][len(b)]\`.`,
+        },
+        {
+          kind: "visualized",
+          title: "Filling the 2-D table",
+          code: `a, b = "horse", "ros"
+m, n = len(a), len(b)
+dp = [[0] * (n + 1) for _ in range(m + 1)]
+for i in range(m + 1):
+    dp[i][0] = i
+for j in range(n + 1):
+    dp[0][j] = j
+for i in range(1, m + 1):
+    for j in range(1, n + 1):
+        if a[i - 1] == b[j - 1]:
+            dp[i][j] = dp[i - 1][j - 1]
+        else:
+            dp[i][j] = 1 + min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1])
+print("edit distance:", dp[m][n])`,
+        },
+        {
+          kind: "quiz",
+          question: "When the current characters match, the DP move is…",
+          options: [
+            { text: "Carry the diagonal for free: dp[i][j] = dp[i-1][j-1].", correct: true },
+            { text: "Add 1 to the diagonal: dp[i][j] = 1 + dp[i-1][j-1]." },
+            { text: "Take the minimum of the three neighbors plus 1." },
+            { text: "Reset dp[i][j] to 0." },
+          ],
+          explanation:
+            "Matching characters cost nothing, so you inherit the subproblem on the diagonal. You only pay 1 (and take the min of delete/insert/replace) when the characters differ.",
+        },
+        {
+          kind: "challenge",
+          title: "Edit distance",
+          prompt:
+            "Return the Levenshtein **edit distance** between strings `a` and `b` (min insert/delete/replace edits).",
+          starterCode: `def edit_distance(a, b):
+    pass`,
+          tests: [
+            { name: "horse→ros", assertion: "assert edit_distance('horse', 'ros') == 3" },
+            { name: "intention→execution", assertion: "assert edit_distance('intention', 'execution') == 5" },
+            { name: "identical", assertion: "assert edit_distance('same', 'same') == 0" },
+            { name: "empty source", assertion: "assert edit_distance('', 'abc') == 3", hidden: true },
+          ],
+          hints: [
+            "Build `dp` sized `(len(a)+1) x (len(b)+1)`; fill first row/col with 0..n and 0..m.",
+            "Match → diagonal; mismatch → `1 + min(up, left, diagonal)`.",
+            "Return `dp[len(a)][len(b)]`.",
+          ],
+          solution: `def edit_distance(a, b):
+    m, n = len(a), len(b)
+    dp = [[0] * (n + 1) for _ in range(m + 1)]
+    for i in range(m + 1):
+        dp[i][0] = i
+    for j in range(n + 1):
+        dp[0][j] = j
+    for i in range(1, m + 1):
+        for j in range(1, n + 1):
+            if a[i - 1] == b[j - 1]:
+                dp[i][j] = dp[i - 1][j - 1]
+            else:
+                dp[i][j] = 1 + min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1])
+    return dp[m][n]`,
+          xp: 100,
+        },
+      ],
+    },
+    {
+      id: "big-o",
+      title: "Big-O Complexity",
+      summary: "Reason about how running time and space grow with input size.",
+      minutes: 12,
+      blocks: [
+        {
+          kind: "prose",
+          markdown: `# Big-O: how cost grows
+
+Big-O describes how an algorithm's work grows as the input size \`n\` gets large — ignoring
+constants and lower-order terms. It's about **growth**, not stopwatch seconds.
+
+| Class | Name | Example |
+|---|---|---|
+| \`O(1)\` | constant | dict/set lookup, array index |
+| \`O(log n)\` | logarithmic | binary search, balanced-tree ops |
+| \`O(n)\` | linear | one pass over a list |
+| \`O(n log n)\` | linearithmic | good sorts (merge, heap, Timsort) |
+| \`O(n²)\` | quadratic | nested loop over all pairs |
+| \`O(2ⁿ)\` | exponential | naive subset/recursion without memo |
+| \`O(n!)\` | factorial | brute-force permutations |
+
+**Reading code:** a loop over \`n\` is \`O(n)\`; a loop inside a loop is \`O(n²)\`; halving the
+problem each step (\`n → n/2 → …\`) is \`O(log n)\`. Keep the **dominant** term:
+\`O(n² + n)\` is just \`O(n²)\`.
+
+**Space complexity** counts extra memory the same way — a dp table of size \`n\` is \`O(n)\`
+space; a 2-D table is \`O(n·m)\`. **Amortized** cost averages over many operations (a Python
+list \`append\` is amortized \`O(1)\` even though it occasionally resizes).`,
+        },
+        {
+          kind: "runnable",
+          title: "Same answer, different growth",
+          code: `# O(n^2): compare every pair
+def has_dup_slow(a):
+    for i in range(len(a)):
+        for j in range(i + 1, len(a)):
+            if a[i] == a[j]:
+                return True
+    return False
+
+# O(n): a set remembers what we've seen
+def has_dup_fast(a):
+    return len(set(a)) != len(a)
+
+data = list(range(2000)) + [0]        # a duplicate at the end
+print(has_dup_slow(data), has_dup_fast(data))
+# Both correct — but as n grows, the O(n) version pulls far ahead.`,
+        },
+        {
+          kind: "quiz",
+          question:
+            "A function loops over the list, and inside that loop runs a second loop over the whole list. Its time complexity is…",
+          options: [
+            { text: "O(n²)", correct: true },
+            { text: "O(n)" },
+            { text: "O(n log n)" },
+            { text: "O(log n)" },
+          ],
+          explanation:
+            "n iterations, each doing n work → n·n = O(n²). A single pass is O(n); repeatedly halving the input is O(log n).",
+        },
+        {
+          kind: "quiz",
+          question: "Which describes the growth when an algorithm halves the input each step?",
+          options: [
+            { text: "O(log n)", correct: true },
+            { text: "O(n)" },
+            { text: "O(n²)" },
+            { text: "O(1)" },
+          ],
+          explanation:
+            "Halving repeatedly reaches 1 in about log₂(n) steps — the hallmark of binary search and balanced-tree operations.",
+        },
+        {
+          kind: "challenge",
+          title: "Linear-time duplicate check",
+          prompt:
+            "Return `True` if `nums` contains any duplicate, else `False` — in **O(n)** time using a set.",
+          starterCode: `def has_duplicate(nums):
+    pass`,
+          tests: [
+            { name: "has dup", assertion: "assert has_duplicate([1,2,3,1]) == True" },
+            { name: "no dup", assertion: "assert has_duplicate([1,2,3]) == False" },
+            { name: "empty", assertion: "assert has_duplicate([]) == False", hidden: true },
+          ],
+          hints: [
+            "A `set` gives O(1) membership tests.",
+            "Compare `len(set(nums))` with `len(nums)`, or build the set as you scan and return early on a repeat.",
+          ],
+          solution: `def has_duplicate(nums):
+    seen = set()
+    for x in nums:
+        if x in seen:
+            return True
+        seen.add(x)
+    return False`,
+          xp: 70,
+        },
+      ],
+    },
   ],
 };

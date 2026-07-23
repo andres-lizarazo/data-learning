@@ -808,5 +808,133 @@ assert j.name == "backfill" and j.minutes == 120 and j.hours == 2.0`,
         },
       ],
     },
+    {
+      id: "abstractions",
+      title: "ABCs, Protocols & Enums",
+      summary: "Define interfaces two ways (nominal ABCs vs structural Protocols) and model fixed sets with Enum.",
+      minutes: 15,
+      blocks: [
+        {
+          kind: "prose",
+          markdown: `# Interfaces & fixed value sets
+
+Three tools for expressing *contracts* in your types:
+
+**Abstract Base Classes (\`abc\`)** — declare methods a subclass **must** implement.
+An ABC can't be instantiated directly, and forgetting an \`@abstractmethod\` is an error
+at construction time. This is **nominal** typing: you opt in by *inheriting*.
+
+**Protocols (\`typing.Protocol\`)** — **structural** typing (static duck typing). Any object
+with the right methods satisfies the protocol — no inheritance required. Great for "anything
+with an \`.area()\`" without forcing a base class on unrelated types.
+
+**Enums (\`enum.Enum\`)** — a fixed set of named constants (statuses, priorities, directions).
+Safer and more readable than bare strings or magic numbers, and iterable.
+
+| | Opt-in by | Checked | Use when |
+|---|---|---|---|
+| **ABC** | inheritance | at instantiation | you own the hierarchy and want to enforce it |
+| **Protocol** | just having the methods | by the type checker | you accept types you don't control |`,
+        },
+        {
+          kind: "runnable",
+          title: "An ABC you can't instantiate until it's complete",
+          code: `from abc import ABC, abstractmethod
+
+class Shape(ABC):
+    @abstractmethod
+    def area(self) -> float: ...
+
+class Circle(Shape):
+    def __init__(self, r): self.r = r
+    def area(self): return 3.14159 * self.r ** 2
+
+print("circle area:", round(Circle(2).area(), 2))
+
+try:
+    Shape()                       # abstract — can't instantiate
+except TypeError as e:
+    print("blocked:", e)`,
+        },
+        {
+          kind: "runnable",
+          title: "A Protocol: structural typing, no inheritance",
+          code: `from typing import Protocol
+
+class HasArea(Protocol):
+    def area(self) -> float: ...
+
+def describe(obj: HasArea) -> str:
+    return f"area is {obj.area():.2f}"
+
+class Square:                     # note: does NOT inherit HasArea
+    def __init__(self, s): self.s = s
+    def area(self): return self.s * self.s
+
+print(describe(Square(3)))        # works: Square structurally has .area()`,
+        },
+        {
+          kind: "runnable",
+          title: "Enum: a fixed set of named values",
+          code: `from enum import Enum
+
+class Status(Enum):
+    PENDING = "pending"
+    PAID = "paid"
+    REFUNDED = "refunded"
+
+s = Status.PAID
+print(s, "| name:", s.name, "| value:", s.value)
+print("lookup by value:", Status("refunded"))
+print("all members:", [m.name for m in Status])`,
+        },
+        {
+          kind: "quiz",
+          question:
+            "What's the key difference between an abstract base class and a `typing.Protocol`?",
+          options: [
+            {
+              text: "An ABC enforces the interface via inheritance (nominal); a Protocol matches any object that has the right methods (structural).",
+              correct: true,
+            },
+            { text: "They are two names for the same feature." },
+            { text: "Protocols require inheritance; ABCs do not." },
+            { text: "Only ABCs can declare method signatures." },
+          ],
+          explanation:
+            "ABCs are nominal — a type conforms by subclassing and implementing the abstract methods, checked when you instantiate. Protocols are structural — any object with matching methods satisfies them, checked by the type checker without inheritance.",
+        },
+        {
+          kind: "challenge",
+          title: "Model priority as an Enum",
+          prompt:
+            "Define an `enum.Enum` subclass named `Priority` with three members: `LOW = 1`, `MEDIUM = 2`, `HIGH = 3`.",
+          starterCode: `from enum import Enum
+
+class Priority(Enum):
+    pass`,
+          tests: [
+            { name: "value", assertion: "assert Priority.LOW.value == 1" },
+            { name: "high value", assertion: "assert Priority.HIGH.value == 3" },
+            {
+              name: "members in order",
+              assertion: "assert [p.name for p in Priority] == ['LOW', 'MEDIUM', 'HIGH']",
+              hidden: true,
+            },
+          ],
+          hints: [
+            "Inside the class body, assign each member: `LOW = 1`, and so on.",
+            "Enum members are declared as plain class attributes with their values.",
+          ],
+          solution: `from enum import Enum
+
+class Priority(Enum):
+    LOW = 1
+    MEDIUM = 2
+    HIGH = 3`,
+          xp: 70,
+        },
+      ],
+    },
   ],
 };

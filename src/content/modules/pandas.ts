@@ -225,6 +225,22 @@ def avg_by_group(records):
     return {k: float(v) for k, v in s.items()}`,
           xp: 80,
         },
+        {
+          kind: "quiz",
+          question:
+            "`df.groupby(\"city\")[\"sales\"].sum()` returns what, and what is `city` in the result?",
+          options: [
+            {
+              text: "A Series of per-city sums, indexed by city (city becomes the index).",
+              correct: true,
+            },
+            { text: "A DataFrame with city as a regular column." },
+            { text: "A single number — the grand total." },
+            { text: "A dict mapping city to sales." },
+          ],
+          explanation:
+            "Aggregating one column over a groupby yields a Series indexed by the group key. Add `.reset_index()` to turn `city` back into an ordinary column, or use `.agg(...)` for multiple named aggregations.",
+        },
       ],
     },
     {
@@ -295,6 +311,19 @@ def order_costs(orders, prices):
     m = pd.DataFrame(orders).merge(pd.DataFrame(prices), on="item")
     return {row["item"]: int(row["qty"] * row["price"]) for _, row in m.iterrows()}`,
           xp: 80,
+        },
+        {
+          kind: "quiz",
+          question:
+            "You merge two DataFrames with `how=\"inner\"` on `item`. A row whose `item` exists in the left frame but not the right will…",
+          options: [
+            { text: "Be dropped from the result.", correct: true },
+            { text: "Appear with the right-side columns filled with NaN." },
+            { text: "Raise a KeyError." },
+            { text: "Be kept with zeros in the missing columns." },
+          ],
+          explanation:
+            "An inner join keeps only keys present in *both* frames. Use `how=\"left\"` to keep all left rows (unmatched right columns become NaN), `how=\"outer\"` to keep everything from both sides.",
         },
       ],
     },

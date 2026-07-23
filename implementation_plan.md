@@ -482,6 +482,41 @@ green CI gate + Playwright e2e.
 - [x] A11y: reusable **focus-trap** on the command palette + onboarding; **keyboard
       grading** for flashcards (Space to flip, 1/2/3 to grade).
 
+## 2026-07 Content deepening pass (DONE)
+
+Filled the remaining depth gaps within existing modules — no new tooling or block kinds,
+authored as typed TS and verified end-to-end (`npm run build`, Python solutions run against
+`python3`, SQL run against a real Postgres 16 in Docker).
+
+### Python
+- [x] **Intro to ML** promoted `starter → deep`: added **Regression & metrics** (LinearRegression,
+      MAE/RMSE/R²), **Preprocessing & Pipelines** (StandardScaler, leakage, `Pipeline`),
+      **Cross-Validation & over/underfitting**, and **Classification Metrics**
+      (confusion matrix, precision/recall/F1, ROC) — each prose + runnable + quiz + challenge,
+      plus a closing flashcard deck. Blurb updated.
+- [x] **Core Libraries** — new **Regular Expressions (`re`)** lesson (search/match/findall/sub,
+      named groups, `~`), closing the platform's total absence of regex.
+- [x] **DSA** — DP expanded from 2 → 5 lessons: **0/1 Knapsack**, **Longest Increasing
+      Subsequence**, **Edit Distance**, plus a dedicated **Big-O Complexity** lesson. Added 6
+      quizzes across them (DSA was previously quiz-light).
+- [x] **Python OOP** — new **ABCs, Protocols & Enums** lesson (nominal vs structural typing,
+      `enum.Enum`).
+- [x] **NumPy** — new **Linear Algebra & Random** lesson (`@` vs `*`, `np.linalg.solve`,
+      `default_rng`).
+- [x] **Pandas** — added quizzes (groupby result shape, inner-join semantics); module had none.
+
+### SQL (PostgreSQL)
+- [x] **PL/pgSQL control flow** made interactive: `IF/LOOP/WHILE/FOR`, `FOR … IN SELECT`,
+      `CONTINUE`, and `EXCEPTION WHEN … SQLERRM` runnables + a factorial `sql-challenge`
+      (ported from `sql-reference/concepts.md` §20).
+- [x] **Stored procedures** — runnable `CREATE PROCEDURE` / `CALL` example (§18).
+- [x] **`EXPLAIN ANALYZE`** — runnable showing real timings + index use on a generated table (§13).
+- [x] **String functions / regex** — `initcap`, `lpad`, `translate`, `regexp_replace`,
+      `regexp_matches`, `format`, `~` runnable (§21).
+- [x] **Self-join** runnable (categories → parent) in the JOINs lesson (§2).
+- [x] **Cheat-sheet** deck extended with DISTINCT ON, COALESCE/NULLIF, string_agg, FILTER,
+      keyset pagination, EXPLAIN vs EXPLAIN ANALYZE (§0).
+
 ## Decisions Log
 - **Light theme via CSS variables + `.light` utility remaps (not a full `dark:` rewrite):**
   the app was authored dark-only with no `dark:` prefixes, so inverting every className was

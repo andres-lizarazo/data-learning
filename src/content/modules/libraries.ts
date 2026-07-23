@@ -248,5 +248,111 @@ def product(nums):
         },
       ],
     },
+    {
+      id: "regex",
+      title: "Regular Expressions (re)",
+      summary: "Match, search, extract and replace text patterns with the re module.",
+      minutes: 13,
+      blocks: [
+        {
+          kind: "prose",
+          markdown: `# Pattern-matching text with \`re\`
+
+Regular expressions describe **patterns** in text. Python's \`re\` module compiles a
+pattern and matches it against strings.
+
+**The core functions:**
+
+| Call | Returns |
+|---|---|
+| \`re.search(p, s)\` | first match **anywhere**, or \`None\` |
+| \`re.match(p, s)\` | match **only at the start**, or \`None\` |
+| \`re.findall(p, s)\` | list of **all** matches |
+| \`re.finditer(p, s)\` | iterator of match objects |
+| \`re.sub(p, repl, s)\` | \`s\` with matches **replaced** |
+| \`re.split(p, s)\` | split \`s\` on the pattern |
+
+**The building blocks you'll reach for most:**
+
+- \`\\d\` digit, \`\\w\` word char, \`\\s\` whitespace (uppercase = negation: \`\\D \\W \\S\`)
+- \`.\` any char, \`^\` start, \`$\` end
+- quantifiers: \`*\` (0+), \`+\` (1+), \`?\` (0 or 1), \`{2,4}\` (range)
+- \`[abc]\` a set, \`[^abc]\` negated set, \`(…)\` a **capture group**, \`a|b\` alternation
+
+> Always write patterns as **raw strings** — \`r"\\d+"\` — so backslashes reach \`re\`
+> instead of being eaten by Python's own string escapes.`,
+        },
+        {
+          kind: "runnable",
+          title: "search, match, findall",
+          code: `import re
+
+text = "Order 42 shipped on 2026-07-23, order 7 pending"
+
+print(re.search(r"\\d+", text).group())     # first number anywhere -> 42
+print(re.match(r"\\d+", text))               # None: text doesn't START with a digit
+print(re.findall(r"\\d+", text))             # every run of digits
+print(re.findall(r"\\d{4}-\\d{2}-\\d{2}", text))  # ISO dates`,
+        },
+        {
+          kind: "runnable",
+          title: "Groups & substitution",
+          code: `import re
+
+# Named capture groups pull structured fields out of text.
+m = re.search(r"(?P<year>\\d{4})-(?P<month>\\d{2})-(?P<day>\\d{2})", "date: 2026-07-23")
+print(m.group("year"), m.group("month"), m.group("day"))
+print(m.groups())                             # ('2026', '07', '23')
+
+# sub() rewrites matches; \\1 back-references the first group.
+print(re.sub(r"(\\d{4})-(\\d{2})-(\\d{2})", r"\\3/\\2/\\1", "2026-07-23"))  # 23/07/2026
+print(re.sub(r"\\s+", " ", "too    many   spaces"))  # collapse whitespace`,
+        },
+        {
+          kind: "quiz",
+          question:
+            "What's the difference between `re.match` and `re.search`?",
+          options: [
+            {
+              text: "`match` anchors at the start of the string; `search` scans the whole string.",
+              correct: true,
+            },
+            { text: "`match` returns a bool; `search` returns a match object." },
+            { text: "`match` is case-insensitive; `search` is case-sensitive." },
+            { text: "There is no difference — they are aliases." },
+          ],
+          explanation:
+            "`re.match` only succeeds if the pattern matches at position 0, while `re.search` finds the first match anywhere. To force a full-string match, use `re.fullmatch` or anchor with `^…$`.",
+        },
+        {
+          kind: "challenge",
+          title: "Extract the numbers",
+          prompt:
+            "Return a list of **all integers** appearing in the string `s`, in order, as `int`s. Use `re.findall`. If there are none, return `[]`.",
+          starterCode: `import re
+
+def numbers(s):
+    pass`,
+          tests: [
+            { name: "runs of digits", assertion: "assert numbers('a1b22c333') == [1, 22, 333]" },
+            { name: "none", assertion: "assert numbers('no digits here') == []" },
+            {
+              name: "mixed text",
+              assertion: "assert numbers('year 2026, month 7') == [2026, 7]",
+              hidden: true,
+            },
+          ],
+          hints: [
+            "`re.findall(r'\\\\d+', s)` returns every run of digits as strings.",
+            "Convert each match to an int: `[int(x) for x in re.findall(r'\\\\d+', s)]`.",
+          ],
+          solution: `import re
+
+def numbers(s):
+    return [int(x) for x in re.findall(r"\\d+", s)]`,
+          xp: 70,
+        },
+      ],
+    },
   ],
 };

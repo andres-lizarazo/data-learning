@@ -137,6 +137,15 @@ GROUP BY u.id, u.name
 ORDER BY total_orders DESC, u.name;`,
         },
         {
+          kind: "sql-runnable",
+          title: "Self-join: each category with its parent's name",
+          sql: `-- The same table appears twice under different aliases (c = child, p = parent).
+SELECT c.name AS category, p.name AS parent
+FROM categories c
+LEFT JOIN categories p ON p.id = c.parent_id
+ORDER BY parent NULLS FIRST, category;`,
+        },
+        {
           kind: "prose",
           markdown: `## LATERAL — "for each row, run this subquery"
 
@@ -787,6 +796,23 @@ EXPLAIN SELECT * FROM orders WHERE status = 'paid';`,
         },
         {
           kind: "sql-runnable",
+          title: "EXPLAIN ANALYZE — real timings on a bigger table",
+          resetBefore: true,
+          sql: `-- The 6-row seed is too small for an index to matter, so build a bigger table.
+CREATE TEMP TABLE big AS
+SELECT g AS id, (g % 100)::int AS bucket
+FROM generate_series(1, 50000) AS g;
+
+CREATE INDEX idx_big_bucket ON big (bucket);
+ANALYZE big;
+
+-- Plain EXPLAIN only *estimates*. EXPLAIN ANALYZE actually RUNS the query and
+-- reports "actual time=" and real row counts — how you confirm the index is used.
+EXPLAIN ANALYZE
+SELECT count(*) FROM big WHERE bucket = 7;`,
+        },
+        {
+          kind: "sql-runnable",
           title: "GIN index for array membership",
           resetBefore: true,
           sql: `CREATE INDEX idx_products_tags ON products USING GIN (tags);
@@ -1055,6 +1081,121 @@ UPDATE products SET price = price WHERE id = 1;
 SELECT id, name, (updated_at IS NOT NULL) AS got_timestamp FROM products WHERE id = 1;`,
         },
         {
+          kind: "prose",
+          markdown: `### Control flow inside a function
+
+PL/pgSQL is a real procedural language. Inside \`BEGIN … END\` you can branch and loop:
+
+- **\`IF / ELSIF / ELSE\`** for branching.
+- **\`LOOP … EXIT WHEN\`**, **\`WHILE … LOOP\`**, and **\`FOR i IN 1..n LOOP\`** for iteration
+  (\`FOR … IN REVERSE\` counts down; \`CONTINUE WHEN\` skips an iteration).
+- **\`FOR row IN SELECT … LOOP\`** to iterate over query results row by row.
+- **\`RAISE NOTICE / WARNING / EXCEPTION\`** to log or abort.`,
+        },
+        {
+          kind: "sql-runnable",
+          title: "Loops + IF: sum of the odd numbers 1..n",
+          resetBefore: true,
+          sql: `CREATE OR REPLACE FUNCTION odd_sum(n INTEGER)
+RETURNS INTEGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    total INTEGER := 0;
+    i     INTEGER;
+BEGIN
+    FOR i IN 1..n LOOP
+        CONTINUE WHEN i % 2 = 0;   -- skip even numbers
+        total := total + i;
+    END LOOP;
+
+    IF total > 100 THEN
+        RAISE NOTICE 'large total: %', total;
+    END IF;
+
+    RETURN total;
+END;
+$$;
+
+SELECT odd_sum(10) AS sum_of_odds_1_to_10;   -- 1+3+5+7+9 = 25`,
+        },
+        {
+          kind: "sql-runnable",
+          title: "FOR over a query: count rows above a threshold",
+          resetBefore: true,
+          sql: `CREATE OR REPLACE FUNCTION count_pricey(threshold NUMERIC)
+RETURNS INTEGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    rec RECORD;
+    n   INTEGER := 0;
+BEGIN
+    -- Iterate the result set one row at a time.
+    FOR rec IN SELECT price FROM products LOOP
+        IF rec.price >= threshold THEN
+            n := n + 1;
+        END IF;
+    END LOOP;
+    RETURN n;
+END;
+$$;
+
+SELECT count_pricey(100) AS products_100_or_more;`,
+        },
+        {
+          kind: "sql-runnable",
+          title: "Exception handling: catch a constraint violation",
+          resetBefore: true,
+          sql: `CREATE OR REPLACE FUNCTION demo_catch()
+RETURNS TEXT
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    taken TEXT;
+BEGIN
+    SELECT email INTO taken FROM users LIMIT 1;      -- an email that already exists
+
+    INSERT INTO users (id, name, email, created_at, active)
+    VALUES (9999, 'Dup', taken, CURRENT_DATE, true); -- violates UNIQUE(email)
+
+    RETURN 'inserted (should not happen)';
+EXCEPTION
+    WHEN unique_violation THEN
+        RETURN 'caught unique_violation: ' || SQLERRM;
+    WHEN OTHERS THEN
+        RETURN 'caught other error: ' || SQLERRM;
+END;
+$$;
+
+SELECT demo_catch() AS result;`,
+        },
+        {
+          kind: "prose",
+          markdown: `### Procedures — called with \`CALL\`
+
+A **procedure** is like a function but is invoked with \`CALL\` instead of \`SELECT\`, returns
+nothing directly, and (unlike a function) may \`COMMIT\`/\`ROLLBACK\` its own transactions —
+useful for batch jobs that commit in chunks.`,
+        },
+        {
+          kind: "sql-runnable",
+          title: "A procedure that mutates data, run with CALL",
+          resetBefore: true,
+          sql: `CREATE OR REPLACE PROCEDURE bump_prices(pct NUMERIC)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    UPDATE products SET price = ROUND(price * (1 + pct / 100), 2);
+    RAISE NOTICE 'prices bumped by % percent', pct;
+END;
+$$;
+
+CALL bump_prices(10);              -- invoke with CALL, not SELECT
+
+SELECT name, price FROM products ORDER BY id;`,
+        },
+        {
           kind: "quiz",
           question: "Which is true of a PL/pgSQL **procedure** (vs. a function)?",
           options: [
@@ -1065,6 +1206,47 @@ SELECT id, name, (updated_at IS NOT NULL) AS got_timestamp FROM products WHERE i
           ],
           explanation:
             "Procedures are called with `CALL`, return nothing (or via INOUT params), and—unlike functions—can manage transactions internally. Functions return a value and are usable in SQL expressions.",
+        },
+        {
+          kind: "sql-challenge",
+          title: "Write a factorial function",
+          prompt:
+            "Create a PL/pgSQL function `factorial(n INTEGER) RETURNS BIGINT` that multiplies `1 * 2 * … * n` using a loop, then `SELECT factorial(6) AS result;`. (6! = 720.)",
+          starterSql: `CREATE OR REPLACE FUNCTION factorial(n INTEGER)
+RETURNS BIGINT
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    result BIGINT := 1;
+    i INTEGER;
+BEGIN
+    -- multiply result by each i from 1 to n
+    RETURN result;
+END;
+$$;
+
+SELECT factorial(6) AS result;`,
+          solution: `CREATE OR REPLACE FUNCTION factorial(n INTEGER)
+RETURNS BIGINT
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    result BIGINT := 1;
+    i INTEGER;
+BEGIN
+    FOR i IN 1..n LOOP
+        result := result * i;
+    END LOOP;
+    RETURN result;
+END;
+$$;
+
+SELECT factorial(6) AS result;`,
+          hints: [
+            "Use a `FOR i IN 1..n LOOP … END LOOP;` and multiply `result := result * i;` each pass.",
+            "Return `result` after the loop, then `SELECT factorial(6) AS result;`.",
+          ],
+          xp: 90,
         },
       ],
     },
@@ -1100,6 +1282,18 @@ SELECT id, name, (updated_at IS NOT NULL) AS got_timestamp FROM products WHERE i
     extract(year FROM created_at)::int   AS signup_year
 FROM users
 ORDER BY name;`,
+        },
+        {
+          kind: "sql-runnable",
+          title: "Regex & string shaping",
+          sql: `SELECT
+    initcap('ada LOVELACE')                              AS titled,        -- Ada Lovelace
+    lpad('42', 5, '0')                                   AS padded,        -- 00042
+    translate('a.b.c', '.', '-')                         AS translated,    -- a-b-c
+    regexp_replace('order #1234 shipped', '\\D', '', 'g') AS digits_only,   -- 1234
+    (regexp_matches('user@example.com', '@(.+)$'))[1]    AS domain,        -- example.com
+    format('Hello, %s! You are #%s', 'Ada', 7)           AS greeting,      -- template
+    ('abc123' ~ '^[a-z]+[0-9]+$')                        AS matches_pattern;`,
         },
         {
           kind: "sql-runnable",
@@ -2818,6 +3012,12 @@ marts, and RLS handles multi-tenant or regional data walls.`,
             { front: "NULL comparison", back: "`= NULL` is never true. Use `IS NULL` / `IS NOT NULL`, or `IS DISTINCT FROM` for NULL-safe inequality." },
             { front: "CTE (`WITH`)", back: "A named subquery that makes multi-step queries readable and enables recursion. `WITH t AS (...) SELECT ... FROM t`." },
             { front: "Upsert in Postgres", back: "`INSERT ... ON CONFLICT (key) DO UPDATE SET ...` (or `MERGE`) — write-once idempotency: running twice equals running once." },
+            { front: "DISTINCT vs DISTINCT ON", back: "`DISTINCT` dedupes whole rows. `DISTINCT ON (col) ... ORDER BY col, x` keeps the first row per `col` — the classic 'latest per group'." },
+            { front: "COALESCE vs NULLIF", back: "`COALESCE(a,b,...)` returns the first non-NULL. `NULLIF(a,b)` returns NULL when `a=b` — e.g. `x / NULLIF(y,0)` avoids divide-by-zero." },
+            { front: "string_agg / array_agg", back: "Aggregate rows into one value: `string_agg(name, ', ' ORDER BY name)` builds a delimited list; `array_agg(...)` builds an array." },
+            { front: "FILTER clause", back: "Conditional aggregation without CASE: `COUNT(*) FILTER (WHERE status='paid')` counts only matching rows within the same GROUP BY." },
+            { front: "OFFSET pagination vs keyset", back: "`LIMIT n OFFSET m` gets slow on deep pages (it scans+discards). Keyset — `WHERE id > :last ORDER BY id LIMIT n` — stays fast." },
+            { front: "EXPLAIN vs EXPLAIN ANALYZE", back: "`EXPLAIN` shows the *estimated* plan without running it; `EXPLAIN ANALYZE` actually runs the query and reports real time and row counts." },
           ],
         },
       ],

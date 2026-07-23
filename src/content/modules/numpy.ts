@@ -240,5 +240,116 @@ def column_sums(matrix):
         },
       ],
     },
+    {
+      id: "linalg-random",
+      title: "Linear Algebra & Random",
+      summary: "Matrix products, solving systems with np.linalg, and reproducible randomness.",
+      minutes: 14,
+      blocks: [
+        {
+          kind: "prose",
+          markdown: `# Matrices and randomness
+
+NumPy is a linear-algebra engine. Two operators matter:
+
+- \`*\` is **element-wise** multiplication.
+- \`@\` (or \`np.dot\`) is the **matrix product** — the one from linear algebra.
+
+The \`np.linalg\` module solves the rest: \`np.linalg.inv\` (inverse), \`np.linalg.det\`
+(determinant), and \`np.linalg.solve(A, b)\` to solve \`A x = b\` **without** forming the
+inverse (faster and more stable).
+
+**Randomness — use a Generator.** The modern API is \`rng = np.random.default_rng(seed)\`.
+Seeding makes results **reproducible**; \`rng.random\`, \`rng.integers\`, \`rng.normal\`, and
+\`rng.choice\` draw samples.`,
+        },
+        {
+          kind: "runnable",
+          title: "Matrix product vs element-wise",
+          packages: ["numpy"],
+          code: `import numpy as np
+
+A = np.array([[1, 2], [3, 4]])
+B = np.array([[5, 6], [7, 8]])
+
+print("element-wise A * B:\\n", A * B)
+print("matrix product A @ B:\\n", A @ B)
+print("A transposed:\\n", A.T)`,
+        },
+        {
+          kind: "runnable",
+          title: "Solve a linear system A x = b",
+          packages: ["numpy"],
+          code: `import numpy as np
+
+# 2x + y = 5 ;  x + 3y = 10   ->  x = 1, y = 3
+A = np.array([[2.0, 1.0], [1.0, 3.0]])
+b = np.array([5.0, 10.0])
+
+x = np.linalg.solve(A, b)
+print("solution:", x)
+print("det(A):", round(float(np.linalg.det(A)), 2))
+print("check A @ x == b:", np.allclose(A @ x, b))`,
+        },
+        {
+          kind: "runnable",
+          title: "Reproducible randomness with a Generator",
+          packages: ["numpy"],
+          code: `import numpy as np
+
+rng = np.random.default_rng(42)          # same seed -> same numbers every run
+print("floats:", rng.random(3).round(3))
+print("ints:  ", rng.integers(1, 100, size=5))
+print("normal:", rng.normal(0, 1, size=3).round(3))
+print("choice:", rng.choice(["a", "b", "c"], size=4).tolist())`,
+        },
+        {
+          kind: "quiz",
+          question: "What's the difference between `A * B` and `A @ B` for 2-D NumPy arrays?",
+          options: [
+            {
+              text: "`*` multiplies element by element; `@` is the matrix (dot) product.",
+              correct: true,
+            },
+            { text: "They are identical for arrays." },
+            { text: "`*` is the matrix product; `@` is element-wise." },
+            { text: "`@` only works on 1-D arrays." },
+          ],
+          explanation:
+            "`*` is element-wise (shapes must broadcast). `@` (equivalently `np.dot`/`np.matmul`) contracts the inner dimensions — the linear-algebra matrix product.",
+        },
+        {
+          kind: "challenge",
+          title: "Matrix–vector product",
+          prompt:
+            "Given a 2-D list `A` and a 1-D list `v`, return the matrix–vector product `A @ v` as a plain Python list. Use NumPy.",
+          packages: ["numpy"],
+          starterCode: `import numpy as np
+
+def matvec(A, v):
+    pass`,
+          tests: [
+            {
+              name: "2x2",
+              assertion: "assert matvec([[1,2],[3,4]], [1,1]) == [3, 7]",
+            },
+            {
+              name: "identity",
+              assertion: "assert matvec([[1,0],[0,1]], [5,9]) == [5, 9]",
+              hidden: true,
+            },
+          ],
+          hints: [
+            "Convert both to arrays: `np.array(A)` and `np.array(v)`.",
+            "The product is `np.array(A) @ np.array(v)`; return `.tolist()`.",
+          ],
+          solution: `import numpy as np
+
+def matvec(A, v):
+    return (np.array(A) @ np.array(v)).tolist()`,
+          xp: 75,
+        },
+      ],
+    },
   ],
 };
