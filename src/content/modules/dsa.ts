@@ -113,6 +113,11 @@ for i, x in enumerate([10, 20, 30]):
             { name: "mid", assertion: "assert sorted(two_sum([3,2,4], 6)) == [1,2]" },
             { name: "dupes", assertion: "assert sorted(two_sum([3,3], 6)) == [0,1]", hidden: true },
           ],
+          hints: [
+            "Walk the list once with `enumerate` so you have each value AND its index.",
+            "For the current value `x`, its partner is `target - x`. Keep a dict of the values you've already seen mapped to their index.",
+            "If `target - x` is already in that dict, you've found the pair — return `[seen[target - x], i]`. Otherwise store `seen[x] = i` and continue.",
+          ],
           solution: `def two_sum(nums, target):
     seen = {}
     for i, x in enumerate(nums):
@@ -223,10 +228,15 @@ Watch the stack grow on the way down and unwind on the way back up 👇`,
             { name: "empty", assertion: "assert rsum([]) == 0" },
             { name: "one", assertion: "assert rsum([42]) == 42", hidden: true },
           ],
+          hints: [
+            "Base case: the sum of an empty list is `0` — that's what stops the recursion.",
+            "Otherwise, the answer is the first element plus the sum of the *rest*: `nums[0] + rsum(nums[1:])`.",
+          ],
           solution: `def rsum(nums):
     if not nums:
         return 0
     return nums[0] + rsum(nums[1:])`,
+          xp: 70,
         },
       ],
     },
@@ -380,6 +390,11 @@ bubble_sort([5, 2, 8, 1, 9, 3])`,
             { name: "empty", assertion: "assert insertion_sort([]) == []" },
             { name: "dupes", assertion: "assert insertion_sort([2,2,1]) == [1,2,2]", hidden: true },
           ],
+          hints: [
+            "Copy the input first (`a = list(nums)`) so you sort a new list and leave the original alone.",
+            "Walk from index 1 to the end. Each element is the `key` you insert into the already-sorted part on its left.",
+            "Shift every left-neighbour that's bigger than `key` one slot to the right, then drop `key` into the gap that opens up.",
+          ],
           solution: `def insertion_sort(nums):
     a = list(nums)
     for i in range(1, len(a)):
@@ -445,6 +460,11 @@ print("index:", found)`,
             { name: "missing", assertion: "assert bsearch([1,3,5,7], 4) == -1" },
             { name: "first", assertion: "assert bsearch([1,3,5,7], 1) == 0", hidden: true },
           ],
+          hints: [
+            "Track a window with two pointers, `lo = 0` and `hi = len(a) - 1`, and loop while `lo <= hi`.",
+            "Check the middle: `mid = (lo + hi) // 2`. If `a[mid] == target` you're done.",
+            "If the middle is too small, the target is to the right (`lo = mid + 1`); if too big, to the left (`hi = mid - 1`). Return `-1` if the window closes.",
+          ],
           solution: `def bsearch(a, target):
     lo, hi = 0, len(a) - 1
     while lo <= hi:
@@ -501,6 +521,11 @@ at a known position is O(1) (just relink pointers), but random access is O(n).`,
                 "n3={'val':3,'next':None}; n2={'val':2,'next':n3}; n1={'val':1,'next':n2}; r=reverse(n1); assert [r['val'], r['next']['val'], r['next']['next']['val']] == [3,2,1]",
             },
             { name: "empty", assertion: "assert reverse(None) is None", hidden: true },
+          ],
+          hints: [
+            "Keep three references as you walk: `prev` (starts None), `cur` (starts at head), and a temporary `nxt`.",
+            "Before you flip a node's pointer, stash `nxt = cur['next']` so you don't lose the rest of the list.",
+            "Point `cur['next']` back at `prev`, then slide everything forward: `prev = cur; cur = nxt`. When `cur` is None, `prev` is the new head.",
           ],
           solution: `def reverse(head):
     prev = None
@@ -560,6 +585,11 @@ O(log n) when balanced. Traversals visit nodes in different orders:
                 "t={'val':2,'left':{'val':1,'left':None,'right':None},'right':{'val':3,'left':None,'right':None}}; assert inorder(t) == [1,2,3]",
             },
             { name: "empty", assertion: "assert inorder(None) == []", hidden: true },
+          ],
+          hints: [
+            "Base case: an empty subtree (`root is None`) contributes an empty list `[]`.",
+            "In-order means: everything from the LEFT subtree, then this node's value, then everything from the RIGHT subtree.",
+            "Recurse and concatenate: `inorder(root['left']) + [root['val']] + inorder(root['right'])`.",
           ],
           solution: `def inorder(root):
     if root is None:
@@ -677,6 +707,11 @@ A **graph** is nodes + edges, often stored as an adjacency list \`{node: [neighb
               assertion: "g={'A':[],'B':['A']}; assert reachable(g,'A') == {'A'}",
               hidden: true,
             },
+          ],
+          hints: [
+            "Track a `seen` set (start it with `start`) and a worklist of nodes still to explore (start it with `[start]`).",
+            "Pop a node, then look at its neighbours via `graph.get(node, [])` — the `.get` default handles nodes with no outgoing edges.",
+            "Add each unseen neighbour to both `seen` and the worklist. When the worklist empties, `seen` is your answer.",
           ],
           solution: `def reachable(graph, start):
     seen = set([start])

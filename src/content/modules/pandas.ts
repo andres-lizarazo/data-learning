@@ -98,6 +98,10 @@ def names_above(records, cutoff):
               hidden: true,
             },
           ],
+          hints: [
+            "Build a DataFrame from the records, then filter rows with a boolean mask: `df[df[\"score\"] >= cutoff]`.",
+            "From the filtered frame, select the `name` column and return `.tolist()`.",
+          ],
           solution: `import pandas as pd
 
 def names_above(records, cutoff):
@@ -210,6 +214,10 @@ def avg_by_group(records):
               hidden: true,
             },
           ],
+          hints: [
+            "`df.groupby(\"group\")[\"value\"].mean()` gives a Series indexed by group with the mean of each.",
+            "Convert that Series to a plain dict with a comprehension over `.items()`, casting each value with `float(...)`.",
+          ],
           solution: `import pandas as pd
 
 def avg_by_group(records):
@@ -276,6 +284,10 @@ def order_costs(orders, prices):
                 "assert order_costs([{'item':'x','qty':4}], [{'item':'x','price':3}]) == {'x': 12}",
               hidden: true,
             },
+          ],
+          hints: [
+            "Make a DataFrame from each list and join them on the shared key: `df_orders.merge(df_prices, on=\"item\")`.",
+            "Walk the merged rows with `.iterrows()` and build a dict mapping each item to `int(row[\"qty\"] * row[\"price\"])`.",
           ],
           solution: `import pandas as pd
 

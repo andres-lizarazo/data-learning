@@ -188,6 +188,10 @@ print(counts)`,
               hidden: true,
             },
           ],
+          hints: [
+            "Start with an empty dict and loop over `words`, tallying each one.",
+            "`counts.get(w, 0)` returns the current count (or 0 the first time you see `w`), so `counts[w] = counts.get(w, 0) + 1` increments safely.",
+          ],
           solution: `def word_count(words):
     counts = {}
     for w in words:
@@ -241,8 +245,13 @@ print("difference:", a - b)`,
             { name: "none", assertion: "assert common([1],[2]) == []" },
             { name: "dupes", assertion: "assert common([1,1,2],[2,2,1]) == [1,2]", hidden: true },
           ],
+          hints: [
+            "Turn each list into a `set` so membership is fast and duplicates collapse.",
+            "The values in both are the set intersection `set(a) & set(b)`; wrap it in `sorted(...)` to return a sorted list.",
+          ],
           solution: `def common(a, b):
     return sorted(set(a) & set(b))`,
+          xp: 60,
         },
       ],
     },
