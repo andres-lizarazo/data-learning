@@ -24,6 +24,7 @@ import { dbtEs } from "./es/de/dbt";
 import { orchestrationEs } from "./es/de/orchestration";
 import { dataQualityEs } from "./es/de/dataQuality";
 import { streamingEs } from "./es/de/streaming";
+import { awsEs } from "./es/cloud/aws";
 
 // Registry of Spanish lesson overlays, keyed by lesson id. Add a module's overlay here as it
 // gets translated; lessons without an entry fall back to their English content automatically.
@@ -51,6 +52,7 @@ const esOverlays: Record<string, LessonI18n> = {
   ...orchestrationEs,
   ...dataQualityEs,
   ...streamingEs,
+  ...awsEs,
 };
 
 const overlays: Record<Locale, Record<string, LessonI18n>> = {
