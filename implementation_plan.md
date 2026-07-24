@@ -455,10 +455,16 @@ Prioritized, phase by phase. Each phase is independently shippable.
         **Python Basics** fully translated (all 8 lessons) as the pilot. Verified in-browser:
         Spanish prose/quiz/challenge render, code stays Python, sidebar titles localized.
         (Note: flashcard fronts are translated, so review-queue state is per-language.)
-  - [ ] 🚧 i18n phase 2 continued — translate the remaining 25 modules' lesson content
-        (same overlay pattern, one `src/content/i18n/es/<module>.ts` each) and the editor/
-        challenge/notes component chrome (Run/Submit/Reset/Show solution/console) + remaining
-        pages (Profile, Practice, Roadmap, Reference, CommandPalette, ShortcutsHelp).
+  - [x] **i18n phase 2 complete — 100% of lesson content translated (all 26 modules).**
+        Every module now has a Spanish overlay under `src/content/i18n/es/` (Python track,
+        PostgreSQL, Software Design, Data Engineering, Cloud/AWS, and the Foundations &
+        Tooling track — Linux & Git/GitHub closing the set), each registered in
+        `src/content/i18n/index.ts`. Same text-only, index-matched overlay pattern throughout,
+        so all executable code/tests/solutions/quiz-correct flags stay sourced from English.
+        Editor/challenge/notes component chrome (Run/Submit/Reset/Show solution/console) and
+        the remaining pages (Profile, Practice, Roadmap, Reference, CommandPalette,
+        ShortcutsHelp) were translated earlier in this phase. CI gate green
+        (typecheck + lint + 199 tests + 99 Python challenges).
 
 ## 2026-07 Quality, robustness & UX hardening (DONE)
 

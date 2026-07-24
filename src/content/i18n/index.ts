@@ -25,6 +25,8 @@ import { orchestrationEs } from "./es/de/orchestration";
 import { dataQualityEs } from "./es/de/dataQuality";
 import { streamingEs } from "./es/de/streaming";
 import { awsEs } from "./es/cloud/aws";
+import { linuxEs } from "./es/platform/linux";
+import { gitGithubEs } from "./es/platform/git";
 
 // Registry of Spanish lesson overlays, keyed by lesson id. Add a module's overlay here as it
 // gets translated; lessons without an entry fall back to their English content automatically.
@@ -53,6 +55,8 @@ const esOverlays: Record<string, LessonI18n> = {
   ...dataQualityEs,
   ...streamingEs,
   ...awsEs,
+  ...linuxEs,
+  ...gitGithubEs,
 };
 
 const overlays: Record<Locale, Record<string, LessonI18n>> = {
