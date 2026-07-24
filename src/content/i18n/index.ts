@@ -20,6 +20,7 @@ import { dataModelingEs } from "./es/de/dataModeling";
 import { warehouseLakehouseEs } from "./es/de/warehouse";
 import { pysparkEs } from "./es/pyspark";
 import { databricksEs } from "./es/de/databricks";
+import { dbtEs } from "./es/de/dbt";
 
 // Registry of Spanish lesson overlays, keyed by lesson id. Add a module's overlay here as it
 // gets translated; lessons without an entry fall back to their English content automatically.
@@ -43,6 +44,7 @@ const esOverlays: Record<string, LessonI18n> = {
   ...warehouseLakehouseEs,
   ...pysparkEs,
   ...databricksEs,
+  ...dbtEs,
 };
 
 const overlays: Record<Locale, Record<string, LessonI18n>> = {
